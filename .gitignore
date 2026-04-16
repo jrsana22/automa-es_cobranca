@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+automacao.db
+*.xlsx
+token.json
+credentials.json
+.venv/

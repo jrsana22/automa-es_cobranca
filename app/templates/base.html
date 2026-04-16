@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Automação Cobrança{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+        nav { background: #1e293b; padding: 1rem 2rem; display: flex; align-items: center; gap: 2rem; border-bottom: 1px solid #334155; }
+        nav a { color: #94a3b8; text-decoration: none; font-size: 0.9rem; }
+        nav a:hover, nav a.active { color: #38bdf8; }
+        nav .brand { color: #f1f5f9; font-weight: 700; font-size: 1.1rem; margin-right: auto; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+        h1, h2, h3 { color: #f1f5f9; margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; }
+        .btn { display: inline-block; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.875rem; cursor: pointer; border: none; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-success { background: #16a34a; color: white; }
+        .btn-success:hover { background: #15803d; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        .badge { padding: 0.2rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-success { background: #166534; color: #86efac; }
+        .badge-error { background: #7f1d1d; color: #fca5a5; }
+        .badge-pending { background: #713f12; color: #fde68a; }
+        form { display: grid; gap: 1rem; }
+        label { display: block; color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.25rem; }
+        input, select, textarea { width: 100%; padding: 0.5rem; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; font-size: 0.9rem; }
+        input:focus, select:focus { outline: none; border-color: #38bdf8; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .actions { display: flex; gap: 0.5rem; }
+        .empty { text-align: center; color: #64748b; padding: 2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; text-align: center; }
+        .stat-card.stat-total { border-color: #2563eb; }
+        .stat-label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: #f1f5f9; }
+        .stat-sub { color: #64748b; font-size: 0.7rem; margin-top: 0.25rem; }
+        .fluxo-tag { display: inline-block; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin: 0.1rem; }
+        .fluxo-preboleto { background: #1e3a5f; color: #7dd3fc; }
+        .fluxo-vencendo_hoje { background: #1a3a2a; color: #86efac; }
+        .fluxo-cobranca_d1 { background: #3b1a0a; color: #fdba74; }
+        .fluxo-cobranca_2_30 { background: #3b0a0a; color: #fca5a5; }
+        .fluxo-reativacao { background: #2d1a3b; color: #c4b5fd; }
+        .fluxos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        .fluxo-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 1rem; }
+        .fluxo-header { margin-bottom: 0.75rem; }
+        .fluxo-header label { display: flex; align-items: center; gap: 0.5rem; color: #f1f5f9; cursor: pointer; }
+        .fluxo-header input[type="checkbox"] { width: auto; accent-color: #2563eb; }
+        .fluxo-desc { display: block; color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; margin-left: 1.5rem; }
+        .fluxo-body { padding-left: 1.5rem; }
+        .fluxo-body input { margin-top: 0.25rem; }
+        .fluxo-dias { margin-top: 0.5rem; }
+        .dias-badge { display: inline-block; background: #334155; color: #94a3b8; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; }
+        .badge-warning { background: #713f12; color: #fde68a; }
+    </style>
+</head>
+<body>
+    <nav>
+        <span class="brand">Automação Cobrança</span>
+        <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Dashboard</a>
+        <a href="/automacoes/novo" class="{% if 'novo' in request.url.path %}active{% endif %}">Nova Automação</a>
+        <a href="/logs" class="{% if request.url.path == '/logs' %}active{% endif %}">Logs</a>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

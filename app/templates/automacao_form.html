@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}{% if automacao %}Editar Cliente{% else %}Novo Cliente{% endif %}{% endblock %}
+{% block content %}
+<h1>{% if automacao %}Editar Cliente{% else %}Novo Cliente{% endif %}</h1>
+
+<div class="card">
+    <form action="/api/automacoes{% if automacao %}/{{ automacao.id }}{% endif %}" method="POST">
+        <!-- Dados do Cliente -->
+        <h3>Dados do Cliente</h3>
+        <div class="form-row">
+            <div>
+                <label for="nome">Nome do Cliente</label>
+                <input type="text" id="nome" name="nome" value="{{ automacao.nome if automacao else '' }}" required placeholder="Ex: APVS Brasil">
+            </div>
+            <div>
+                <label for="erp_tipo">Tipo do ERP</label>
+                <select id="erp_tipo" name="erp_tipo">
+                    <option value="apvs_brasil" {% if automacao and automacao.erp_tipo == 'apvs_brasil' %}selected{% endif %}>APVS Brasil</option>
+                    <option value="apvs_truck" {% if automacao and automacao.erp_tipo == 'apvs_truck' %}selected{% endif %}>APVS Truck</option>
+                </select>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 1rem;">Acesso ERP</h3>
+        <div class="form-row">
+            <div>
+                <label for="erp_url">URL do ERP</label>
+                <input type="url" id="erp_url" name="erp_url" value="{{ automacao.erp_url if automacao else '' }}" required placeholder="https://erp.apvs.com.br">
+            </div>
+            <div>
+                <label for="horario_execucao">Horário de Execução</label>
+                <input type="time" id="horario_execucao" name="horario_execucao" value="{{ automacao.horario_execucao if automacao else '06:00' }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label for="erp_login">Login</label>
+                <input type="text" id="erp_login" name="erp_login" value="{{ automacao.erp_login if automacao else '' }}" required>
+            </div>
+            <div>
+                <label for="erp_senha">Senha{% if automacao %} (deixe vazio para manter){% endif %}</label>
+                <input type="password" id="erp_senha" name="erp_senha" {% if not automacao %}required{% endif %}>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 1rem;">Google Sheets</h3>
+        <div class="form-row">
+            <div>
+                <label for="sheets_url">URL da Planilha</label>
+                <input type="url" id="sheets_url" name="sheets_url" value="{{ automacao.sheets_url if automacao else '' }}" required placeholder="https://docs.google.com/spreadsheets/d/...">
+            </div>
+            <div>
+                <label for="coluna_vencimento">Coluna de Vencimento</label>
+                <input type="text" id="coluna_vencimento" name="coluna_vencimento" value="{{ automacao.coluna_vencimento if automacao else 'vencimento_Parcela' }}">
+            </div>
+        </div>
+
+        <!-- Fluxos -->
+        <h3 style="margin-top: 1.5rem;">Fluxos de Cobrança</h3>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1rem;">
+            Cada fluxo filtra os dados do ERP de uma forma e escreve em uma aba diferente da planilha.
+            Desative os fluxos que não precisa.
+        </p>
+
+        {% set fluxos_config = [
+            ("preboleto", "Pré-boleto", "D-7 a D-1: vencendo em até 7 dias", -7, -1),
+            ("vencendo_hoje", "Vencendo Hoje", "D-0: vence hoje", 0, 0),
+            ("cobranca_d1", "Cobrança D+1", "D+1: 1 dia vencido", 1, 1),
+            ("cobranca_2_30", "Cobrança 2-30D", "2 a 30 dias vencido (a cada 3 dias)", 2, 30),
+            ("reativacao", "Reativação", "31 a 120 dias vencido", 31, 120),
+        ] %}
+
+        <div class="fluxos-grid">
+        {% for tipo, nome_padrao, descricao, min_dias, max_dias in fluxos_config %}
+            {% if automacao %}
+                {% set fluxo = automacao.fluxos|selectattr('tipo', 'equalto', tipo)|first %}
+                {% set aba_value = fluxo.sheets_aba if fluxo else nome_padrao %}
+                {% set ativo_checked = fluxo.ativo if fluxo else true %}
+            {% else %}
+                {% set aba_value = nome_padrao %}
+                {% set ativo_checked = true %}
+            {% endif %}
+            <div class="fluxo-card">
+                <div class="fluxo-header">
+                    <label class="fluxo-toggle">
+                        <input type="checkbox" name="{{ tipo }}_ativo" value="true" {% if ativo_checked %}checked{% endif %}>
+                        <strong>{{ nome_padrao }}</strong>
+                    </label>
+                    <span class="fluxo-desc">{{ descricao }}</span>
+                </div>
+                <div class="fluxo-body">
+                    <div>
+                        <label>Nome da aba na planilha</label>
+                        <input type="text" name="{{ tipo }}_aba" value="{{ aba_value }}" placeholder="{{ nome_padrao }}">
+                    </div>
+                    <div class="fluxo-dias">
+                        <span class="dias-badge">{{ min_dias }} a {{ max_dias }} dias</span>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+
+        {% if automacao %}
+        <div class="form-row" style="margin-top: 1rem;">
+            <div>
+                <label for="ativo">Cliente Ativo</label>
+                <select id="ativo" name="ativo">
+                    <option value="true" {% if automacao.ativo %}selected{% endif %}>Sim</option>
+                    <option value="false" {% if not automacao.ativo %}selected{% endif %}>Não</option>
+                </select>
+            </div>
+            <div>
+                <label for="dia_cobranca_base">Dia base Cobrança 2-30D (ciclo 3 dias)</label>
+                <input type="number" id="dia_cobranca_base" name="dia_cobranca_base" value="{{ automacao.dia_cobranca_base if automacao else 1 }}" min="1" max="3">
+                <small style="color: #64748b;">Dia 1 = dias 1,4,7... | Dia 2 = dias 2,5,8... | Dia 3 = dias 3,6,9...</small>
+            </div>
+        </div>
+        {% else %}
+        <input type="hidden" name="dia_cobranca_base" value="1">
+        {% endif %}
+
+        <div style="margin-top: 1rem;">
+            <label>
+                <input type="checkbox" name="executar_agora" value="true" {% if not automacao %}checked{% endif %}>
+                Executar imediatamente após salvar
+            </label>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="/" class="btn" style="background: #334155; color: #e2e8f0;">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

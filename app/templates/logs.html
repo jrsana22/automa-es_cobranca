@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Logs - Automação Cobrança{% endblock %}
+{% block content %}
+<h1>Logs de Execução</h1>
+
+{% if execucoes %}
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Fluxo</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Encontrados</th>
+                <th>Filtrados</th>
+                <th>Log</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exec in execucoes %}
+            <tr>
+                <td>{{ exec.automacao.nome if exec.automacao else '-' }}</td>
+                <td>
+                    {% if exec.fluxo %}
+                    <span class="fluxo-tag fluxo-{{ exec.fluxo.tipo }}">{{ exec.fluxo.nome }}</span>
+                    {% else %}
+                    <span style="color: #64748b;">Geral</span>
+                    {% endif %}
+                </td>
+                <td>{{ exec.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>
+                    {% if exec.status == 'sucesso' %}
+                    <span class="badge badge-success">Sucesso</span>
+                    {% elif exec.status == 'erro' %}
+                    <span class="badge badge-error">Erro</span>
+                    {% elif exec.status == 'vazio' %}
+                    <span class="badge badge-pending">Vazio</span>
+                    {% elif exec.status == 'parcial' %}
+                    <span class="badge badge-warning">Parcial</span>
+                    {% else %}
+                    <span class="badge badge-pending">{{ exec.status }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ exec.registros_encontrados }}</td>
+                <td>{{ exec.registros_filtrados }}</td>
+                <td>
+                    <details>
+                        <summary style="cursor: pointer; color: #38bdf8; font-size: 0.8rem;">Ver log</summary>
+                        <pre style="margin-top: 0.5rem; padding: 0.5rem; background: #0f172a; border-radius: 4px; font-size: 0.75rem; white-space: pre-wrap; max-height: 200px; overflow-y: auto;">{{ exec.log }}</pre>
+                    </details>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card empty">Nenhuma execução registrada.</div>
+{% endif %}
+{% endblock %}

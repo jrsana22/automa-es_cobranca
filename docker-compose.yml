@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ~/credentials.json:/app/credentials.json
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./data/automacao.db}
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-change-me-32bytes-encryption!}
+      - GOOGLE_CREDENTIALS_PATH=/app/credentials.json
+    restart: unless-stopped
+
+  # Descomente para usar PostgreSQL em produção:
+  # db:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_DB: automacao
+  #     POSTGRES_USER: automacao
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+# volumes:
+#   pgdata:
