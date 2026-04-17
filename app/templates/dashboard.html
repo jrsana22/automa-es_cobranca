@@ -2,27 +2,10 @@
 {% block title %}Dashboard - Automação Cobrança{% endblock %}
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-    <h1>Automações</h1>
+    <h1>Clientes</h1>
     <div>
         <a href="/automacoes/novo" class="btn btn-primary">+ Novo Cliente</a>
         <button onclick="executarTodos()" class="btn btn-success" style="margin-left: 0.5rem;">Executar Todos</button>
-    </div>
-</div>
-
-<!-- Stats Cards -->
-<div class="stats-grid">
-    {% set tipos_nomes = {"preboleto": "Pré-boleto", "vencendo_hoje": "Vencendo Hoje", "cobranca_d1": "Cobrança D+1", "cobranca_2_30": "Cobrança 2-30D", "reativacao": "Reativação"} %}
-    {% for tipo, nome in tipos_nomes.items() %}
-    <div class="stat-card">
-        <div class="stat-label">{{ nome }}</div>
-        <div class="stat-value">{{ stats_tipo.get(tipo, {}).get("registros", 0) }}</div>
-        <div class="stat-sub">registros hoje</div>
-    </div>
-    {% endfor %}
-    <div class="stat-card stat-total">
-        <div class="stat-label">Total Clientes</div>
-        <div class="stat-value">{{ automacoes|length }}</div>
-        <div class="stat-sub">cadastros</div>
     </div>
 </div>
 
@@ -33,10 +16,8 @@
         <thead>
             <tr>
                 <th>Cliente</th>
-                <th>ERP</th>
-                <th>Planilha</th>
-                <th>Fluxos Ativos</th>
-                <th>Horário</th>
+                <th>Automações</th>
+                <th>Agendamento</th>
                 <th>Status</th>
                 <th>Ações</th>
             </tr>
@@ -44,19 +25,21 @@
         <tbody>
             {% for auto in automacoes %}
             <tr>
-                <td><strong>{{ auto.nome }}</strong></td>
-                <td>{{ auto.erp_tipo }}</td>
                 <td>
-                    <a href="{{ auto.sheets_url }}" target="_blank" style="color: #38bdf8;">Abrir</a>
+                    <strong>{{ auto.nome }}</strong>
+                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.15rem;">
+                        <a href="{{ auto.sheets_url }}" target="_blank" style="color: #38bdf8;">Abrir planilha</a>
+                    </div>
                 </td>
                 <td>
                     {% for fluxo in auto.fluxos %}
-                    {% if fluxo.ativo %}
-                    <span class="fluxo-tag fluxo-{{ fluxo.tipo }}">{{ fluxo.nome }}</span>
-                    {% endif %}
+                    <span class="fluxo-tag fluxo-{{ fluxo.tipo }} {% if not fluxo.ativo %}fluxo-inativo{% endif %}">{{ fluxo.nome }}</span>
                     {% endfor %}
                 </td>
-                <td>{{ auto.horario_execucao }}</td>
+                <td>
+                    <div style="font-size: 0.85rem;">{{ auto.dias_semana_display }}</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">{{ auto.horario_execucao }}</div>
+                </td>
                 <td>
                     {% if auto.ativo %}
                     <span class="badge badge-success">Ativo</span>
@@ -89,7 +72,7 @@
         <thead>
             <tr>
                 <th>Cliente</th>
-                <th>Fluxo</th>
+                <th>Automação</th>
                 <th>Data</th>
                 <th>Status</th>
                 <th>Encontrados</th>

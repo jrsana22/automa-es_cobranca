@@ -59,6 +59,11 @@
         .fluxo-dias { margin-top: 0.5rem; }
         .dias-badge { display: inline-block; background: #334155; color: #94a3b8; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; }
         .badge-warning { background: #713f12; color: #fde68a; }
+        .dias-semana-grid { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .dia-checkbox { display: none; }
+        .dia-label { display: inline-block; padding: 0.4rem 0.75rem; background: #0f172a; border: 1px solid #334155; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #94a3b8; user-select: none; transition: all 0.15s; }
+        .dia-checkbox:checked + .dia-label { background: #2563eb; border-color: #3b82f6; color: #ffffff; }
+        .fluxo-inativo { opacity: 0.35; text-decoration: line-through; }
     </style>
 </head>
 <body>

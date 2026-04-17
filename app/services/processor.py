@@ -66,7 +66,7 @@ def _filtrar_por_fluxo(df: pd.DataFrame, fluxo: Fluxo, col_venc: str, automacao:
     return df_filtrado
 
 
-def processar_automacao(automacao: Automacao, db) -> dict:
+def processar_automacao(automacao: Automacao, db, agendado: bool = False) -> dict:
     """
     Executa o passo a passo completo de uma automação:
     1. Login no ERP (com retry)
@@ -143,7 +143,12 @@ def processar_automacao(automacao: Automacao, db) -> dict:
         # Verificar se hoje é dia de cobrança 2-30D (se houver esse fluxo)
         dia_cobranca = _verificar_dia_cobranca(automacao)
 
-        for fluxo in fluxos_ativos:
+        for i, fluxo in enumerate(fluxos_ativos):
+            # Quando agendado, esperar 2 min entre fluxos (exceto antes do primeiro)
+            if agendado and i > 0:
+                log_parts.append(f"Aguardando 120s antes do próximo fluxo (execução agendada)...")
+                time.sleep(120)
+
             log_parts.append(f"\n--- Fluxo: {fluxo.nome} ({fluxo.tipo}) ---")
 
             # Pular fluxo cobrança_2_30 se não for dia de executar

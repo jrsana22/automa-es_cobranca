@@ -6,11 +6,13 @@ from fastapi.templating import Jinja2Templates
 
 from app.database import init_db
 from app.routers import dashboard, api, executions
+from app.migrate_db import migrate_add_dias_semana
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    migrate_add_dias_semana()
     yield
 
 

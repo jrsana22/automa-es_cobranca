@@ -43,7 +43,7 @@ def executar_automacao_agendada(automacao_id: int):
         logger.info(f"Executando automação agendada: {automacao.nome} (ID={automacao_id})")
 
         try:
-            resultado = processar_automacao(automacao, db)
+            resultado = processar_automacao(automacao, db, agendado=True)
             logger.info(
                 f"Automação {automacao.nome}: status={resultado['status']}, "
                 f"encontrados={resultado.get('registros_encontrados', 0)}, "
@@ -81,15 +81,18 @@ def atualizar_agendamentos(db: Session):
         except (ValueError, AttributeError):
             hora, minuto = 6, 0  # Default: 06:00
 
+        # Parse dias da semana (formato APScheduler: 0=Seg, 6=Dom)
+        dias_cron = automacao.dias_semana if automacao.dias_semana else "0,1,2,3,4"
+
         scheduler.add_job(
             executar_automacao_agendada,
-            trigger=CronTrigger(hour=hora, minute=minuto),
+            trigger=CronTrigger(hour=hora, minute=minuto, day_of_week=dias_cron),
             id=f"automacao_{automacao.id}",
             name=f"Automação: {automacao.nome}",
             args=[automacao.id],
             replace_existing=True,
         )
-        logger.info(f"Agendado: {automacao.nome} às {hora:02d}:{minuto:02d}")
+        logger.info(f"Agendado: {automacao.nome} às {hora:02d}:{minuto:02d} dias={dias_cron}")
 
 
 def iniciar_scheduler(db: Session):

@@ -43,23 +43,40 @@
             </div>
         </div>
 
+        <!-- Dias da Semana -->
+        <h3 style="margin-top: 1rem;">Dias de Execução</h3>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.75rem;">Selecione os dias em que a automação será executada.</p>
+        <div class="dias-semana-grid">
+            {% set dias = [(0, "Seg"), (1, "Ter"), (2, "Qua"), (3, "Qui"), (4, "Sex"), (5, "Sáb"), (6, "Dom")] %}
+            {% if automacao %}
+                {% set dias_ativos = automacao.dias_semana_lista %}
+            {% else %}
+                {% set dias_ativos = [0, 1, 2, 3, 4] %}
+            {% endif %}
+            {% for dia_num, dia_nome in dias %}
+            <span>
+                <input type="checkbox" class="dia-checkbox" id="dia_{{ dia_num }}" name="dias_check" value="{{ dia_num }}" {% if dia_num in dias_ativos %}checked{% endif %} onchange="syncDiasSemana()">
+                <label class="dia-label" for="dia_{{ dia_num }}">{{ dia_nome }}</label>
+            </span>
+            {% endfor %}
+        </div>
+        <input type="hidden" id="dias_semana" name="dias_semana" value="{{ automacao.dias_semana if automacao else '0,1,2,3,4' }}">
+
         <h3 style="margin-top: 1rem;">Google Sheets</h3>
         <div class="form-row">
             <div>
                 <label for="sheets_url">URL da Planilha</label>
                 <input type="url" id="sheets_url" name="sheets_url" value="{{ automacao.sheets_url if automacao else '' }}" required placeholder="https://docs.google.com/spreadsheets/d/...">
             </div>
-            <div>
-                <label for="coluna_vencimento">Coluna de Vencimento</label>
-                <input type="text" id="coluna_vencimento" name="coluna_vencimento" value="{{ automacao.coluna_vencimento if automacao else 'vencimento_Parcela' }}">
-            </div>
         </div>
+        <input type="hidden" name="coluna_vencimento" value="{{ automacao.coluna_vencimento if automacao else 'vencimento_Parcela' }}">
 
         <!-- Fluxos -->
-        <h3 style="margin-top: 1.5rem;">Fluxos de Cobrança</h3>
+        <h3 style="margin-top: 1.5rem;">Automações (Fluxos)</h3>
         <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1rem;">
-            Cada fluxo filtra os dados do ERP de uma forma e escreve em uma aba diferente da planilha.
-            Desative os fluxos que não precisa.
+            Cada automação filtra os dados do ERP de uma forma e escreve em uma aba da planilha.
+            Quando agendado, cada fluxo executa 2 min após o anterior.
+            Desative os que não precisa.
         </p>
 
         {% set fluxos_config = [
@@ -133,4 +150,12 @@
         </div>
     </form>
 </div>
+
+<script>
+function syncDiasSemana() {
+    const checks = document.querySelectorAll('input[name="dias_check"]:checked');
+    const values = Array.from(checks).map(c => c.value);
+    document.getElementById('dias_semana').value = values.join(',');
+}
+</script>
 {% endblock %}

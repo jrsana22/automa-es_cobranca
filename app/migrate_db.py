@@ -114,5 +114,28 @@ def migrate():
     print("Migração concluída com sucesso!")
 
 
+def migrate_add_dias_semana():
+    """Adiciona coluna dias_semana na tabela automacoes se não existir."""
+    if not os.path.exists(DB_PATH):
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    # Verifica se a coluna já existe
+    cur.execute("PRAGMA table_info(automacoes)")
+    columns = [row[1] for row in cur.fetchall()]
+
+    if "dias_semana" not in columns:
+        cur.execute("ALTER TABLE automacoes ADD COLUMN dias_semana VARCHAR(20) DEFAULT '0,1,2,3,4'")
+        conn.commit()
+        print("Coluna 'dias_semana' adicionada à tabela automacoes.")
+    else:
+        print("Coluna 'dias_semana' já existe.")
+
+    conn.close()
+
+
 if __name__ == "__main__":
     migrate()
+    migrate_add_dias_semana()

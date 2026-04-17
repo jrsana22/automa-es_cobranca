@@ -49,6 +49,30 @@ class Automacao(Base):
     coluna_vencimento: Mapped[str] = mapped_column(String(100), default="vencimento_Parcela")
     horario_execucao: Mapped[str] = mapped_column(String(5), default="06:00")
 
+    # Dias da semana para execução (0=Seg, 6=Dom, formato APScheduler)
+    dias_semana: Mapped[str] = mapped_column(String(20), default="0,1,2,3,4")
+
+    DIAS_SEMANA_NOMES = {0: "Seg", 1: "Ter", 2: "Qua", 3: "Qui", 4: "Sex", 5: "Sáb", 6: "Dom"}
+
+    @property
+    def dias_semana_lista(self) -> list[int]:
+        if not self.dias_semana:
+            return []
+        return [int(d.strip()) for d in self.dias_semana.split(",") if d.strip().isdigit()]
+
+    @property
+    def dias_semana_display(self) -> str:
+        dias = self.dias_semana_lista
+        if dias == [0, 1, 2, 3, 4]:
+            return "Seg-Sex"
+        if dias == [0, 1, 2, 3, 4, 5]:
+            return "Seg-Sáb"
+        if dias == [0, 1, 2, 3, 4, 5, 6]:
+            return "Todos os dias"
+        if not dias:
+            return "Nenhum"
+        return ", ".join(self.DIAS_SEMANA_NOMES.get(d, str(d)) for d in dias)
+
     # Ciclo de 3 dias para cobrança 2-30D: controla o dia base (1 = dias 1,4,7...)
     dia_cobranca_base: Mapped[int] = mapped_column(Integer, default=1)
 

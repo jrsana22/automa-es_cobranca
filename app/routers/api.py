@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models import Automacao, Fluxo, FLUXOS_PADRAO
 from app.crypto import encrypt_password, decrypt_password
 from app.routers.executions import _executar_automacao
+from app.scheduler import atualizar_agendamentos
 
 router = APIRouter()
 
@@ -20,6 +21,7 @@ def criar_automacao(
     sheets_url: str = Form(...),
     coluna_vencimento: str = Form("vencimento_Parcela"),
     horario_execucao: str = Form("06:00"),
+    dias_semana: str = Form("0,1,2,3,4"),
     dia_cobranca_base: int = Form(1),
     mapeamento: str = Form("{}"),
     # Fluxos (nomes das abas e ativos)
@@ -51,6 +53,7 @@ def criar_automacao(
         sheets_url=sheets_url,
         coluna_vencimento=coluna_vencimento,
         horario_execucao=horario_execucao,
+        dias_semana=dias_semana,
         dia_cobranca_base=dia_cobranca_base,
         mapeamento_json=mapeamento if mapeamento else "{}",
     )
@@ -86,6 +89,7 @@ def criar_automacao(
     if executar_agora:
         _executar_automacao(automacao.id, db)
 
+    atualizar_agendamentos(db)
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -100,6 +104,7 @@ def atualizar_automacao(
     sheets_url: str = Form(...),
     coluna_vencimento: str = Form("vencimento_Parcela"),
     horario_execucao: str = Form("06:00"),
+    dias_semana: str = Form("0,1,2,3,4"),
     dia_cobranca_base: int = Form(1),
     ativo: bool = Form(True),
     mapeamento: str = Form("{}"),
@@ -129,6 +134,7 @@ def atualizar_automacao(
     automacao.sheets_url = sheets_url
     automacao.coluna_vencimento = coluna_vencimento
     automacao.horario_execucao = horario_execucao
+    automacao.dias_semana = dias_semana
     automacao.dia_cobranca_base = dia_cobranca_base
     automacao.ativo = ativo
     automacao.mapeamento_json = mapeamento if mapeamento else "{}"
@@ -150,6 +156,7 @@ def atualizar_automacao(
             fluxo.ativo = update["ativo"]
 
     db.commit()
+    atualizar_agendamentos(db)
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -160,6 +167,7 @@ def toggle_automacao(automacao_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404)
     automacao.ativo = not automacao.ativo
     db.commit()
+    atualizar_agendamentos(db)
     return {"ok": True, "ativo": automacao.ativo}
 
 
@@ -183,4 +191,5 @@ def deletar_automacao(automacao_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404)
     db.delete(automacao)
     db.commit()
+    atualizar_agendamentos(db)
     return {"ok": True}
