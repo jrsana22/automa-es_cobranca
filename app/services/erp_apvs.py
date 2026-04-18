@@ -128,12 +128,15 @@ class APVSClient(BaseERPClient):
         )
 
         # Verificar se login foi bem sucedido
-        if "WebClient.aspx" in resp.url:
-            logger.error("Login falhou — redirecionado de volta para login")
+        # O cookie I4ProEngine é criado no Step 2 (GravarVisitorID), antes do login,
+        # então não serve como indicador de autenticação.
+        # A verificação real é: se a resposta continua na página de login, as credenciais falharam.
+        if "[Login]" in resp.text or "cd_usuario" in resp.text and "nm_senha" in resp.text and resp.url.rstrip("/").endswith("Default.aspx"):
+            logger.error("Login falhou — credenciais recusadas pelo ERP")
             return False
 
-        if "I4ProEngine" not in dict(self.session.cookies):
-            logger.error("Login falhou — cookie I4ProEngine não encontrado")
+        if "WebClient.aspx" in resp.url:
+            logger.error("Login falhou — redirecionado de volta para login")
             return False
 
         logger.info("Login realizado com sucesso")
