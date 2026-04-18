@@ -42,8 +42,14 @@ class BaseERPClient(ABC):
         ...
 
     @abstractmethod
-    def exportar_inadimplencia(self) -> ExportResult:
-        """Navega até o relatório de inadimplência e faz download do XLSX."""
+    def exportar_inadimplencia(
+        self,
+        id_formulario: str = "127000007",
+        id_situacao: str = "2",
+        dt_inicial: str = "",
+        dt_final: str = "",
+    ) -> ExportResult:
+        """Navega até o relatório e faz download do XLSX com filtros."""
         ...
 
     def close(self):

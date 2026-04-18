@@ -34,6 +34,7 @@ ID_TELA = "127000653"
 ID_MENU = "127000051"
 ID_MODULO = "127"
 ID_FORMULARIO_INADIMPLENCIA = "127000007"
+ID_FORMULARIO_PREBOLETO = "127000008"
 ID_SITUACAO_COBRANCA = "2"
 
 # Fingerprint fixo para o script (cada instância do client gera um único)
@@ -170,17 +171,27 @@ class APVSClient(BaseERPClient):
         logger.info(f"Tela carregada — eng_token={self._eng_token[:20]}... cd_empresa={self._cd_empresa}")
         return hidden_fields
 
-    def exportar_inadimplencia(self) -> ExportResult:
+    def exportar_inadimplencia(
+        self,
+        id_formulario: str = ID_FORMULARIO_INADIMPLENCIA,
+        id_situacao: str = ID_SITUACAO_COBRANCA,
+        dt_inicial: str = "",
+        dt_final: str = "",
+    ) -> ExportResult:
         """
-        Exporta relatório de inadimplência como XLSX.
-        Fluxo: carrega tela → monta POST → Excel.aspx → lê XLSX.
+        Exporta relatório do ERP como XLSX.
+        Args:
+            id_formulario: "127000007" (Inadimplência) ou "127000008" (Pré Boleto)
+            id_situacao: tipo de inadimplência ("2" = Cobrança, vazio para Pré Boleto)
+            dt_inicial: data inicial do filtro (DD/MM/AAAA), vazio = sem filtro
+            dt_final: data final do filtro (DD/MM/AAAA), vazio = sem filtro
         """
-        logger.info("Iniciando exportação de inadimplência")
+        logger.info(f"Exportando formulário {id_formulario}, situação={id_situacao}, período={dt_inicial} a {dt_final}")
 
         # Step 1: Carregar a tela do relatório para capturar tokens
         hidden_fields = self._carregar_tela_relatorio()
 
-        # Step 2: Montar o POST para Excel.aspx com todos os campos do formulário
+        # Step 2: Montar o POST para Excel.aspx
         export_data = {
             # Campos hidden do ASP.NET
             "eng_token": self._eng_token,
@@ -195,7 +206,7 @@ class APVSClient(BaseERPClient):
             "eng_filtropadrao": "",
             "eng_chk": self._eng_chk,
             "eng_filtro": "",
-            "eng_idrelatorio": ID_FORMULARIO_INADIMPLENCIA,
+            "eng_idrelatorio": id_formulario,
             "eng_acao": "",
             "eng_contenttype": "",
             "eng_detalhe": "s",
@@ -230,16 +241,16 @@ class APVSClient(BaseERPClient):
             "eng_validade_eis": "0",
             "eng_chave": "id_processo=0",
             "eng_chkch": self._eng_chkch,
-            # Campos do formulário de inadimplência
-            "id_formulario": ID_FORMULARIO_INADIMPLENCIA,
-            "id_situacao_inadimplente": ID_SITUACAO_COBRANCA,
+            # Campos do formulário
+            "id_formulario": id_formulario,
+            "id_situacao_inadimplente": id_situacao,
             "id_ano_consulta": "",
             "id_mes_consulta": "",
             "id_processo": "0",
             "cd_papel": self._cd_papel,
             "cd_usuario_login": self.erp_login,
             "cd_empresa": self._cd_empresa,
-            # Campos lookup (vazio = "Não selecionado")
+            # Campos lookup
             "txtid_pessoa_diretor_estado": "[Não selecionado]",
             "id_pessoa_diretor_estado": "",
             "lkpid_pessoa_diretor_estado": "[Não selecionado]",
@@ -266,9 +277,10 @@ class APVSClient(BaseERPClient):
             "id_mes_pendencia": "",
             "nr_ano_pendencia": str(pd.Timestamp.now().year),
             "dv_ativo": "",
-            "dt_inicial_id127000007": "",
-            "dt_final_id127000007": "",
-            # Datas vazias (sem filtro de data extra)
+            # Filtro de datas por formulário
+            f"dt_inicial_id{id_formulario}": dt_inicial,
+            f"dt_final_id{id_formulario}": dt_final,
+            # Datas genéricas
             "dt_inicio": "",
             "dt_fim": "",
             "dt_pagto": "",

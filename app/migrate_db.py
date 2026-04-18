@@ -122,7 +122,6 @@ def migrate_add_dias_semana():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    # Verifica se a coluna já existe
     cur.execute("PRAGMA table_info(automacoes)")
     columns = [row[1] for row in cur.fetchall()]
 
@@ -136,6 +135,69 @@ def migrate_add_dias_semana():
     conn.close()
 
 
+def migrate_add_fluxo_campos():
+    """Adiciona formulario_id e situacao_id na tabela fluxos se não existirem."""
+    if not os.path.exists(DB_PATH):
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("PRAGMA table_info(fluxos)")
+    columns = [row[1] for row in cur.fetchall()]
+
+    # Mapeamento tipo → (formulario_id, situacao_id)
+    tipo_map = {
+        "preboleto": ("127000008", ""),
+        "vencendo_hoje": ("127000008", ""),
+        "cobranca_d1": ("127000007", "2"),
+        "cobranca_2_30": ("127000007", "2"),
+        "reativacao": ("127000007", "2"),
+    }
+
+    if "formulario_id" not in columns:
+        cur.execute("ALTER TABLE fluxos ADD COLUMN formulario_id VARCHAR(20) DEFAULT '127000007'")
+        conn.commit()
+        print("Coluna 'formulario_id' adicionada à tabela fluxos.")
+
+        # Preencher valores corretos por tipo
+        for tipo, (form_id, sit_id) in tipo_map.items():
+            cur.execute("UPDATE fluxos SET formulario_id = ? WHERE tipo = ?", (form_id, tipo))
+        conn.commit()
+        print("Valores de formulario_id atualizados por tipo.")
+    else:
+        print("Coluna 'formulario_id' já existe.")
+
+    if "situacao_id" not in columns:
+        cur.execute("ALTER TABLE fluxos ADD COLUMN situacao_id VARCHAR(20) DEFAULT '2'")
+        conn.commit()
+        print("Coluna 'situacao_id' adicionada à tabela fluxos.")
+
+        # Preencher valores corretos por tipo
+        for tipo, (form_id, sit_id) in tipo_map.items():
+            cur.execute("UPDATE fluxos SET situacao_id = ? WHERE tipo = ?", (sit_id, tipo))
+        conn.commit()
+        print("Valores de situacao_id atualizados por tipo.")
+    else:
+        print("Coluna 'situacao_id' já existe.")
+
+    # Atualizar nomes das abas para os novos nomes padrão
+    aba_map = {
+        "preboleto": "D-7 - PRÉ-BOLETO",
+        "vencendo_hoje": "VENCIMENTO NO DIA",
+        "cobranca_d1": "D+1 - COBRANÇA",
+        "cobranca_2_30": "COBRANÇA 2-30D",
+        "reativacao": "REATIVAÇÃO",
+    }
+    for tipo, aba in aba_map.items():
+        cur.execute("UPDATE fluxos SET sheets_aba = ? WHERE tipo = ?", (aba, tipo))
+    conn.commit()
+    print("Nomes das abas atualizados.")
+
+    conn.close()
+
+
 if __name__ == "__main__":
     migrate()
     migrate_add_dias_semana()
+    migrate_add_fluxo_campos()

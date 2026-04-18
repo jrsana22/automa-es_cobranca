@@ -23,11 +23,11 @@ FLUXO_COBRANCA_2_30 = "cobranca_2_30"  # 2 a 30 dias vencido (a cada 3 dias)
 FLUXO_REATIVACAO = "reativacao"      # 31 a 120 dias vencido
 
 FLUXOS_PADRAO = [
-    {"tipo": FLUXO_PREBOLETO,      "nome": "Pré-boleto",       "sheets_aba": "Pré-boleto",        "filtro_dias_min": -7, "filtro_dias_max": -1},
-    {"tipo": FLUXO_VENCENDO_HOJE, "nome": "Vencendo Hoje",    "sheets_aba": "Vencendo Hoje",     "filtro_dias_min": 0,  "filtro_dias_max": 0},
-    {"tipo": FLUXO_COBRANCA_D1,   "nome": "Cobrança D+1",     "sheets_aba": "D+1",               "filtro_dias_min": 1,  "filtro_dias_max": 1},
-    {"tipo": FLUXO_COBRANCA_2_30, "nome": "Cobrança 2-30D",   "sheets_aba": "Cobrança 2-30D",    "filtro_dias_min": 2,  "filtro_dias_max": 30},
-    {"tipo": FLUXO_REATIVACAO,    "nome": "Reativação",        "sheets_aba": "Reativação",        "filtro_dias_min": 31, "filtro_dias_max": 120},
+    {"tipo": FLUXO_PREBOLETO,      "nome": "Pré-boleto",       "sheets_aba": "D-7 - PRÉ-BOLETO",    "formulario_id": "127000008", "situacao_id": "", "filtro_dias_min": -7, "filtro_dias_max": -1},
+    {"tipo": FLUXO_VENCENDO_HOJE, "nome": "Vencendo Hoje",    "sheets_aba": "VENCIMENTO NO DIA",   "formulario_id": "127000008", "situacao_id": "", "filtro_dias_min": 0,  "filtro_dias_max": 0},
+    {"tipo": FLUXO_COBRANCA_D1,   "nome": "Cobrança D+1",     "sheets_aba": "D+1 - COBRANÇA",      "formulario_id": "127000007", "situacao_id": "2", "filtro_dias_min": 1,  "filtro_dias_max": 1},
+    {"tipo": FLUXO_COBRANCA_2_30, "nome": "Cobrança 2-30D",   "sheets_aba": "COBRANÇA 2-30D",      "formulario_id": "127000007", "situacao_id": "2", "filtro_dias_min": 2,  "filtro_dias_max": 30},
+    {"tipo": FLUXO_REATIVACAO,    "nome": "Reativação",        "sheets_aba": "REATIVAÇÃO",          "formulario_id": "127000007", "situacao_id": "2", "filtro_dias_min": 31, "filtro_dias_max": 119},
 ]
 
 
@@ -100,11 +100,11 @@ class Automacao(Base):
     # Mapeamento padrão para APVS (coluna ERP → coluna Sheets)
     MAPEAMENTO_PADRAO = {
         "nome": "Nome",
-        "placa": "Placa",
-        "celular": "Celular",
-        "boleto": "Boleto",
-        "link": "Link",
-        "valor_total": "Valor Total",
+        "placa": "placa",
+        "celular": "telefone_formatado",
+        "boleto": "codigo_de_barras (COLAR AQUI)",
+        "link": "codigojunto",
+        "valor_total": "Valor da mensalidade",
         "vencimento_Parcela": "Vencimento",
     }
 
@@ -125,6 +125,8 @@ class Fluxo(Base):
     filtro_dias_min: Mapped[int] = mapped_column(Integer, nullable=False)  # negativo=futuro, 0=hoje, positivo=passado
     filtro_dias_max: Mapped[int] = mapped_column(Integer, nullable=False)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
+    formulario_id: Mapped[str] = mapped_column(String(20), default="127000007")
+    situacao_id: Mapped[str] = mapped_column(String(20), default="2")
 
     automacao: Mapped["Automacao"] = relationship(back_populates="fluxos")
     execucoes: Mapped[list["Execucao"]] = relationship(back_populates="fluxo", cascade="all, delete-orphan")

@@ -1,18 +1,18 @@
 """
-Processador principal — orquestra: ERP → filtrar por fluxos → Google Sheets.
-Login 1 vez, exportar 1 vez, filtrar N vezes (1 por fluxo ativo).
+Processador principal — orquestra: ERP → exportar por fluxo → Google Sheets.
+Login 1 vez, exportar N vezes (1 por fluxo ativo, cada um com filtros diferentes no ERP).
 Inclui retry de login, lock por automação e alerta de falha via WhatsApp.
 """
 
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from app.tz import agora, hoje
 
 import pandas as pd
 
-from app.models import Automacao, Fluxo, Execucao, FLUXO_COBRANCA_2_30
+from app.models import Automacao, Fluxo, Execucao
 from app.services.erp_factory import criar_erp_client
 from app.services.notifier import notify_failure
 from app.services.sheets import SheetsWriter
@@ -24,60 +24,28 @@ ERP_LOGIN_MAX_RETRIES = 3
 ERP_LOGIN_RETRY_INTERVAL = 30  # segundos
 
 
-def _verificar_dia_cobranca(automacao: Automacao) -> bool:
+def _calcular_datas(fluxo: Fluxo) -> tuple[str, str]:
     """
-    Verifica se hoje é dia de executar o fluxo cobrança_2_30.
-    O ciclo é de 3 dias: executa nos dias (dia_base, dia_base+3, dia_base+6, ...)
+    Calcula dt_inicial e dt_final para o filtro do ERP baseado no fluxo.
+    Retorna strings no formato DD/MM/AAAA.
     """
-    dia_base = automacao.dia_cobranca_base or 1
-    dia_hoje = agora().day
-    # Ajusta para que o ciclo comece no dia_base
-    return (dia_hoje - dia_base) % 3 == 0 if dia_hoje >= dia_base else False
-
-
-def _filtrar_por_fluxo(df: pd.DataFrame, fluxo: Fluxo, col_venc: str, automacao: Automacao) -> pd.DataFrame:
-    """
-    Filtra o DataFrame pelo intervalo de dias do fluxo.
-    filtro_dias_min/max negativos = vencimento no futuro (pré-boleto)
-    filtro_dias_min/max = 0 = vence hoje
-    filtro_dias_min/max positivos = vencimento no passado (cobrança/reativação)
-    """
-    if col_venc not in df.columns:
-        # Busca case-insensitive
-        col_match = [c for c in df.columns if c.lower().strip() == col_venc.lower().strip()]
-        if col_match:
-            col_venc = col_match[0]
-        else:
-            raise ValueError(f"Coluna '{col_venc}' não encontrada. Colunas: {list(df.columns)}")
-
-    # Converte coluna de vencimento para datetime
-    df_copy = df.copy()
-    df_copy["_vencimento_dt"] = pd.to_datetime(df_copy[col_venc], errors="coerce", dayfirst=True)
-
-    hoje_dt = hoje()
+    hoje_dt = hoje().replace(tzinfo=None)
     data_min = hoje_dt + timedelta(days=fluxo.filtro_dias_min)
     data_max = hoje_dt + timedelta(days=fluxo.filtro_dias_max)
-
-    # Filtro: vencimento entre data_min e data_max (inclusive)
-    df_filtrado = df_copy[
-        (df_copy["_vencimento_dt"] >= data_min) &
-        (df_copy["_vencimento_dt"] <= data_max)
-    ]
-    df_filtrado = df_filtrado.drop(columns=["_vencimento_dt"])
-
-    return df_filtrado
+    return data_min.strftime("%d/%m/%Y"), data_max.strftime("%d/%m/%Y")
 
 
 def processar_automacao(automacao: Automacao, db, agendado: bool = False) -> dict:
     """
     Executa o passo a passo completo de uma automação:
     1. Login no ERP (com retry)
-    2. Exportar relatório de inadimplência (1 vez)
-    3. Para cada fluxo ativo, filtrar e escrever na aba correspondente
+    2. Para cada fluxo ativo, exportar com filtros próprios e escrever na aba
     """
     log_parts = []
     overall_status = "sucesso"
     client = None
+    total_encontrados = 0
+    total_filtrados = 0
 
     try:
         # 1. Criar client ERP e fazer login com retry
@@ -118,32 +86,19 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False) -> dic
                 "log": "\n".join(log_parts),
             }
 
-        # 2. Exportar relatório (1 vez para todos os fluxos)
-        log_parts.append("Exportando relatório de inadimplência...")
-        resultado = client.exportar_inadimplencia()
-        df = resultado.dataframe
-        total_registros = len(df)
-        log_parts.append(f"Registros encontrados: {total_registros}")
-        log_parts.append(f"Colunas: {list(df.columns)}")
-
-        # 3. Filtrar e escrever por fluxo
+        # 2. Exportar e escrever por fluxo (cada um com seus próprios filtros no ERP)
         fluxos_ativos = [f for f in automacao.fluxos if f.ativo]
         if not fluxos_ativos:
             log_parts.append("Nenhum fluxo ativo. Nada a processar.")
             return {
                 "status": "sucesso",
-                "registros_encontrados": total_registros,
+                "registros_encontrados": 0,
                 "registros_filtrados": 0,
                 "log": "\n".join(log_parts),
             }
 
-        col_venc = automacao.coluna_vencimento
         writer = SheetsWriter()
         mapeamento = automacao.mapeamento or automacao.MAPEAMENTO_PADRAO
-        total_filtrados = 0
-
-        # Verificar se hoje é dia de cobrança 2-30D (se houver esse fluxo)
-        dia_cobranca = _verificar_dia_cobranca(automacao)
 
         for i, fluxo in enumerate(fluxos_ativos):
             # Quando agendado, esperar 2 min entre fluxos (exceto antes do primeiro)
@@ -153,51 +108,57 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False) -> dic
 
             log_parts.append(f"\n--- Fluxo: {fluxo.nome} ({fluxo.tipo}) ---")
 
-            # Pular fluxo cobrança_2_30 se não for dia de executar
-            if fluxo.tipo == FLUXO_COBRANCA_2_30 and not dia_cobranca:
-                log_parts.append(f"Pulando fluxo {fluxo.nome} — hoje não é dia de cobrança (ciclo a cada 3 dias)")
-                # Criar execução com status "vazio"
-                execucao = Execucao(
-                    automacao_id=automacao.id,
-                    fluxo_id=fluxo.id,
-                    status="vazio",
-                    registros_encontrados=total_registros,
-                    registros_filtrados=0,
-                    log=f"Fluxo {fluxo.nome} pulado — não é dia de cobrança (ciclo a cada 3 dias)",
-                )
-                db.add(execucao)
-                db.commit()
-                continue
+            # Calcular datas do filtro
+            dt_inicial, dt_final = _calcular_datas(fluxo)
+            log_parts.append(f"Filtro: formulário={fluxo.formulario_id}, situação={fluxo.situacao_id or 'N/A'}, período={dt_inicial} a {dt_final}")
 
-            # Filtrar
+            # Exportar do ERP com filtros deste fluxo
             try:
-                df_filtrado = _filtrar_por_fluxo(df, fluxo, col_venc, automacao)
-            except ValueError as e:
-                log_parts.append(f"Erro ao filtrar fluxo {fluxo.nome}: {e}")
+                resultado = client.exportar_inadimplencia(
+                    id_formulario=fluxo.formulario_id,
+                    id_situacao=fluxo.situacao_id,
+                    dt_inicial=dt_inicial,
+                    dt_final=dt_final,
+                )
+                df = resultado.dataframe
+                registros_encontrados = len(df)
+                total_encontrados += registros_encontrados
+                log_parts.append(f"Registros exportados: {registros_encontrados}")
+            except Exception as e:
+                log_parts.append(f"Erro ao exportar fluxo {fluxo.nome}: {e}")
                 overall_status = "parcial"
-                continue
-
-            registros_filtrados = len(df_filtrado)
-            total_filtrados += registros_filtrados
-            log_parts.append(f"Registros filtrados: {registros_filtrados}")
-
-            if registros_filtrados == 0:
-                log_parts.append(f"Nenhum registro para o fluxo {fluxo.nome}. Planilha não atualizada.")
-                # Criar execução com status "vazio"
+                notify_failure(automacao.nome, f"Erro ao exportar fluxo {fluxo.nome}: {e}")
+                # Criar execução com erro
                 execucao = Execucao(
                     automacao_id=automacao.id,
                     fluxo_id=fluxo.id,
-                    status="vazio",
-                    registros_encontrados=total_registros,
+                    status="erro",
+                    registros_encontrados=0,
                     registros_filtrados=0,
-                    log=f"Fluxo {fluxo.nome}: 0 registros filtrados",
+                    log=f"Erro ao exportar: {e}",
                 )
                 db.add(execucao)
                 db.commit()
                 continue
+
+            if registros_encontrados == 0:
+                log_parts.append(f"Nenhum registro para o fluxo {fluxo.nome}. Planilha não atualizada.")
+                execucao = Execucao(
+                    automacao_id=automacao.id,
+                    fluxo_id=fluxo.id,
+                    status="vazio",
+                    registros_encontrados=0,
+                    registros_filtrados=0,
+                    log=f"Fluxo {fluxo.nome}: 0 registros exportados",
+                )
+                db.add(execucao)
+                db.commit()
+                continue
+
+            total_filtrados += registros_encontrados
 
             # Converter para lista de dicts
-            registros = df_filtrado.to_dict(orient="records")
+            registros = df.to_dict(orient="records")
             for registro in registros:
                 for key, value in registro.items():
                     if isinstance(value, pd.Timestamp):
@@ -232,8 +193,8 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False) -> dic
                 automacao_id=automacao.id,
                 fluxo_id=fluxo.id,
                 status=status_fluxo,
-                registros_encontrados=total_registros,
-                registros_filtrados=registros_filtrados,
+                registros_encontrados=registros_encontrados,
+                registros_filtrados=registros_encontrados,
                 log=f"Fluxo {fluxo.nome}: {resultado_sheets['log']}",
             )
             db.add(execucao)
@@ -241,7 +202,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False) -> dic
 
         return {
             "status": overall_status,
-            "registros_encontrados": total_registros,
+            "registros_encontrados": total_encontrados,
             "registros_filtrados": total_filtrados,
             "log": "\n".join(log_parts),
         }
