@@ -4,7 +4,8 @@ Envia alerta quando uma automação falha.
 """
 
 import logging
-from datetime import datetime
+
+from app.tz import agora
 
 import requests
 
@@ -30,7 +31,7 @@ def notify_failure(automation_name: str, error_message: str) -> bool:
         f"⚠️ FALHA NA AUTOMAÇÃO\n\n"
         f"Cliente: {automation_name}\n"
         f"Erro: {error_message}\n"
-        f"Horário: {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        f"Horário: {agora().strftime('%d/%m/%Y %H:%M')}"
     )
 
     payload = {

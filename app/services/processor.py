@@ -8,6 +8,8 @@ import logging
 import time
 from datetime import datetime, timedelta
 
+from app.tz import agora, hoje
+
 import pandas as pd
 
 from app.models import Automacao, Fluxo, Execucao, FLUXO_COBRANCA_2_30
@@ -28,7 +30,7 @@ def _verificar_dia_cobranca(automacao: Automacao) -> bool:
     O ciclo é de 3 dias: executa nos dias (dia_base, dia_base+3, dia_base+6, ...)
     """
     dia_base = automacao.dia_cobranca_base or 1
-    dia_hoje = datetime.now().day
+    dia_hoje = agora().day
     # Ajusta para que o ciclo comece no dia_base
     return (dia_hoje - dia_base) % 3 == 0 if dia_hoje >= dia_base else False
 
@@ -52,9 +54,9 @@ def _filtrar_por_fluxo(df: pd.DataFrame, fluxo: Fluxo, col_venc: str, automacao:
     df_copy = df.copy()
     df_copy["_vencimento_dt"] = pd.to_datetime(df_copy[col_venc], errors="coerce", dayfirst=True)
 
-    hoje = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    data_min = hoje + timedelta(days=fluxo.filtro_dias_min)
-    data_max = hoje + timedelta(days=fluxo.filtro_dias_max)
+    hoje_dt = hoje()
+    data_min = hoje_dt + timedelta(days=fluxo.filtro_dias_min)
+    data_max = hoje_dt + timedelta(days=fluxo.filtro_dias_max)
 
     # Filtro: vencimento entre data_min e data_max (inclusive)
     df_filtrado = df_copy[
@@ -79,7 +81,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False) -> dic
 
     try:
         # 1. Criar client ERP e fazer login com retry
-        log_parts.append(f"[{datetime.now().isoformat()}] Iniciando automação: {automacao.nome}")
+        log_parts.append(f"[{agora().isoformat()}] Iniciando automação: {automacao.nome}")
         senha = decrypt_password(automacao.erp_senha)
         client = criar_erp_client(automacao, senha)
 

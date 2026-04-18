@@ -1,8 +1,15 @@
 import json
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
-from sqlalchemy import Integer, String, Boolean, Text, DateTime, ForeignKey, func as sa_func, UniqueConstraint
+from sqlalchemy import Integer, String, Boolean, Text, DateTime, ForeignKey, UniqueConstraint
+
+_BRASILIA = ZoneInfo("America/Sao_Paulo")
+
+
+def _agora_brasilia():
+    return datetime.now(_BRASILIA)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -129,7 +136,7 @@ class Execucao(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     automacao_id: Mapped[int] = mapped_column(Integer, ForeignKey("automacoes.id"), nullable=False)
     fluxo_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("fluxos.id"), nullable=True)
-    data: Mapped[datetime] = mapped_column(DateTime, server_default=sa_func.now())
+    data: Mapped[datetime] = mapped_column(DateTime, default=_agora_brasilia)
     # pendente / sucesso / erro / parcial / vazio
     status: Mapped[str] = mapped_column(String(20), default="pendente")
     registros_encontrados: Mapped[int] = mapped_column(Integer, default=0)

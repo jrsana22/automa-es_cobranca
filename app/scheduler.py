@@ -5,9 +5,11 @@ Inclui lock por automação (impede execução simultânea do mesmo automation_i
 """
 
 import logging
-from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from zoneinfo import ZoneInfo
+
+BRASILIA_TZ = ZoneInfo("America/Sao_Paulo")
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy.orm import Session
 
@@ -18,7 +20,7 @@ from app.services.notifier import notify_failure
 
 logger = logging.getLogger(__name__)
 
-scheduler = AsyncIOScheduler()
+scheduler = AsyncIOScheduler(timezone=BRASILIA_TZ)
 
 # Lock em memória para impedir execução simultânea da mesma automação
 _running_automations: set[int] = set()

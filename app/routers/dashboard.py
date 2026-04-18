@@ -24,8 +24,9 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     )
 
     # Stats: registros filtrados hoje por tipo de fluxo
-    from datetime import datetime, timedelta
-    hoje = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    from datetime import timedelta
+    from app.tz import hoje as hoje_brasilia
+    hoje = hoje_brasilia()
     semana = hoje - timedelta(days=7)
     mes = hoje - timedelta(days=30)
 
