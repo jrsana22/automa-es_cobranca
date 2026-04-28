@@ -411,7 +411,7 @@ def status_em_tempo_real(db: Session = Depends(get_db)):
         fluxos_status[str(auto.id)] = {}
         for erp_config in auto.erp_configs:
             for fluxo in erp_config.fluxos:
-                key = f"{erp_config.erp_tipo}_{fluxo.tipo}"
+                key = f"{erp_config.erp_tipo}-{fluxo.tipo}"
                 is_running_now = (
                     auto.id in _running_automations
                     and auto.id in _running_fluxo_info
