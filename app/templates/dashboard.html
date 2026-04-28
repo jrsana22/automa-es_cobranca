@@ -34,6 +34,9 @@
                             {{ 'Truck' if erp.erp_tipo == 'apvs_truck' else 'Brasil' }}
                         </span>
                         {% endfor %}
+                        <span class="badge badge-schedule" title="Horário de execução">
+                            🕐 {{ auto.horario_execucao }} &bull; {{ auto.dias_semana_display }}
+                        </span>
                     </div>
                     <div class="client-status" id="client-status-{{ auto.id }}">
                         <span class="badge badge-empty">&mdash;</span>

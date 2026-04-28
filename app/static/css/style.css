@@ -474,6 +474,7 @@ a:hover { color: var(--blue); }
 
 .badge-erp-brasil { background: var(--brasil-bg); color: var(--brasil); }
 .badge-erp-truck { background: var(--truck-bg); color: var(--truck); }
+.badge-schedule { background: #1e293b; color: #94a3b8; font-size: 0.7rem; }
 
 /* ---------- Buttons ---------- */
 .btn {
