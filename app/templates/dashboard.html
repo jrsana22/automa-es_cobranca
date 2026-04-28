@@ -60,7 +60,7 @@
                             <div class="fluxo-card {% if not fluxo.ativo %}inactive{% endif %}" id="fluxo-card-{{ auto.id }}-{{ erp.erp_tipo }}-{{ fluxo.tipo }}">
                                 <div class="fluxo-header fluxo-{{ fluxo.tipo }}">{{ fluxo.nome }}</div>
                                 <div class="fluxo-body" id="fluxo-status-{{ auto.id }}-{{ erp.erp_tipo }}-{{ fluxo.tipo }}">
-                                    <span class="badge badge-empty">&mdash;</span>
+                                    <span class="badge badge-empty">○ —</span>
                                 </div>
                             </div>
                             {% endfor %}
@@ -84,29 +84,40 @@
 
 {% block scripts %}
 <script>
-// ---- Polling & Status ----
-let pollingTimer = null;
-let isPolling = false;
-
 const STATUS_CONFIG = {
-    sucesso:  { badge: 'badge-success', label: 'OK' },
-    erro:     { badge: 'badge-error', label: 'Erro' },
-    vazio:    { badge: 'badge-empty', label: 'Vazio' },
-    parcial:  { badge: 'badge-warning', label: 'Parcial' },
-    executando: { badge: 'badge-running', label: 'Rodando...' },
-    pendente: { badge: 'badge-empty', label: 'Aguardando' },
+    sucesso:    { badge: 'badge-success',  icon: '✓', label: 'OK' },
+    erro:       { badge: 'badge-error',    icon: '✕', label: 'Erro' },
+    vazio:      { badge: 'badge-empty',    icon: '–', label: 'Vazio' },
+    parcial:    { badge: 'badge-warning',  icon: '!', label: 'Parcial' },
+    executando: { badge: 'badge-running',  icon: '◉', label: 'Rodando' },
+    pendente:   { badge: 'badge-empty',    icon: '○', label: '—' },
 };
 
-function renderFluxoStatus(autoId, key, info, isRunning) {
+let pollInterval = null;
+
+function renderFluxoStatus(autoId, key, info, runningFluxo, erpTipo) {
     const el = document.getElementById(`fluxo-status-${autoId}-${key}`);
+    const card = document.getElementById(`fluxo-card-${autoId}-${key}`);
     if (!el) return;
-    let status = info.status;
-    if (isRunning && (status === 'pendente' || status === 'executando')) status = 'executando';
+
+    // Determinar se ESTE fluxo específico está rodando agora
+    const isThisRunning = runningFluxo &&
+        runningFluxo.erp === erpTipo &&
+        info.nome === runningFluxo.fluxo;
+
+    let status = isThisRunning ? 'executando' : info.status;
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pendente;
-    const hora = info.hora ? ` ${info.hora}` : '';
-    const regs = info.registros > 0 ? ` (${info.registros})` : '';
+    const hora = info.hora ? `<span class="fluxo-hora">${info.hora}</span>` : '';
+    const regs = info.registros > 0 ? `<span class="fluxo-regs">${info.registros} reg</span>` : '';
     const pulse = status === 'executando' ? ' animate-pulse' : '';
-    el.innerHTML = `<span class="badge ${cfg.badge}${pulse}">${cfg.label}${regs}${hora}</span>`;
+
+    el.innerHTML = `<span class="badge ${cfg.badge}${pulse}">${cfg.icon} ${cfg.label}</span>${regs}${hora}`;
+
+    if (card) {
+        card.classList.toggle('fluxo-running', status === 'executando');
+        card.classList.toggle('fluxo-erro', status === 'erro');
+        card.classList.toggle('fluxo-ok', status === 'sucesso');
+    }
 }
 
 function updateStatus(data) {
@@ -114,41 +125,55 @@ function updateStatus(data) {
 
     for (const [autoId, fluxos] of Object.entries(data.fluxos_status)) {
         const isRunning = data.running.includes(parseInt(autoId));
-        const currentFluxo = runningInfo[autoId];
+        const currentFluxo = runningInfo[autoId] || null;
 
+        // Contar progresso
+        let done = 0, total = 0, erros = 0;
         for (const [key, info] of Object.entries(fluxos)) {
-            renderFluxoStatus(autoId, key, info, isRunning);
+            total++;
+            if (info.status === 'sucesso' || info.status === 'vazio') done++;
+            if (info.status === 'erro') erros++;
+            renderFluxoStatus(autoId, key, info, currentFluxo, info.erp_tipo);
         }
 
-        // Running badge — mostra qual fluxo está rodando agora
+        // Badge do fluxo atual
         const rb = document.getElementById(`running-badge-${autoId}`);
         if (rb) {
-            if (isRunning && currentFluxo) {
-                rb.innerHTML = ` <span class="badge badge-running animate-pulse">${currentFluxo.fluxo}</span>`;
-            } else if (isRunning) {
-                rb.innerHTML = ' <span class="badge badge-running animate-pulse">EXECUTANDO</span>';
+            if (isRunning && currentFluxo?.fluxo) {
+                rb.innerHTML = `<span class="badge badge-running animate-pulse">◉ ${currentFluxo.fluxo}</span>`;
             } else {
                 rb.innerHTML = '';
             }
         }
 
-        // Client status summary
+        // Progresso geral do cliente
         const cs = document.getElementById(`client-status-${autoId}`);
-        if (cs && fluxos) {
-            const vals = Object.values(fluxos);
-            const hasError = vals.some(f => f.status === 'erro');
-            const allSuccess = vals.every(f => f.status === 'sucesso' || f.status === 'vazio' || f.status === 'pendente');
+        if (cs) {
             if (isRunning) {
-                cs.innerHTML = '<span class="badge badge-running animate-pulse">Executando</span>';
-            } else if (hasError) {
-                cs.innerHTML = '<span class="badge badge-error">Erro</span>';
-            } else if (allSuccess) {
-                cs.innerHTML = '<span class="badge badge-success">OK</span>';
+                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                cs.innerHTML = `
+                    <div class="progress-wrap">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill animate-pulse" style="width:${pct}%"></div>
+                        </div>
+                        <span class="progress-label">${done}/${total}</span>
+                    </div>`;
+            } else if (erros > 0) {
+                cs.innerHTML = `<span class="badge badge-error">✕ ${erros} erro${erros > 1 ? 's' : ''}</span>`;
+            } else if (done === total && total > 0) {
+                cs.innerHTML = `<span class="badge badge-success">✓ OK</span>`;
+            } else {
+                cs.innerHTML = `<span class="badge badge-empty">—</span>`;
             }
         }
-    }
 
-    if (data.running.length === 0 && isPolling) stopPolling();
+        // Botão executar
+        const btn = document.getElementById(`btn-exec-${autoId}`);
+        if (btn) {
+            btn.disabled = isRunning;
+            btn.textContent = isRunning ? '...' : 'Executar';
+        }
+    }
 }
 
 async function pollStatus() {
@@ -156,44 +181,36 @@ async function pollStatus() {
         const resp = await fetch('/api/status');
         const data = await resp.json();
         updateStatus(data);
-    } catch (e) { console.error('Poll error:', e); }
+    } catch (e) { /* silencioso */ }
 }
 
-function startPolling() {
-    if (isPolling) return;
-    isPolling = true;
-    pollStatus();
-    pollingTimer = setInterval(pollStatus, 3000);
+// Sempre pollar — 2s quando rodando, 8s quando idle
+function schedulePoll() {
+    pollStatus().then(() => {
+        const anyRunning = document.querySelector('.animate-pulse') !== null;
+        clearTimeout(pollInterval);
+        pollInterval = setTimeout(schedulePoll, anyRunning ? 2000 : 8000);
+    });
 }
-
-function stopPolling() {
-    isPolling = false;
-    if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
-}
-
-// Initial load + polling
-startPolling();
+schedulePoll();
 
 // ---- Actions ----
 async function executarUm(id) {
     const btn = document.getElementById(`btn-exec-${id}`);
-    if (!btn) return;
-    btn.disabled = true; btn.textContent = '...';
-    startPolling();
+    if (btn) { btn.disabled = true; btn.textContent = '...'; }
     try {
         const resp = await fetch(`/api/executar/${id}`, { method: 'POST' });
         const data = await resp.json();
         if (data.status === 'ja_em_execucao') showToast('Automação já está em execução.', 'error');
-        else showToast(`Status: ${data.status} | ${data.registros_filtrados} registros`, data.status === 'erro' ? 'error' : 'success');
+        else { showToast('Execução iniciada.', 'success'); schedulePoll(); }
     } catch (e) { showToast('Erro: ' + e.message, 'error'); }
-    finally { btn.disabled = false; btn.textContent = 'Executar'; pollStatus(); }
 }
 
 async function executarTodos() {
     if (!confirmAction('Executar todas as automações ativas?')) return;
-    startPolling();
     await fetch('/api/executar-todos', { method: 'POST' });
-    showToast('Execução iniciada para todos os clientes ativos.', 'info');
+    showToast('Execução iniciada para todos os clientes.', 'success');
+    schedulePoll();
 }
 
 async function deletar(id) {
