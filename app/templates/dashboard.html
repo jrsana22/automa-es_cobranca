@@ -1,151 +1,203 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - Automação Cobrança{% endblock %}
+
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-    <h1>Clientes</h1>
+<!-- Page Header -->
+<div class="page-header">
     <div>
+        <h1 class="page-title">Dashboard</h1>
+    </div>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button onclick="executarTodos()" class="btn btn-success btn-sm">Executar Todos</button>
         <a href="/automacoes/novo" class="btn btn-primary">+ Novo Cliente</a>
-        <button onclick="executarTodos()" class="btn btn-success" style="margin-left: 0.5rem;">Executar Todos</button>
     </div>
 </div>
 
-<!-- Clientes -->
-{% if automacoes %}
-<div class="card">
-    <table>
-        <thead>
-            <tr>
-                <th>Cliente</th>
-                <th>Automações</th>
-                <th>Agendamento</th>
-                <th>Status</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
+<div class="page-container">
+    <!-- Client List with Fluxos -->
+    <div id="client-list">
+        {% if automacoes %}
             {% for auto in automacoes %}
-            <tr>
-                <td>
-                    <strong>{{ auto.nome }}</strong>
-                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.15rem;">
-                        <a href="{{ auto.sheets_url }}" target="_blank" style="color: #38bdf8;">Abrir planilha</a>
+            <div class="client-row" id="client-{{ auto.id }}">
+                <!-- Header -->
+                <div class="client-header">
+                    <div class="client-name">
+                        {{ auto.nome }}
+                        {% if not auto.ativo %}
+                        <span class="badge badge-empty">Inativo</span>
+                        {% endif %}
+                        <span id="running-badge-{{ auto.id }}"></span>
                     </div>
-                </td>
-                <td>
-                    {% for fluxo in auto.fluxos %}
-                    <span class="fluxo-tag fluxo-{{ fluxo.tipo }} {% if not fluxo.ativo %}fluxo-inativo{% endif %}">{{ fluxo.nome }}</span>
+                    <div class="client-erp-badges">
+                        {% for erp in auto.erp_configs %}
+                        <span class="badge {% if erp.erp_tipo == 'apvs_truck' %}badge-erp-truck{% else %}badge-erp-brasil{% endif %}">
+                            {{ 'Truck' if erp.erp_tipo == 'apvs_truck' else 'Brasil' }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <div class="client-status" id="client-status-{{ auto.id }}">
+                        <span class="badge badge-empty">&mdash;</span>
+                    </div>
+                    <div class="client-actions">
+                        <button onclick="executarUm({{ auto.id }})" class="btn btn-success btn-sm" id="btn-exec-{{ auto.id }}">Executar</button>
+                        <a href="/automacoes/{{ auto.id }}/editar" class="btn btn-ghost btn-sm">Editar</a>
+                        <button onclick="deletar({{ auto.id }})" class="btn btn-danger btn-sm">Excluir</button>
+                    </div>
+                </div>
+
+                <!-- Fluxos por ERP -->
+                <div class="client-fluxos">
+                    {% for erp in auto.erp_configs %}
+                    <div class="erp-section-inline">
+                        <div class="erp-label {% if erp.erp_tipo == 'apvs_truck' %}erp-label-truck{% else %}erp-label-brasil{% endif %}">
+                            {{ 'Truck' if erp.erp_tipo == 'apvs_truck' else 'Brasil' }}
+                        </div>
+                        <div class="fluxo-grid">
+                            {% for fluxo in erp.fluxos %}
+                            <div class="fluxo-card {% if not fluxo.ativo %}inactive{% endif %}" id="fluxo-card-{{ auto.id }}-{{ erp.erp_tipo }}-{{ fluxo.tipo }}">
+                                <div class="fluxo-header fluxo-{{ fluxo.tipo }}">{{ fluxo.nome }}</div>
+                                <div class="fluxo-body" id="fluxo-status-{{ auto.id }}-{{ erp.erp_tipo }}-{{ fluxo.tipo }}">
+                                    <span class="badge badge-empty">&mdash;</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                     {% endfor %}
-                </td>
-                <td>
-                    <div style="font-size: 0.85rem;">{{ auto.dias_semana_display }}</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">{{ auto.horario_execucao }}</div>
-                </td>
-                <td>
-                    {% if auto.ativo %}
-                    <span class="badge badge-success">Ativo</span>
-                    {% else %}
-                    <span class="badge badge-error">Inativo</span>
-                    {% endif %}
-                </td>
-                <td class="actions">
-                    <button onclick="executarUm({{ auto.id }})" class="btn btn-success btn-sm">Executar</button>
-                    <a href="/automacoes/{{ auto.id }}/editar" class="btn btn-primary btn-sm">Editar</a>
-                    <button onclick="toggleAtivo({{ auto.id }}, {{ 'true' if not auto.ativo else 'false' }})" class="btn btn-sm" style="background: {{ '#f59e0b' if auto.ativo else '#16a34a' }}; color: white;">{{ 'Desativar' if auto.ativo else 'Ativar' }}</button>
-                    <button onclick="deletar({{ auto.id }})" class="btn btn-danger btn-sm">Excluir</button>
-                </td>
-            </tr>
+                </div>
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">&#128203;</div>
+            <div class="empty-state-title">Nenhum cliente cadastrado</div>
+            <div class="empty-state-text">Comece criando o primeiro cliente para automatizar a cobrança.</div>
+            <a href="/automacoes/novo" class="btn btn-primary">+ Novo Cliente</a>
+        </div>
+        {% endif %}
+    </div>
 </div>
-{% else %}
-<div class="card empty">
-    Nenhum cliente cadastrado. <a href="/automacoes/novo" style="color: #38bdf8;">Cadastre o primeiro</a>.
-</div>
-{% endif %}
+{% endblock %}
 
-<!-- Execuções Recentes -->
-{% if execucoes %}
-<h2 style="margin-top: 2rem;">Últimas Execuções</h2>
-<div class="card">
-    <table>
-        <thead>
-            <tr>
-                <th>Cliente</th>
-                <th>Automação</th>
-                <th>Data</th>
-                <th>Status</th>
-                <th>Encontrados</th>
-                <th>Filtrados</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for exec in execucoes %}
-            <tr>
-                <td>{{ exec.automacao.nome if exec.automacao else '-' }}</td>
-                <td>
-                    {% if exec.fluxo %}
-                    <span class="fluxo-tag fluxo-{{ exec.fluxo.tipo }}">{{ exec.fluxo.nome }}</span>
-                    {% else %}
-                    <span style="color: #64748b;">Geral</span>
-                    {% endif %}
-                </td>
-                <td>{{ exec.data.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td>
-                    {% if exec.status == 'sucesso' %}
-                    <span class="badge badge-success">Sucesso</span>
-                    {% elif exec.status == 'erro' %}
-                    <span class="badge badge-error">Erro</span>
-                    {% elif exec.status == 'vazio' %}
-                    <span class="badge badge-pending">Vazio</span>
-                    {% elif exec.status == 'parcial' %}
-                    <span class="badge badge-warning">Parcial</span>
-                    {% else %}
-                    <span class="badge badge-pending">{{ exec.status }}</span>
-                    {% endif %}
-                </td>
-                <td>{{ exec.registros_encontrados }}</td>
-                <td>{{ exec.registros_filtrados }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
-
+{% block scripts %}
 <script>
+// ---- Polling & Status ----
+let pollingTimer = null;
+let isPolling = false;
+
+const STATUS_CONFIG = {
+    sucesso:  { badge: 'badge-success', label: 'OK' },
+    erro:     { badge: 'badge-error', label: 'Erro' },
+    vazio:    { badge: 'badge-empty', label: 'Vazio' },
+    parcial:  { badge: 'badge-warning', label: 'Parcial' },
+    executando: { badge: 'badge-running', label: 'Rodando...' },
+    pendente: { badge: 'badge-empty', label: 'Aguardando' },
+};
+
+function renderFluxoStatus(autoId, key, info, isRunning) {
+    const el = document.getElementById(`fluxo-status-${autoId}-${key}`);
+    if (!el) return;
+    let status = info.status;
+    if (isRunning && (status === 'pendente' || status === 'executando')) status = 'executando';
+    const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pendente;
+    const hora = info.hora ? ` ${info.hora}` : '';
+    const regs = info.registros > 0 ? ` (${info.registros})` : '';
+    const pulse = status === 'executando' ? ' animate-pulse' : '';
+    el.innerHTML = `<span class="badge ${cfg.badge}${pulse}">${cfg.label}${regs}${hora}</span>`;
+}
+
+function updateStatus(data) {
+    const runningInfo = data.running_info || {};
+
+    for (const [autoId, fluxos] of Object.entries(data.fluxos_status)) {
+        const isRunning = data.running.includes(parseInt(autoId));
+        const currentFluxo = runningInfo[autoId];
+
+        for (const [key, info] of Object.entries(fluxos)) {
+            renderFluxoStatus(autoId, key, info, isRunning);
+        }
+
+        // Running badge — mostra qual fluxo está rodando agora
+        const rb = document.getElementById(`running-badge-${autoId}`);
+        if (rb) {
+            if (isRunning && currentFluxo) {
+                rb.innerHTML = ` <span class="badge badge-running animate-pulse">${currentFluxo.fluxo}</span>`;
+            } else if (isRunning) {
+                rb.innerHTML = ' <span class="badge badge-running animate-pulse">EXECUTANDO</span>';
+            } else {
+                rb.innerHTML = '';
+            }
+        }
+
+        // Client status summary
+        const cs = document.getElementById(`client-status-${autoId}`);
+        if (cs && fluxos) {
+            const vals = Object.values(fluxos);
+            const hasError = vals.some(f => f.status === 'erro');
+            const allSuccess = vals.every(f => f.status === 'sucesso' || f.status === 'vazio' || f.status === 'pendente');
+            if (isRunning) {
+                cs.innerHTML = '<span class="badge badge-running animate-pulse">Executando</span>';
+            } else if (hasError) {
+                cs.innerHTML = '<span class="badge badge-error">Erro</span>';
+            } else if (allSuccess) {
+                cs.innerHTML = '<span class="badge badge-success">OK</span>';
+            }
+        }
+    }
+
+    if (data.running.length === 0 && isPolling) stopPolling();
+}
+
+async function pollStatus() {
+    try {
+        const resp = await fetch('/api/status');
+        const data = await resp.json();
+        updateStatus(data);
+    } catch (e) { console.error('Poll error:', e); }
+}
+
+function startPolling() {
+    if (isPolling) return;
+    isPolling = true;
+    pollStatus();
+    pollingTimer = setInterval(pollStatus, 3000);
+}
+
+function stopPolling() {
+    isPolling = false;
+    if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
+}
+
+// Initial load + polling
+startPolling();
+
+// ---- Actions ----
 async function executarUm(id) {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.textContent = 'Executando...';
+    const btn = document.getElementById(`btn-exec-${id}`);
+    if (!btn) return;
+    btn.disabled = true; btn.textContent = '...';
+    startPolling();
     try {
         const resp = await fetch(`/api/executar/${id}`, { method: 'POST' });
         const data = await resp.json();
-        alert(`Status: ${data.status}\nRegistros encontrados: ${data.registros_encontrados}\nRegistros filtrados: ${data.registros_filtrados}`);
-        location.reload();
-    } catch (e) {
-        alert('Erro ao executar: ' + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Executar';
-    }
+        if (data.status === 'ja_em_execucao') showToast('Automação já está em execução.', 'error');
+        else showToast(`Status: ${data.status} | ${data.registros_filtrados} registros`, data.status === 'erro' ? 'error' : 'success');
+    } catch (e) { showToast('Erro: ' + e.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Executar'; pollStatus(); }
 }
 
 async function executarTodos() {
-    if (!confirm('Executar todas as automações ativas?')) return;
-    const resp = await fetch('/api/executar-todos', { method: 'POST' });
-    location.reload();
-}
-
-async function toggleAtivo(id, ativar) {
-    await fetch(`/api/automacoes/${id}/toggle`, { method: 'PATCH' });
-    location.reload();
+    if (!confirmAction('Executar todas as automações ativas?')) return;
+    startPolling();
+    await fetch('/api/executar-todos', { method: 'POST' });
+    showToast('Execução iniciada para todos os clientes ativos.', 'info');
 }
 
 async function deletar(id) {
-    if (!confirm('Tem certeza que deseja excluir este cliente e todos os seus fluxos?')) return;
+    if (!confirmAction('Excluir este cliente e todos os seus dados?')) return;
     await fetch(`/api/automacoes/${id}`, { method: 'DELETE' });
-    location.reload();
+    document.getElementById(`client-${id}`)?.remove();
+    showToast('Cliente excluído.', 'info');
 }
 </script>
 {% endblock %}

@@ -201,3 +201,6 @@ if __name__ == "__main__":
     migrate()
     migrate_add_dias_semana()
     migrate_add_fluxo_campos()
+
+    from migrate_multi_erp import migrate_multi_erp
+    migrate_multi_erp()

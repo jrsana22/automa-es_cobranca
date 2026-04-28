@@ -7,6 +7,7 @@ Subclasses implementam a lógica específica de cada ERP.
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import timedelta
 from io import BytesIO
 
 import requests
@@ -51,6 +52,35 @@ class BaseERPClient(ABC):
     ) -> ExportResult:
         """Navega até o relatório e faz download do XLSX com filtros."""
         ...
+
+    def exportar_form_008(self, dt_ini, dt_fim) -> ExportResult:
+        """
+        Exporta form 127000008 (Pré-boleto), dividindo por mês se o período cruzar virada de mês.
+        dt_ini / dt_fim: objetos date ou datetime.
+        """
+        from datetime import date as _date
+        dt_ini = dt_ini.date() if hasattr(dt_ini, "date") else dt_ini
+        dt_fim = dt_fim.date() if hasattr(dt_fim, "date") else dt_fim
+
+        dfs = []
+        cur = dt_ini
+        while cur <= dt_fim:
+            if cur.month == 12:
+                month_end = _date(cur.year + 1, 1, 1) - timedelta(days=1)
+            else:
+                month_end = _date(cur.year, cur.month + 1, 1) - timedelta(days=1)
+            chunk_end = min(month_end, dt_fim)
+            r = self.exportar_inadimplencia(
+                id_formulario="127000008",
+                id_situacao="",
+                dt_inicial=cur.strftime("%d/%m/%Y"),
+                dt_final=chunk_end.strftime("%d/%m/%Y"),
+            )
+            dfs.append(r.dataframe)
+            cur = chunk_end + timedelta(days=1)
+
+        combined = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+        return ExportResult(dataframe=combined, total_registros=len(combined), log=f"form 008: {len(combined)} registros")
 
     def close(self):
         self.session.close()

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database import get_db
-from app.models import Automacao, Execucao, Fluxo, FLUXOS_PADRAO
+from app.models import Automacao, Execucao, Fluxo, ERPConfig
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -23,32 +23,10 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
-    # Stats: registros filtrados hoje por tipo de fluxo
-    from datetime import timedelta
-    from app.tz import hoje as hoje_brasilia
-    hoje = hoje_brasilia()
-    semana = hoje - timedelta(days=7)
-    mes = hoje - timedelta(days=30)
-
-    stats_hoje = db.query(Execucao).filter(
-        Execucao.data >= hoje,
-        Execucao.fluxo_id != None,
-        Execucao.status.in_(["sucesso", "parcial", "vazio"]),
-    ).all()
-
-    stats_tipo = {}
-    for exec in stats_hoje:
-        tipo = exec.fluxo.tipo if exec.fluxo else "geral"
-        if tipo not in stats_tipo:
-            stats_tipo[tipo] = {"registros": 0, "execucoes": 0}
-        stats_tipo[tipo]["registros"] += exec.registros_filtrados or 0
-        stats_tipo[tipo]["execucoes"] += 1
-
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
         "automacoes": automacoes,
         "execucoes": ultimas_execucoes,
-        "stats_tipo": stats_tipo,
     })
 
 
@@ -57,7 +35,6 @@ def nova_automacao(request: Request):
     return templates.TemplateResponse("automacao_form.html", {
         "request": request,
         "automacao": None,
-        "fluxos_padrao": FLUXOS_PADRAO,
     })
 
 
@@ -69,7 +46,6 @@ def editar_automacao(automacao_id: int, request: Request, db: Session = Depends(
     return templates.TemplateResponse("automacao_form.html", {
         "request": request,
         "automacao": automacao,
-        "fluxos_padrao": FLUXOS_PADRAO,
     })
 
 

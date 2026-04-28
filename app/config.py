@@ -10,7 +10,7 @@ class Settings:
     # SQLite para dev, PostgreSQL para produção
     # Ex SQLite: sqlite:///./automacao.db
     # Ex PostgreSQL: postgresql://user:pass@host:5432/dbname
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./automacao.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}/automacao.db")
     GOOGLE_CREDENTIALS_PATH: str = os.getenv(
         "GOOGLE_CREDENTIALS_PATH", os.path.expanduser("~/credentials.json")
     )

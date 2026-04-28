@@ -6,7 +6,7 @@ Inclui lock por automação (impede execução simultânea do mesmo automation_i
 
 import logging
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from zoneinfo import ZoneInfo
 
 BRASILIA_TZ = ZoneInfo("America/Sao_Paulo")
@@ -17,13 +17,11 @@ from app.database import SessionLocal
 from app.models import Automacao, Execucao
 from app.services.processor import processar_automacao
 from app.services.notifier import notify_failure
+from app.routers.executions import _running_automations
 
 logger = logging.getLogger(__name__)
 
-scheduler = AsyncIOScheduler(timezone=BRASILIA_TZ)
-
-# Lock em memória para impedir execução simultânea da mesma automação
-_running_automations: set[int] = set()
+scheduler = BackgroundScheduler(timezone=BRASILIA_TZ)
 
 
 def executar_automacao_agendada(automacao_id: int):
@@ -45,7 +43,8 @@ def executar_automacao_agendada(automacao_id: int):
         logger.info(f"Executando automação agendada: {automacao.nome} (ID={automacao_id})")
 
         try:
-            resultado = processar_automacao(automacao, db, agendado=True)
+            from app.routers.executions import _on_fluxo_start
+            resultado = processar_automacao(automacao, db, agendado=True, on_fluxo_start=_on_fluxo_start)
             logger.info(
                 f"Automação {automacao.nome}: status={resultado['status']}, "
                 f"encontrados={resultado.get('registros_encontrados', 0)}, "

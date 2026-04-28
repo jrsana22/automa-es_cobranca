@@ -17,6 +17,7 @@ Fluxo real (mapeado via reverse-engineering):
 import json
 import logging
 import uuid
+from datetime import timedelta
 from io import BytesIO
 from typing import Optional
 from urllib.parse import urlencode
@@ -37,15 +38,12 @@ ID_FORMULARIO_INADIMPLENCIA = "127000007"
 ID_FORMULARIO_PREBOLETO = "127000008"
 ID_SITUACAO_COBRANCA = "2"
 
-# Fingerprint fixo para o script (cada instância do client gera um único)
-_VISITOR_ID = f"fp_auto_{uuid.uuid4().hex[:12]}"
-
-
 class APVSClient(BaseERPClient):
     """Client HTTP para o ERP APVS (ASP.NET WebForms)."""
 
     def __init__(self, base_url: str, login: str, senha: str):
         super().__init__(base_url, login, senha)
+        self._visitor_id = f"fp_auto_{uuid.uuid4().hex[:12]}"
         self._eng_token: Optional[str] = None
         self._eng_chk: Optional[str] = None
         self._eng_chkch: Optional[str] = None
@@ -76,14 +74,14 @@ class APVSClient(BaseERPClient):
         resp.raise_for_status()
 
         # Step 2: POST GravarVisitorID (fingerprint → vira cookie I4ProEngine)
-        visitor_data = json.dumps({"visitorId": _VISITOR_ID})
+        visitor_data = json.dumps({"visitorId": self._visitor_id})
         resp = self.session.post(
             f"{self.base_url}/default.aspx/GravarVisitorID",
             data=visitor_data,
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
         resp.raise_for_status()
-        logger.info(f"Fingerprint gravado: {_VISITOR_ID}")
+        logger.info(f"Fingerprint gravado: {self._visitor_id}")
 
         # Step 3: POST GravarTimezone
         tz_data = json.dumps({"timezone": "-0300"})
@@ -131,7 +129,7 @@ class APVSClient(BaseERPClient):
         # O cookie I4ProEngine é criado no Step 2 (GravarVisitorID), antes do login,
         # então não serve como indicador de autenticação.
         # A verificação real é: se a resposta continua na página de login, as credenciais falharam.
-        if "[Login]" in resp.text or "cd_usuario" in resp.text and "nm_senha" in resp.text and resp.url.rstrip("/").endswith("Default.aspx"):
+        if "[Login]" in resp.text or ("cd_usuario" in resp.text and "nm_senha" in resp.text and resp.url.rstrip("/").endswith("Default.aspx")):
             logger.error("Login falhou — credenciais recusadas pelo ERP")
             return False
 
@@ -185,7 +183,7 @@ class APVSClient(BaseERPClient):
         Exporta relatório do ERP como XLSX.
         Args:
             id_formulario: "127000007" (Inadimplência) ou "127000008" (Pré Boleto)
-            id_situacao: tipo de inadimplência ("2" = Cobrança, vazio para Pré Boleto)
+            id_situacao: tipo de inadimplência (vazio = sem filtro)
             dt_inicial: data inicial do filtro (DD/MM/AAAA), vazio = sem filtro
             dt_final: data final do filtro (DD/MM/AAAA), vazio = sem filtro
         """
@@ -284,16 +282,16 @@ class APVSClient(BaseERPClient):
             f"dt_inicial_id{id_formulario}": dt_inicial,
             f"dt_final_id{id_formulario}": dt_final,
             # Datas genéricas
-            "dt_inicio": "",
-            "dt_fim": "",
+            "dt_inicio": dt_inicial,
+            "dt_fim": dt_final,
             "dt_pagto": "",
             "dt_agendamento_inicio": "",
             "dt_agendamento_fim": "",
             "dt_movimento": "",
             "dt_fup_inicio": "",
             "dt_fup_fim": "",
-            "dt_inicial": "",
-            "dt_final": "",
+            "dt_inicial": dt_inicial,
+            "dt_final": dt_final,
         }
 
         # Step 3: POST para Excel.aspx

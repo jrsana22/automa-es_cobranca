@@ -1,8 +1,28 @@
-__pycache__/
-*.pyc
+# Ambiente
 .env
-automacao.db
-*.xlsx
-token.json
+*.env
+
+# Credenciais Google
 credentials.json
+*.json.key
+
+# Banco de dados local
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
 .venv/
+venv/
+env/
+
+# Logs
+*.log
+journal.md
+CLAUDE.md
+
+# macOS
+.DS_Store
+**/.DS_Store

@@ -1,161 +1,296 @@
 {% extends "base.html" %}
 {% block title %}{% if automacao %}Editar Cliente{% else %}Novo Cliente{% endif %}{% endblock %}
+
 {% block content %}
-<h1>{% if automacao %}Editar Cliente{% else %}Novo Cliente{% endif %}</h1>
+<div class="page-header">
+    <h1 class="page-title">{% if automacao %}Editar Cliente{% else %}Novo Cliente{% endif %}</h1>
+</div>
 
-<div class="card">
+<div class="page-container">
     <form action="/api/automacoes{% if automacao %}/{{ automacao.id }}{% endif %}" method="POST">
-        <!-- Dados do Cliente -->
-        <h3>Dados do Cliente</h3>
-        <div class="form-row">
-            <div>
-                <label for="nome">Nome do Cliente</label>
-                <input type="text" id="nome" name="nome" value="{{ automacao.nome if automacao else '' }}" required placeholder="Ex: APVS Brasil">
-            </div>
-            <div>
-                <label for="erp_tipo">Tipo do ERP</label>
-                <select id="erp_tipo" name="erp_tipo">
-                    <option value="apvs_brasil" {% if automacao and automacao.erp_tipo == 'apvs_brasil' %}selected{% endif %}>APVS Brasil</option>
-                    <option value="apvs_truck" {% if automacao and automacao.erp_tipo == 'apvs_truck' %}selected{% endif %}>APVS Truck</option>
-                </select>
-            </div>
-        </div>
 
-        <h3 style="margin-top: 1rem;">Acesso ERP</h3>
-        <div class="form-row">
-            <div>
-                <label for="erp_url">URL do ERP</label>
-                <input type="url" id="erp_url" name="erp_url" value="{{ automacao.erp_url if automacao else '' }}" required placeholder="https://erp.apvs.com.br">
+        <!-- Dados Gerais -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <div class="card-title">Dados do Cliente</div>
             </div>
-            <div>
-                <label for="horario_execucao">Horário de Execução</label>
-                <input type="time" id="horario_execucao" name="horario_execucao" value="{{ automacao.horario_execucao if automacao else '06:00' }}">
-            </div>
-        </div>
-        <div class="form-row">
-            <div>
-                <label for="erp_login">Login</label>
-                <input type="text" id="erp_login" name="erp_login" value="{{ automacao.erp_login if automacao else '' }}" required>
-            </div>
-            <div>
-                <label for="erp_senha">Senha{% if automacao %} (deixe vazio para manter){% endif %}</label>
-                <input type="password" id="erp_senha" name="erp_senha" {% if not automacao %}required{% endif %}>
-            </div>
-        </div>
-
-        <!-- Dias da Semana -->
-        <h3 style="margin-top: 1rem;">Dias de Execução</h3>
-        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.75rem;">Selecione os dias em que a automação será executada.</p>
-        <div class="dias-semana-grid">
-            {% set dias = [(0, "Seg"), (1, "Ter"), (2, "Qua"), (3, "Qui"), (4, "Sex"), (5, "Sáb"), (6, "Dom")] %}
-            {% if automacao %}
-                {% set dias_ativos = automacao.dias_semana_lista %}
-            {% else %}
-                {% set dias_ativos = [0, 1, 2, 3, 4] %}
-            {% endif %}
-            {% for dia_num, dia_nome in dias %}
-            <span>
-                <input type="checkbox" class="dia-checkbox" id="dia_{{ dia_num }}" name="dias_check" value="{{ dia_num }}" {% if dia_num in dias_ativos %}checked{% endif %} onchange="syncDiasSemana()">
-                <label class="dia-label" for="dia_{{ dia_num }}">{{ dia_nome }}</label>
-            </span>
-            {% endfor %}
-        </div>
-        <input type="hidden" id="dias_semana" name="dias_semana" value="{{ automacao.dias_semana if automacao else '0,1,2,3,4' }}">
-
-        <h3 style="margin-top: 1rem;">Google Sheets</h3>
-        <div class="form-row">
-            <div>
-                <label for="sheets_url">URL da Planilha</label>
-                <input type="url" id="sheets_url" name="sheets_url" value="{{ automacao.sheets_url if automacao else '' }}" required placeholder="https://docs.google.com/spreadsheets/d/...">
-            </div>
-        </div>
-        <input type="hidden" name="coluna_vencimento" value="{{ automacao.coluna_vencimento if automacao else 'vencimento_Parcela' }}">
-
-        <!-- Fluxos -->
-        <h3 style="margin-top: 1.5rem;">Automações (Fluxos)</h3>
-        <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1rem;">
-            Cada automação filtra os dados do ERP de uma forma e escreve em uma aba da planilha.
-            Quando agendado, cada fluxo executa 2 min após o anterior.
-            Desative os que não precisa.
-        </p>
-
-        {% set fluxos_config = [
-            ("preboleto", "Pré-boleto", "D-7 a D-1: vencendo em até 7 dias", -7, -1),
-            ("vencendo_hoje", "Vencendo Hoje", "D-0: vence hoje", 0, 0),
-            ("cobranca_d1", "Cobrança D+1", "D+1: 1 dia vencido", 1, 1),
-            ("cobranca_2_30", "Cobrança 2-30D", "2 a 30 dias vencido (a cada 3 dias)", 2, 30),
-            ("reativacao", "Reativação", "31 a 120 dias vencido", 31, 120),
-        ] %}
-
-        <div class="fluxos-grid">
-        {% for tipo, nome_padrao, descricao, min_dias, max_dias in fluxos_config %}
-            {% if automacao %}
-                {% set fluxo = automacao.fluxos|selectattr('tipo', 'equalto', tipo)|first %}
-                {% set aba_value = fluxo.sheets_aba if fluxo else nome_padrao %}
-                {% set ativo_checked = fluxo.ativo if fluxo else true %}
-            {% else %}
-                {% set aba_value = nome_padrao %}
-                {% set ativo_checked = true %}
-            {% endif %}
-            <div class="fluxo-card">
-                <div class="fluxo-header">
-                    <label class="fluxo-toggle">
-                        <input type="checkbox" name="{{ tipo }}_ativo" value="true" {% if ativo_checked %}checked{% endif %}>
-                        <strong>{{ nome_padrao }}</strong>
-                    </label>
-                    <span class="fluxo-desc">{{ descricao }}</span>
-                </div>
-                <div class="fluxo-body">
-                    <div>
-                        <label>Nome da aba na planilha</label>
-                        <input type="text" name="{{ tipo }}_aba" value="{{ aba_value }}" placeholder="{{ nome_padrao }}">
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Nome do Cliente</label>
+                        <input type="text" class="form-input" name="nome" value="{{ automacao.nome if automacao else '' }}" required placeholder="Ex: João Silva">
                     </div>
-                    <div class="fluxo-dias">
-                        <span class="dias-badge">{{ min_dias }} a {{ max_dias }} dias</span>
+                    <div class="form-group">
+                        <label class="form-label">Horário de Execução</label>
+                        <input type="time" class="form-input" name="horario_execucao" value="{{ automacao.horario_execucao if automacao else '06:00' }}">
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">URL da Planilha Google Sheets</label>
+                    <input type="url" class="form-input" name="sheets_url" value="{{ automacao.sheets_url if automacao else '' }}" required placeholder="https://docs.google.com/spreadsheets/d/...">
+                    <div class="form-hint">Compartilhe com automacao-sheets@automacaocobranca-493700.iam.gserviceaccount.com (Editor)</div>
+                </div>
+                <input type="hidden" name="coluna_vencimento" value="{{ automacao.coluna_vencimento if automacao else 'vencimento_Parcela' }}">
+
+                <!-- Dias da Semana -->
+                <div class="form-group">
+                    <label class="form-label">Dias de Execução</label>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        {% set dias = [(0, "Seg"), (1, "Ter"), (2, "Qua"), (3, "Qui"), (4, "Sex"), (5, "Sáb"), (6, "Dom")] %}
+                        {% if automacao %}
+                            {% set dias_ativos = automacao.dias_semana_lista %}
+                        {% else %}
+                            {% set dias_ativos = [0, 1, 2, 3, 4] %}
+                        {% endif %}
+                        {% for dia_num, dia_nome in dias %}
+                        <span>
+                            <input type="checkbox" class="dia-checkbox" id="dia_{{ dia_num }}" name="dias_check" value="{{ dia_num }}" {% if dia_num in dias_ativos %}checked{% endif %} onchange="syncDiasSemana()" style="display:none;">
+                            <label class="dia-label" for="dia_{{ dia_num }}" style="display:inline-block;padding:0.4rem 0.75rem;background:var(--bg-primary);border:1px solid var(--border-default);border-radius:var(--radius-sm);cursor:pointer;font-size:0.85rem;color:var(--text-secondary);user-select:none;transition:all 0.15s;">{{ dia_nome }}</label>
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="dias_semana" name="dias_semana" value="{{ automacao.dias_semana if automacao else '0,1,2,3,4' }}">
+                </div>
             </div>
-        {% endfor %}
         </div>
 
+        <!-- ========== ERP BRASIL ========== -->
+        {% set brasil_erp = none %}
         {% if automacao %}
-        <div class="form-row" style="margin-top: 1rem;">
-            <div>
-                <label for="ativo">Cliente Ativo</label>
-                <select id="ativo" name="ativo">
-                    <option value="true" {% if automacao.ativo %}selected{% endif %}>Sim</option>
-                    <option value="false" {% if not automacao.ativo %}selected{% endif %}>Não</option>
-                </select>
+            {% for erp in automacao.erp_configs %}
+                {% if erp.erp_tipo == 'apvs_brasil' %}{% set brasil_erp = erp %}{% endif %}
+            {% endfor %}
+        {% endif %}
+
+        <div class="erp-form-section erp-form-section-brasil {% if not brasil_erp and automacao %}inactive{% endif %}" style="margin-bottom: 1.5rem;">
+            <div class="erp-form-header">
+                <div class="erp-form-title erp-form-title-brasil">
+                    🇧🇷 APVS Brasil
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" class="toggle-input" id="brasil_ativo" name="brasil_ativo" value="on" {% if not automacao or brasil_erp %}checked{% endif %} onchange="toggleErpSection('brasil')">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-label">Ativo</span>
+                </label>
             </div>
-            <div>
-                <label for="dia_cobranca_base">Dia base Cobrança 2-30D (ciclo 3 dias)</label>
-                <input type="number" id="dia_cobranca_base" name="dia_cobranca_base" value="{{ automacao.dia_cobranca_base if automacao else 1 }}" min="1" max="3">
-                <small style="color: #64748b;">Dia 1 = dias 1,4,7... | Dia 2 = dias 2,5,8... | Dia 3 = dias 3,6,9...</small>
+
+            <div id="brasil-fields">
+                <input type="hidden" name="brasil_erp_tipo" value="apvs_brasil">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">URL do ERP</label>
+                        <input type="url" class="form-input" name="brasil_erp_url" value="{{ brasil_erp.erp_url if brasil_erp else 'https://erp.apvs.com.br/' }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Login</label>
+                        <input type="text" class="form-input" name="brasil_erp_login" value="{{ brasil_erp.erp_login if brasil_erp else '' }}" placeholder="usuario.erp">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Senha{% if brasil_erp %} (vazio = manter){% endif %}</label>
+                        <input type="password" class="form-input" name="brasil_erp_senha" {% if not brasil_erp %}required{% endif %} placeholder="••••••••">
+                    </div>
+                </div>
+
+                <!-- Fluxos Brasil -->
+                <div style="margin-top: 1rem;">
+                    <label class="form-label" style="margin-bottom: 0.75rem;">Fluxos (abas da planilha)</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.75rem;">
+                    {% set brasil_fluxos = [
+                        ("preboleto", "Pré-boleto", "D-7 a D-1", -7, -1),
+                        ("vencendo_hoje", "Vencendo Hoje", "D-0: vence hoje", 0, 0),
+                        ("cobranca_d1", "Cobrança D+1", "D+1: 1 dia vencido", 1, 1),
+                        ("cobranca_2_30", "Cobrança 2-30D", "2 a 30 dias vencido", 2, 30),
+                        ("reativacao", "Reativação", "31 a 120 dias vencido", 31, 120),
+                    ] %}
+                    {% for tipo, nome_padrao, desc, min_d, max_d in brasil_fluxos %}
+                        {% if brasil_erp %}
+                            {% set fluxo = brasil_erp.fluxos|selectattr('tipo', 'equalto', tipo)|first %}
+                            {% set aba_value = fluxo.sheets_aba if fluxo else nome_padrao %}
+                            {% set ativo_checked = fluxo.ativo if fluxo else true %}
+                        {% else %}
+                            {% set brasil_abas = {"preboleto": "D-7 - PRÉ-BOLETO", "vencendo_hoje": "VENCIMENTO NO DIA", "cobranca_d1": "D+1 - COBRANÇA", "cobranca_2_30": "COBRANÇA 2-30D", "reativacao": "REATIVAÇÃO"} %}
+                            {% set aba_value = brasil_abas[tipo] %}
+                            {% set ativo_checked = true %}
+                        {% endif %}
+                        <div class="fluxo-form-card {% if not ativo_checked %}inactive{% endif %}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <label class="toggle" style="margin: 0;">
+                                    <input type="checkbox" class="toggle-input" name="brasil_{{ tipo }}_ativo" value="on" {% if ativo_checked %}checked{% endif %} onchange="this.closest('.fluxo-form-card').classList.toggle('inactive', !this.checked)">
+                                    <span class="toggle-track"></span>
+                                </label>
+                                <strong style="font-size: 0.85rem;">{{ nome_padrao }}</strong>
+                                <span class="badge badge-empty" style="font-size: 0.65rem;">{{ min_d }} a {{ max_d }}d</span>
+                            </div>
+                            <input type="text" class="form-input" name="brasil_{{ tipo }}_aba" value="{{ aba_value }}" style="font-size: 0.8rem; padding: 0.35rem 0.5rem;">
+                            <div class="form-hint">{{ desc }}</div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== ERP TRUCK ========== -->
+        {% set truck_erp = none %}
+        {% if automacao %}
+            {% for erp in automacao.erp_configs %}
+                {% if erp.erp_tipo == 'apvs_truck' %}{% set truck_erp = erp %}{% endif %}
+            {% endfor %}
+        {% endif %}
+
+        <div class="erp-form-section erp-form-section-truck {% if not truck_erp and automacao %}inactive{% endif %}" style="margin-bottom: 1.5rem;">
+            <div class="erp-form-header">
+                <div class="erp-form-title erp-form-title-truck">
+                    🚛 APVS Truck
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" class="toggle-input" id="truck_ativo" name="truck_ativo" value="on" {% if not automacao or truck_erp %}checked{% endif %} onchange="toggleErpSection('truck')">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-label">Ativo</span>
+                </label>
+            </div>
+
+            <div id="truck-fields">
+                <input type="hidden" name="truck_erp_tipo" value="apvs_truck">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">URL do ERP</label>
+                        <input type="url" class="form-input" name="truck_erp_url" value="{{ truck_erp.erp_url if truck_erp else 'https://erp.apvstruck.org.br/' }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Login</label>
+                        <input type="text" class="form-input" name="truck_erp_login" value="{{ truck_erp.erp_login if truck_erp else '' }}" placeholder="usuario.erp">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Senha{% if truck_erp %} (vazio = manter){% endif %}</label>
+                        <input type="password" class="form-input" name="truck_erp_senha" placeholder="••••••••">
+                    </div>
+                </div>
+
+                <!-- Fluxos Truck -->
+                <div style="margin-top: 1rem;">
+                    <label class="form-label" style="margin-bottom: 0.75rem;">Fluxos (abas da planilha)</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.75rem;">
+                    {% set truck_fluxos = [
+                        ("preboleto", "Pré-boleto", "D-7 a D-1", -7, -1),
+                        ("vencendo_hoje", "Vencendo Hoje", "D-0: vence hoje", 0, 0),
+                        ("cobranca_d1", "Cobrança D+1", "D+1: 1 dia vencido", 1, 1),
+                        ("cobranca_2_30", "Cobrança 2-30D", "2 a 30 dias vencido", 2, 30),
+                        ("reativacao", "Reativação", "31 a 120 dias vencido", 31, 120),
+                    ] %}
+                    {% for tipo, nome_padrao, desc, min_d, max_d in truck_fluxos %}
+                        {% if truck_erp %}
+                            {% set fluxo = truck_erp.fluxos|selectattr('tipo', 'equalto', tipo)|first %}
+                            {% set aba_value = fluxo.sheets_aba if fluxo else nome_padrao %}
+                            {% set ativo_checked = fluxo.ativo if fluxo else true %}
+                        {% else %}
+                            {% set truck_abas = {"preboleto": "TRUCK - D-7 - PRÉ-BOLETO", "vencendo_hoje": "TRUCK VENCIMENTO NO DIA", "cobranca_d1": "TRUCK - INADIMPLÊNCIA D+1", "cobranca_2_30": "TRUCK - COBRANÇA - 2 DIAS VENCIDO", "reativacao": "TRUCK - REATIVAÇÃO"} %}
+                            {% set aba_value = truck_abas[tipo] %}
+                            {% set ativo_checked = true %}
+                        {% endif %}
+                        <div class="fluxo-form-card {% if not ativo_checked %}inactive{% endif %}">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <label class="toggle" style="margin: 0;">
+                                    <input type="checkbox" class="toggle-input" name="truck_{{ tipo }}_ativo" value="on" {% if ativo_checked %}checked{% endif %} onchange="this.closest('.fluxo-form-card').classList.toggle('inactive', !this.checked)">
+                                    <span class="toggle-track"></span>
+                                </label>
+                                <strong style="font-size: 0.85rem;">{{ nome_padrao }}</strong>
+                                <span class="badge badge-empty" style="font-size: 0.65rem;">{{ min_d }} a {{ max_d }}d</span>
+                            </div>
+                            <input type="text" class="form-input" name="truck_{{ tipo }}_aba" value="{{ aba_value }}" style="font-size: 0.8rem; padding: 0.35rem 0.5rem;">
+                            <div class="form-hint">{{ desc }}</div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opções -->
+        {% if automacao %}
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Cliente Ativo</label>
+                        <select class="form-input" name="ativo">
+                            <option value="true" {% if automacao.ativo %}selected{% endif %}>Sim</option>
+                            <option value="false" {% if not automacao.ativo %}selected{% endif %}>Não</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Dia base Cobrança 2-30D</label>
+                        <input type="number" class="form-input" name="dia_cobranca_base" value="{{ automacao.dia_cobranca_base if automacao else 1 }}" min="1" max="3">
+                        <div class="form-hint">Ciclo 3 dias: 1=1,4,7... 2=2,5,8... 3=3,6,9...</div>
+                    </div>
+                </div>
             </div>
         </div>
         {% else %}
         <input type="hidden" name="dia_cobranca_base" value="1">
         {% endif %}
 
-        <div style="margin-top: 1rem;">
-            <label>
-                <input type="checkbox" name="executar_agora" value="true" {% if not automacao %}checked{% endif %}>
-                Executar imediatamente após salvar
+        <!-- Submit -->
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+            <label class="toggle">
+                <input type="checkbox" class="toggle-input" name="executar_agora" value="true" {% if not automacao %}checked{% endif %}>
+                <span class="toggle-track"></span>
+                <span class="toggle-label">Executar imediatamente após salvar</span>
             </label>
         </div>
 
-        <div style="margin-top: 1.5rem;">
-            <button type="submit" class="btn btn-primary">Salvar</button>
-            <a href="/" class="btn" style="background: #334155; color: #e2e8f0;">Cancelar</a>
+        <div style="display: flex; gap: 0.75rem;">
+            <button type="submit" class="btn btn-primary" style="min-width: 140px;">Salvar</button>
+            <a href="/" class="btn btn-ghost">Cancelar</a>
         </div>
     </form>
 </div>
 
 <script>
+function toggleErpSection(prefix) {
+    const checkbox = document.getElementById(`${prefix}_ativo`);
+    const fields = document.getElementById(`${prefix}-fields`);
+    const section = fields.closest('.erp-form-section');
+
+    if (checkbox.checked) {
+        section.classList.remove('inactive');
+        fields.style.display = '';
+    } else {
+        section.classList.add('inactive');
+        fields.style.display = 'none';
+    }
+}
+
 function syncDiasSemana() {
     const checks = document.querySelectorAll('input[name="dias_check"]:checked');
     const values = Array.from(checks).map(c => c.value);
     document.getElementById('dias_semana').value = values.join(',');
+
+    // Visual toggle
+    document.querySelectorAll('.dia-checkbox').forEach(cb => {
+        const label = cb.nextElementSibling;
+        if (cb.checked) {
+            label.style.background = 'var(--blue)';
+            label.style.borderColor = 'var(--blue)';
+            label.style.color = 'white';
+        } else {
+            label.style.background = 'var(--bg-primary)';
+            label.style.borderColor = 'var(--border-default)';
+            label.style.color = 'var(--text-secondary)';
+        }
+    });
 }
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    toggleErpSection('brasil');
+    toggleErpSection('truck');
+    syncDiasSemana();
+});
 </script>
 {% endblock %}

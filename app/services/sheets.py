@@ -91,6 +91,46 @@ class SheetsWriter:
         # Todas as tentativas falharam
         raise last_exception
 
+    def _ensure_sheet_exists(self, spreadsheet_id: str, aba: str) -> str:
+        """
+        Verifica se a aba existe na planilha (case-insensitive, ignora espaços extras).
+        Se não existir, cria. Retorna o nome real da aba.
+        """
+        try:
+            spreadsheet = self._retry_sheets_call(
+                self.service.spreadsheets().get,
+                spreadsheetId=spreadsheet_id,
+            ).execute()
+            sheets = spreadsheet.get("sheets", [])
+
+            # Comparação case-insensitive e sem espaços extras
+            aba_normalizada = aba.strip().lower()
+            for s in sheets:
+                title = s["properties"]["title"]
+                if title.strip().lower() == aba_normalizada:
+                    logger.info(f"Aba '{aba}' encontrada como '{title}'.")
+                    return title
+
+            # Não encontrou — criar
+            logger.info(f"Aba '{aba}' não existe. Criando...")
+            request_body = {
+                "addSheet": {
+                    "properties": {
+                        "title": aba,
+                    }
+                }
+            }
+            self._retry_sheets_call(
+                self.service.spreadsheets().batchUpdate,
+                spreadsheetId=spreadsheet_id,
+                body={"requests": [request_body]},
+            ).execute()
+            logger.info(f"Aba '{aba}' criada com sucesso.")
+            return aba
+        except HttpError as e:
+            logger.error(f"Erro ao verificar/criar aba '{aba}': {e}")
+            raise
+
     def write_data(
         self,
         sheets_url: str,
@@ -99,13 +139,15 @@ class SheetsWriter:
         mapeamento: dict,
     ) -> dict:
         """
-        Limpa dados abaixo do cabeçalho e insere os registros filtrados.
+        Garante que a aba existe, LIMPA SÓ OS DADOS (da linha 2 em diante),
+        PRESERVA o cabeçalho existente (linha 1), e insere os registros
+        mapeando as colunas do ERP para as colunas do cabeçalho da planilha.
 
         Args:
             sheets_url: URL da planilha Google Sheets
             aba: Nome da aba (ex: "D+1 - COBRANÇA")
             data: Lista de dicionários com os dados do ERP
-            mapeamento: Mapeamento de colunas ERP → Sheets
+            mapeamento: Mapeamento de colunas ERP → nome da coluna no Sheets
 
         Returns:
             dict com status e quantidade de linhas escritas
@@ -113,8 +155,11 @@ class SheetsWriter:
         spreadsheet_id = self._extract_sheet_id(sheets_url)
 
         try:
-            # 1. Ler o cabeçalho existente (linha 1)
-            header_range = f"'{aba}'!1:1"
+            # 0. Garantir que a aba existe
+            aba_real = self._ensure_sheet_exists(spreadsheet_id, aba)
+
+            # 1. Ler o cabeçalho existente (linha 1) — NÃO mexe no cabeçalho
+            header_range = f"'{aba_real}'!1:1"
             header_result = self._retry_sheets_call(
                 self.service.spreadsheets().values().get,
                 spreadsheetId=spreadsheet_id,
@@ -122,15 +167,28 @@ class SheetsWriter:
             ).execute()
             header_values = header_result.get("values", [[]])[0]
 
-            if not header_values:
-                logger.warning(f"Aba '{aba}' não tem cabeçalho. Escrevendo cabeçalho novo.")
+            if not header_values or all(v.strip() == "" for v in header_values):
+                # Aba vazia/nova: escreve cabeçalho do mapeamento
                 header_values = list(mapeamento.values())
+                header_body = {
+                    "values": [header_values],
+                    "majorDimension": "ROWS",
+                }
+                self._retry_sheets_call(
+                    self.service.spreadsheets().values().update,
+                    spreadsheetId=spreadsheet_id,
+                    range=f"'{aba_real}'!A1",
+                    valueInputOption="USER_ENTERED",
+                    body=header_body,
+                ).execute()
+                logger.info(f"Cabeçalho escrito na aba nova '{aba_real}': {header_values}")
 
-            # 2. Construir mapeamento de coluna (nome → índice)
-            col_map = {name: idx for idx, name in enumerate(header_values)}
+            # 2. Construir índice do cabeçalho (nome da coluna → posição)
+            col_map = {name.strip(): idx for idx, name in enumerate(header_values) if name.strip()}
 
-            # 3. Limpar dados existentes (da linha 2 em diante)
-            full_range = f"'{aba}'!A:Z"
+            # 3. Limpar dados da linha 2 em diante (preservar cabeçalho)
+            #    Ler para saber quantas linhas tem, depois limpar
+            full_range = f"'{aba_real}'!A:ZZZ"
             full_result = self._retry_sheets_call(
                 self.service.spreadsheets().values().get,
                 spreadsheetId=spreadsheet_id,
@@ -139,20 +197,23 @@ class SheetsWriter:
             existing_rows = len(full_result.get("values", []))
 
             if existing_rows > 1:
-                clear_range = f"'{aba}'!2:{existing_rows}"
+                clear_range = f"'{aba_real}'!2:{existing_rows + 100}"  # +100 margem
                 self._retry_sheets_call(
                     self.service.spreadsheets().values().clear,
                     spreadsheetId=spreadsheet_id,
                     range=clear_range,
                     body={},
                 ).execute()
+                logger.info(f"Dados limpos na aba '{aba_real}' (linha 2 a {existing_rows})")
 
-            # 4. Preparar dados para inserção
+            # 4. Preparar dados para inserção usando o mapeamento ERP → coluna do Sheets
+            num_cols = len(header_values)
             rows = []
             for record in data:
-                row = [""] * len(header_values)
+                row = [""] * num_cols
                 for erp_col, sheets_col in mapeamento.items():
-                    if sheets_col in col_map and erp_col in record:
+                    sheets_col_stripped = sheets_col.strip()
+                    if sheets_col_stripped in col_map and erp_col in record:
                         value = record[erp_col]
                         # Formatar datas como DD/MM/AAAA
                         if isinstance(value, datetime):
@@ -168,12 +229,13 @@ class SheetsWriter:
                                 value = dt.strftime("%d/%m/%Y")
                             except (ValueError, AttributeError):
                                 pass
-                        row[col_map[sheets_col]] = str(value) if value != "" else ""
+                        if value is not None and str(value).strip() != "" and str(value).strip() != "nan":
+                            row[col_map[sheets_col_stripped]] = str(value)
                 rows.append(row)
 
             # 5. Inserir dados a partir da linha 2
             if rows:
-                insert_range = f"'{aba}'!A2"
+                insert_range = f"'{aba_real}'!A2"
                 body = {
                     "values": rows,
                     "majorDimension": "ROWS",
@@ -186,11 +248,11 @@ class SheetsWriter:
                     body=body,
                 ).execute()
 
-            logger.info(f"{len(rows)} linhas escritas na aba '{aba}'")
+            logger.info(f"{len(rows)} linhas escritas na aba '{aba_real}'")
             return {
                 "status": "sucesso",
                 "linhas_escritas": len(rows),
-                "log": f"{len(rows)} registros inseridos na aba '{aba}'",
+                "log": f"{len(rows)} registros inseridos na aba '{aba_real}'",
             }
 
         except HttpError as e:
