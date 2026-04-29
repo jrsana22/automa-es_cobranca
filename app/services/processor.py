@@ -14,7 +14,7 @@ import pandas as pd
 
 from app.models import Automacao, ERPConfig, Fluxo, Execucao
 from app.services.erp_factory import criar_erp_client
-from app.services.notifier import notify_failure
+from app.services.notifier import notify_failure, notify_success
 from app.services.sheets import SheetsWriter
 from app.crypto import decrypt_password
 
@@ -318,6 +318,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
 
             client.close()
 
+        notify_success(automacao_nome)
         return {
             "status": overall_status,
             "registros_encontrados": total_encontrados,
