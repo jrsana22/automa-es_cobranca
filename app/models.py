@@ -24,7 +24,7 @@ FLUXO_REATIVACAO = "reativacao"      # 31 a 120 dias vencido
 
 FLUXOS_PADRAO = [
     {"tipo": FLUXO_PREBOLETO,      "nome": "Pré-boleto",          "sheets_aba": "D-7 - PRÉ-BOLETO",                              "formulario_id": "127000008", "situacao_id": "", "filtro_dias_min": 1,    "filtro_dias_max": 7},
-    {"tipo": FLUXO_VENCENDO_HOJE,  "nome": "Vencimento no Dia",   "sheets_aba": "VENCIMENTO NO DIA",                             "formulario_id": "127000008", "situacao_id": "", "filtro_dias_min": 0,    "filtro_dias_max": 0},
+    {"tipo": FLUXO_VENCENDO_HOJE,  "nome": "Vencimento no Dia",   "sheets_aba": "VENCIMENTO NO DIA",                             "formulario_id": "127000007", "situacao_id": "", "filtro_dias_min": 0,    "filtro_dias_max": 0},
     {"tipo": FLUXO_COBRANCA_D1,    "nome": "Cobrança D+1",        "sheets_aba": "D+1 - COBRANÇA",                                "formulario_id": "127000007", "situacao_id": "", "filtro_dias_min": -1,  "filtro_dias_max": -1},
     {"tipo": FLUXO_COBRANCA_2_30,  "nome": "Cobrança 2-30D",      "sheets_aba": "COBRANÇA - 2 DIAS VENCIDO A CADA 3 DIAS",      "formulario_id": "127000007", "situacao_id": "", "filtro_dias_min": -30, "filtro_dias_max": -2},
     {"tipo": FLUXO_REATIVACAO,     "nome": "Reativação",           "sheets_aba": "REATIVAÇÃO",                                    "formulario_id": "127000007", "situacao_id": "", "filtro_dias_min": -120,"filtro_dias_max": -31},
@@ -32,7 +32,7 @@ FLUXOS_PADRAO = [
 
 FLUXOS_PADRAO_TRUCK = [
     {"tipo": FLUXO_PREBOLETO,      "nome": "Pré-boleto",          "sheets_aba": "TRUCK - D-7 - PRÉ-BOLETO",              "formulario_id": "127000008", "situacao_id": "", "filtro_dias_min": 1,    "filtro_dias_max": 7},
-    {"tipo": FLUXO_VENCENDO_HOJE,  "nome": "Vencimento no Dia",   "sheets_aba": "TRUCK VENCIMENTO NO DIA",               "formulario_id": "127000008", "situacao_id": "", "filtro_dias_min": 0,    "filtro_dias_max": 0},
+    {"tipo": FLUXO_VENCENDO_HOJE,  "nome": "Vencimento no Dia",   "sheets_aba": "TRUCK VENCIMENTO NO DIA",               "formulario_id": "127000007", "situacao_id": "", "filtro_dias_min": 0,    "filtro_dias_max": 0},
     {"tipo": FLUXO_COBRANCA_D1,    "nome": "Cobrança D+1",        "sheets_aba": "TRUCK - INADIMPLÊNCIA D+1",             "formulario_id": "127000007", "situacao_id": "", "filtro_dias_min": -1,  "filtro_dias_max": -1},
     {"tipo": FLUXO_COBRANCA_2_30,  "nome": "Cobrança 2-30D",      "sheets_aba": "TRUCK - COBRANÇA - 2 DIAS VENCIDO",     "formulario_id": "127000007", "situacao_id": "", "filtro_dias_min": -30, "filtro_dias_max": -2},
     {"tipo": FLUXO_REATIVACAO,     "nome": "Reativação",           "sheets_aba": "TRUCK - REATIVAÇÃO",                    "formulario_id": "127000007", "situacao_id": "", "filtro_dias_min": -120,"filtro_dias_max": -31},
