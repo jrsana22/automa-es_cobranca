@@ -17,7 +17,17 @@ NOTIFY_NUMBER = "553186058233"
 NOTIFY_SUCCESS_NUMBER = "5531986058233"
 
 
-def notify_result(automation_name: str, status: str) -> bool:
+def build_fluxo_resumo_text(fluxo_resumo: list) -> str:
+    """Formata lista de (nome, count) para exibição no WhatsApp."""
+    if not fluxo_resumo:
+        return ""
+    lines = []
+    for nome, count in fluxo_resumo:
+        lines.append(f"  • {nome}: {count} registro{'s' if count != 1 else ''}")
+    return "\nResumo:\n" + "\n".join(lines)
+
+
+def notify_result(automation_name: str, status: str, fluxo_resumo: list | None = None) -> bool:
     """Envia notificação ao final de cada execução, independente do status."""
     if status == "sucesso":
         header = "✅ PLANILHA ATUALIZADA"
@@ -29,10 +39,12 @@ def notify_result(automation_name: str, status: str) -> bool:
         header = "❌ FALHA NA ATUALIZAÇÃO"
         body = "A automação encontrou erros. Verifique o painel."
 
+    resumo_text = build_fluxo_resumo_text(fluxo_resumo or [])
     text = (
         f"{header}\n\n"
         f"Cliente: {automation_name}\n"
-        f"{body}\n"
+        f"{body}"
+        f"{resumo_text}\n"
         f"Horário: {agora().strftime('%d/%m/%Y - %H:%M')}"
     )
     payload = {"number": NOTIFY_SUCCESS_NUMBER, "text": text}
@@ -82,7 +94,7 @@ def notify_failure(automation_name: str, error_message: str) -> bool:
         f"{tipo}\n\n"
         f"Cliente: {automation_name}\n"
         f"Erro: {error_message}\n"
-        f"Horário: {agora().strftime('%d/%m/%Y %H:%M')}"
+        f"Horário: {agora().strftime('%d/%m/%Y - %H:%M')}"
     )
 
     payload = {

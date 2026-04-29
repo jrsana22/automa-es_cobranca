@@ -14,7 +14,7 @@ import pandas as pd
 
 from app.models import Automacao, ERPConfig, Fluxo, Execucao, AutomacaoRun
 from app.services.erp_factory import criar_erp_client
-from app.services.notifier import notify_failure, notify_result
+from app.services.notifier import notify_failure, notify_result, build_fluxo_resumo_text
 from app.services.sheets import SheetsWriter
 from app.crypto import decrypt_password
 
@@ -50,6 +50,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
     overall_status = "sucesso"
     total_encontrados = 0
     total_filtrados = 0
+    fluxo_resumo = []  # list of (nome, count) for WhatsApp summary
 
     try:
         # Extrair todos os dados necessários ANTES de qualquer commit
@@ -186,6 +187,10 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                     amanha = hoje_dt + timedelta(days=1)
                     data_min = amanha
                     data_max = _data_fim_dias_uteis(amanha, 7)
+                elif fluxo_data["tipo"] == "vencendo_hoje":
+                    # Registros vencendo hoje estão no form 127000008 (pré-boleto), não no 127000007
+                    data_min = hoje_dt
+                    data_max = hoje_dt + timedelta(days=1)
                 else:
                     data_min = hoje_dt + timedelta(days=fluxo_data["filtro_dias_min"])
                     data_max = hoje_dt + timedelta(days=fluxo_data["filtro_dias_max"])
@@ -197,7 +202,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                     # Form 127000008 (pré-boleto) precisa de datas e tem coluna "vencimento"
                     for _retry in range(2):
                         try:
-                            if fluxo_data["formulario_id"] == "127000008":
+                            if fluxo_data["formulario_id"] == "127000008" or fluxo_data["tipo"] == "vencendo_hoje":
                                 resultado = client.exportar_form_008(data_min, data_max)
                             else:
                                 resultado = client.exportar_inadimplencia(
@@ -267,6 +272,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                     else:
                         detalhe_vazio = f"ERP retornou {registros_bruto}, nenhum no período {data_min.strftime('%d/%m')}–{data_max.strftime('%d/%m')}"
                     log_parts.append(f"Nenhum registro para o fluxo {fluxo_data['nome']}. Limpando aba. ({detalhe_vazio})")
+                    fluxo_resumo.append((fluxo_data["nome"], 0))
                     writer.write_data(
                         sheets_url=sheets_url,
                         aba=fluxo_data["sheets_aba"],
@@ -287,6 +293,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                     continue
 
                 total_filtrados += registros_encontrados
+                fluxo_resumo.append((fluxo_data["nome"], registros_encontrados))
 
                 # Converter para lista de dicts com limpeza de tipos
                 registros = df.to_dict(orient="records")
@@ -351,7 +358,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
         )
         db.add(run)
         db.commit()
-        notify_result(automacao_nome, overall_status)
+        notify_result(automacao_nome, overall_status, fluxo_resumo=fluxo_resumo)
         return {
             "status": overall_status,
             "registros_encontrados": total_encontrados,
