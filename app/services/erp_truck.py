@@ -308,6 +308,8 @@ class PVSTruckClient(BaseERPClient):
                 log=f"Exportação concluída: {len(df)} registros",
             )
         else:
+            snippet = resp.text[:800].replace("\n", " ").replace("\r", "")
+            logger.warning(f"ERP Truck HTML inesperado — form={id_formulario} login={self.erp_login} snippet: {snippet}")
             raise Exception(
                 f"Resposta inesperada do ERP Truck. Content-Type: {content_type}, "
                 f"Content-Disposition: {content_disposition}"
