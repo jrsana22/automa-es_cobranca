@@ -45,7 +45,18 @@
 <!-- Toast container -->
 <div id="toast-container" class="toast-container"></div>
 
-<!-- Toast helper -->
+<!-- Confirm modal -->
+<div id="confirm-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:var(--space-8);min-width:320px;max-width:440px;width:90%;box-shadow:var(--shadow-lg);">
+        <div id="confirm-msg" style="font-size:0.95rem;color:var(--text-primary);margin-bottom:var(--space-6);line-height:1.5;"></div>
+        <div style="display:flex;justify-content:flex-end;gap:var(--space-3);">
+            <button id="confirm-cancel" class="btn btn-ghost btn-sm">Cancelar</button>
+            <button id="confirm-ok" class="btn btn-danger btn-sm">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast + Confirm helpers -->
 <script>
 function showToast(msg, type='info') {
     const c = document.getElementById('toast-container');
@@ -57,7 +68,26 @@ function showToast(msg, type='info') {
 }
 
 function confirmAction(msg) {
-    return confirm(msg);
+    return new Promise(resolve => {
+        const overlay = document.getElementById('confirm-overlay');
+        document.getElementById('confirm-msg').textContent = msg;
+        overlay.style.display = 'flex';
+
+        function cleanup(result) {
+            overlay.style.display = 'none';
+            document.getElementById('confirm-ok').removeEventListener('click', onOk);
+            document.getElementById('confirm-cancel').removeEventListener('click', onCancel);
+            overlay.removeEventListener('click', onOutside);
+            resolve(result);
+        }
+        const onOk = () => cleanup(true);
+        const onCancel = () => cleanup(false);
+        const onOutside = (e) => { if (e.target === overlay) cleanup(false); };
+
+        document.getElementById('confirm-ok').addEventListener('click', onOk);
+        document.getElementById('confirm-cancel').addEventListener('click', onCancel);
+        overlay.addEventListener('click', onOutside);
+    });
 }
 </script>
 

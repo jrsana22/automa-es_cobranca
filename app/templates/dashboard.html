@@ -207,14 +207,14 @@ async function executarUm(id) {
 }
 
 async function executarTodos() {
-    if (!confirmAction('Executar todas as automações ativas?')) return;
+    if (!await confirmAction('Executar todas as automações ativas?')) return;
     await fetch('/api/executar-todos', { method: 'POST' });
     showToast('Execução iniciada para todos os clientes.', 'success');
     schedulePoll();
 }
 
 async function deletar(id) {
-    if (!confirmAction('Excluir este cliente e todos os seus dados?')) return;
+    if (!await confirmAction('Excluir este cliente e todos os seus dados?')) return;
     await fetch(`/api/automacoes/${id}`, { method: 'DELETE' });
     document.getElementById(`client-${id}`)?.remove();
     showToast('Cliente excluído.', 'info');
