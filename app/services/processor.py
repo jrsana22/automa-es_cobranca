@@ -172,7 +172,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
 
                 # Esperar entre fluxos para evitar bloqueio do ERP
                 if erp_idx > 0 or i > 0:
-                    wait = 120 if agendado else 10
+                    wait = 120 if agendado else 30
                     log_parts.append(f"Aguardando {wait}s antes do próximo fluxo...")
                     time.sleep(wait)
 
