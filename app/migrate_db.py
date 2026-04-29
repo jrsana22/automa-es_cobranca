@@ -149,10 +149,10 @@ def migrate_add_fluxo_campos():
     # Mapeamento tipo → (formulario_id, situacao_id)
     tipo_map = {
         "preboleto": ("127000008", ""),
-        "vencendo_hoje": ("127000008", ""),
-        "cobranca_d1": ("127000007", "2"),
-        "cobranca_2_30": ("127000007", "2"),
-        "reativacao": ("127000007", "2"),
+        "vencendo_hoje": ("127000007", ""),
+        "cobranca_d1": ("127000007", ""),
+        "cobranca_2_30": ("127000007", ""),
+        "reativacao": ("127000007", ""),
     }
 
     if "formulario_id" not in columns:
@@ -193,6 +193,26 @@ def migrate_add_fluxo_campos():
         cur.execute("UPDATE fluxos SET sheets_aba = ? WHERE tipo = ?", (aba, tipo))
     conn.commit()
     print("Nomes das abas atualizados.")
+
+    conn.close()
+
+
+def migrate_fix_vencendo_hoje_formulario():
+    """Corrige formulario_id de vencendo_hoje de 127000008 para 127000007 nos registros existentes."""
+    if not os.path.exists(DB_PATH):
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM fluxos WHERE tipo='vencendo_hoje' AND formulario_id='127000008'")
+    count = cur.fetchone()[0]
+    if count > 0:
+        cur.execute("UPDATE fluxos SET formulario_id='127000007' WHERE tipo='vencendo_hoje' AND formulario_id='127000008'")
+        conn.commit()
+        print(f"Corrigidos {count} fluxos vencendo_hoje: 127000008 → 127000007")
+    else:
+        print("Fluxos vencendo_hoje já estão corretos (127000007).")
 
     conn.close()
 

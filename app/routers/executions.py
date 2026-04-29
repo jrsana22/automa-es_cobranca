@@ -19,6 +19,30 @@ router = APIRouter()
 _running_automations: set[int] = set()
 # Mapeia automacao_id → info do fluxo que está rodando agora
 _running_fluxo_info: dict[int, dict] = {}
+# Mapeia automacao_id → datetime de início (para detectar estado travado)
+_running_start_times: dict[int, object] = {}
+
+MAX_RUNTIME_HOURS = 2  # após 2h, considera estado travado e limpa automaticamente
+
+
+def _clear_running(automacao_id: int):
+    _running_automations.discard(automacao_id)
+    _running_fluxo_info.pop(automacao_id, None)
+    _running_start_times.pop(automacao_id, None)
+
+
+def _mark_running(automacao_id: int):
+    _running_automations.add(automacao_id)
+    _running_start_times[automacao_id] = agora()
+
+
+def _purge_stale_running():
+    """Remove entradas com mais de MAX_RUNTIME_HOURS do set de execução."""
+    limite = agora() - timedelta(hours=MAX_RUNTIME_HOURS)
+    stale = [aid for aid, t in _running_start_times.items() if t < limite]
+    for aid in stale:
+        logger.warning(f"Estado 'rodando' travado detectado (automacao_id={aid}). Limpando.")
+        _clear_running(aid)
 
 
 def _run_automation_bg(automacao_id: int):
@@ -48,8 +72,7 @@ def _run_automation_bg(automacao_id: int):
         logger.exception(f"Erro ao processar automação: {e}")
         notify_failure(f"Automação ID={automacao_id}", str(e))
     finally:
-        _running_automations.discard(automacao_id)
-        _running_fluxo_info.pop(automacao_id, None)
+        _clear_running(automacao_id)
         db.close()
 
 
@@ -74,7 +97,7 @@ def executar_automacao(automacao_id: int, db: Session = Depends(get_db)):
         }
 
     # Reservar o lock ANTES de iniciar a thread para evitar race condition
-    _running_automations.add(automacao_id)
+    _mark_running(automacao_id)
     thread = threading.Thread(
         target=_run_automation_bg,
         args=(automacao_id,),
@@ -106,8 +129,7 @@ def _run_single_fluxo_bg(automacao_id: int, fluxo_id: int):
         logger.exception(f"Erro ao processar fluxo {fluxo_id}: {e}")
         notify_failure(f"Fluxo ID={fluxo_id}", str(e))
     finally:
-        _running_automations.discard(automacao_id)
-        _running_fluxo_info.pop(automacao_id, None)
+        _clear_running(automacao_id)
         db.close()
 
 
@@ -128,7 +150,7 @@ def executar_fluxo(automacao_id: int, fluxo_id: int, db: Session = Depends(get_d
             "message": f"Automação já está em execução.",
         }
 
-    _running_automations.add(automacao_id)
+    _mark_running(automacao_id)
     thread = threading.Thread(
         target=_run_single_fluxo_bg,
         args=(automacao_id, fluxo_id),
@@ -145,6 +167,7 @@ def executar_todos(db: Session = Depends(get_db)):
 
     for automacao in automacoes:
         if automacao.id not in _running_automations:
+            _mark_running(automacao.id)
             thread = threading.Thread(
                 target=_run_automation_bg,
                 args=(automacao.id,),

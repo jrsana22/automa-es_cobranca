@@ -9,7 +9,7 @@ _BRASILIA = ZoneInfo("America/Sao_Paulo")
 
 
 def _agora_brasilia():
-    return datetime.now(_BRASILIA)
+    return datetime.now(_BRASILIA).replace(tzinfo=None)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base

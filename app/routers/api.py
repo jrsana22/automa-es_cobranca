@@ -379,8 +379,9 @@ def status_em_tempo_real(db: Session = Depends(get_db)):
     qual fluxo está rodando agora, e último status de cada fluxo.
     """
     from sqlalchemy.orm import joinedload
-    from app.routers.executions import _running_automations, _running_fluxo_info
+    from app.routers.executions import _running_automations, _running_fluxo_info, _purge_stale_running
 
+    _purge_stale_running()
     running = list(_running_automations)
 
     # Buscar todas as automações com ERP configs e fluxos em 1 query

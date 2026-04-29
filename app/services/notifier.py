@@ -17,27 +17,41 @@ NOTIFY_NUMBER = "553186058233"
 NOTIFY_SUCCESS_NUMBER = "5531986058233"
 
 
-def notify_success(automation_name: str) -> bool:
-    """Envia confirmação de execução via WhatsApp."""
+def notify_result(automation_name: str, status: str) -> bool:
+    """Envia notificação ao final de cada execução, independente do status."""
+    if status == "sucesso":
+        header = "✅ PLANILHA ATUALIZADA"
+        body = "O preenchimento da planilha de cobrança foi concluído."
+    elif status == "parcial":
+        header = "⚠️ PLANILHA ATUALIZADA COM ALERTAS"
+        body = "Alguns fluxos concluíram com erro. Verifique o painel."
+    else:
+        header = "❌ FALHA NA ATUALIZAÇÃO"
+        body = "A automação encontrou erros. Verifique o painel."
+
     text = (
-        f"✅ PLANILHA ATUALIZADA\n\n"
+        f"{header}\n\n"
         f"Cliente: {automation_name}\n"
-        f"O preenchimento da planilha de cobrança foi concluído.\n"
-        f"Horário: {agora().strftime('%d/%m/%Y %H:%M')}"
+        f"{body}\n"
+        f"Horário: {agora().strftime('%d/%m/%Y - %H:%M')}"
     )
     payload = {"number": NOTIFY_SUCCESS_NUMBER, "text": text}
     headers = {"token": UAZAPI_TOKEN, "Content-Type": "application/json"}
     try:
         resp = requests.post(UAZAPI_URL, json=payload, headers=headers, timeout=10)
         if resp.status_code == 200:
-            logger.info(f"Confirmação WhatsApp enviada para {automation_name}")
+            logger.info(f"Notificação WhatsApp enviada: {automation_name} [{status}]")
             return True
         else:
-            logger.error(f"Falha ao enviar confirmação WhatsApp: {resp.status_code}")
+            logger.error(f"Falha ao enviar notificação WhatsApp: {resp.status_code}")
             return False
     except Exception as e:
-        logger.error(f"Erro ao enviar confirmação WhatsApp: {e}")
+        logger.error(f"Erro ao enviar notificação WhatsApp: {e}")
         return False
+
+
+def notify_success(automation_name: str) -> bool:
+    return notify_result(automation_name, "sucesso")
 
 
 def _classify_error(error_message: str) -> str:

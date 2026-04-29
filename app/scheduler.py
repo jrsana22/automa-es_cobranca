@@ -21,7 +21,7 @@ from app.database import SessionLocal
 from app.models import Automacao, Execucao
 from app.services.processor import processar_automacao
 from app.services.notifier import notify_failure
-from app.routers.executions import _running_automations
+from app.routers.executions import _running_automations, _mark_running, _clear_running
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def executar_automacao_agendada(automacao_id: int):
             logger.warning(msg)
             return
 
-        _running_automations.add(automacao_id)
+        _mark_running(automacao_id)
         _backup_db()
         logger.info(f"Executando automação agendada: {automacao.nome} (ID={automacao_id})")
 
@@ -76,7 +76,7 @@ def executar_automacao_agendada(automacao_id: int):
         logger.exception(f"Erro ao executar automação agendada {automacao_id}: {e}")
         notify_failure(f"Automação ID={automacao_id}", str(e))
     finally:
-        _running_automations.discard(automacao_id)
+        _clear_running(automacao_id)
         db.close()
 
 

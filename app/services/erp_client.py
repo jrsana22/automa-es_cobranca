@@ -27,6 +27,8 @@ class ExportResult:
 class BaseERPClient(ABC):
     """Base class para clients de ERP. Cada ERP implementa suas próprias rotas."""
 
+    REQUEST_TIMEOUT = 90  # segundos — evita threads presas por conexões penduradas
+
     def __init__(self, base_url: str, login: str, senha: str):
         self.base_url = base_url.rstrip("/")
         self.erp_login = login
@@ -36,6 +38,13 @@ class BaseERPClient(ABC):
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         })
+        # Injetar timeout padrão em todos os requests sem precisar mudar cada chamada
+        _orig_request = self.session.request
+        _timeout = self.REQUEST_TIMEOUT
+        def _request_with_timeout(*args, **kwargs):
+            kwargs.setdefault("timeout", _timeout)
+            return _orig_request(*args, **kwargs)
+        self.session.request = _request_with_timeout
 
     @abstractmethod
     def login(self) -> bool:

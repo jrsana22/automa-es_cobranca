@@ -14,7 +14,7 @@ import pandas as pd
 
 from app.models import Automacao, ERPConfig, Fluxo, Execucao, AutomacaoRun
 from app.services.erp_factory import criar_erp_client
-from app.services.notifier import notify_failure, notify_success
+from app.services.notifier import notify_failure, notify_result
 from app.services.sheets import SheetsWriter
 from app.crypto import decrypt_password
 
@@ -208,8 +208,14 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                                 )
                             break
                         except Exception as _e:
-                            if _retry == 0 and ("401" in str(_e) or "Unauthorized" in str(_e)):
-                                log_parts.append(f"401 detectado — re-login automático...")
+                            _err_str = str(_e)
+                            _session_expired = (
+                                "401" in _err_str
+                                or "Unauthorized" in _err_str
+                                or "Resposta inesperada" in _err_str
+                            )
+                            if _retry == 0 and _session_expired:
+                                log_parts.append(f"Sessão expirada ({_err_str[:80]}) — re-login automático...")
                                 client.close()
                                 client = criar_erp_client(minimal_config, senha)
                                 if not client.login():
@@ -345,8 +351,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
         )
         db.add(run)
         db.commit()
-        if overall_status == "sucesso":
-            notify_success(automacao_nome)
+        notify_result(automacao_nome, overall_status)
         return {
             "status": overall_status,
             "registros_encontrados": total_encontrados,
