@@ -12,7 +12,7 @@ from app.tz import agora, hoje
 
 import pandas as pd
 
-from app.models import Automacao, ERPConfig, Fluxo, Execucao
+from app.models import Automacao, ERPConfig, Fluxo, Execucao, AutomacaoRun
 from app.services.erp_factory import criar_erp_client
 from app.services.notifier import notify_failure, notify_success
 from app.services.sheets import SheetsWriter
@@ -44,6 +44,8 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
       1. Login no ERP (com retry)
       2. Para cada fluxo ativo, exportar com filtros próprios e escrever na aba
     """
+    import time as _time
+    _run_start = _time.monotonic()
     log_parts = []
     overall_status = "sucesso"
     total_encontrados = 0
@@ -193,15 +195,28 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                 # Exportar sem filtro de data — ERP não filtra; aplicamos client-side
                 try:
                     # Form 127000008 (pré-boleto) precisa de datas e tem coluna "vencimento"
-                    if fluxo_data["formulario_id"] == "127000008":
-                        resultado = client.exportar_form_008(data_min, data_max)
-                    else:
-                        resultado = client.exportar_inadimplencia(
-                            id_formulario=fluxo_data["formulario_id"],
-                            id_situacao=fluxo_data["situacao_id"],
-                            dt_inicial="",
-                            dt_final="",
-                        )
+                    for _retry in range(2):
+                        try:
+                            if fluxo_data["formulario_id"] == "127000008":
+                                resultado = client.exportar_form_008(data_min, data_max)
+                            else:
+                                resultado = client.exportar_inadimplencia(
+                                    id_formulario=fluxo_data["formulario_id"],
+                                    id_situacao=fluxo_data["situacao_id"],
+                                    dt_inicial="",
+                                    dt_final="",
+                                )
+                            break
+                        except Exception as _e:
+                            if _retry == 0 and ("401" in str(_e) or "Unauthorized" in str(_e)):
+                                log_parts.append(f"401 detectado — re-login automático...")
+                                client.close()
+                                client = criar_erp_client(minimal_config, senha)
+                                if not client.login():
+                                    raise Exception(f"Re-login falhou após 401: {_e}")
+                                log_parts.append("Re-login OK — repetindo exportação...")
+                            else:
+                                raise
                     df = resultado.dataframe
                     registros_bruto = len(df)
                     log_parts.append(f"Registros exportados (bruto): {registros_bruto}")
@@ -318,7 +333,20 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
 
             client.close()
 
-        notify_success(automacao_nome)
+        _duracao = int(_time.monotonic() - _run_start)
+        run = AutomacaoRun(
+            automacao_id=automacao_id,
+            status=overall_status,
+            agendado=agendado,
+            registros_encontrados=total_encontrados,
+            registros_filtrados=total_filtrados,
+            log_completo="\n".join(log_parts),
+            duracao_segundos=_duracao,
+        )
+        db.add(run)
+        db.commit()
+        if overall_status == "sucesso":
+            notify_success(automacao_nome)
         return {
             "status": overall_status,
             "registros_encontrados": total_encontrados,
@@ -331,6 +359,21 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
         error_msg = str(e)
         log_parts.append(f"ERRO: {error_msg}")
         notify_failure(f"Automação", error_msg)
+        try:
+            _duracao = int(_time.monotonic() - _run_start)
+            run = AutomacaoRun(
+                automacao_id=automacao_id,
+                status="erro",
+                agendado=agendado,
+                registros_encontrados=0,
+                registros_filtrados=0,
+                log_completo="\n".join(log_parts),
+                duracao_segundos=_duracao,
+            )
+            db.add(run)
+            db.commit()
+        except Exception:
+            pass
         return {
             "status": "erro",
             "registros_encontrados": 0,

@@ -5,6 +5,10 @@ Inclui lock por automação (impede execução simultânea do mesmo automation_i
 """
 
 import logging
+import os
+import shutil
+import threading
+import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from zoneinfo import ZoneInfo
@@ -24,6 +28,19 @@ logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler(timezone=BRASILIA_TZ)
 
 
+DB_PATH = "/app/data/automacao.db"
+DB_BACKUP_PATH = "/app/data/automacao.db.bak"
+
+
+def _backup_db():
+    try:
+        if os.path.exists(DB_PATH):
+            shutil.copy2(DB_PATH, DB_BACKUP_PATH)
+            logger.info("Backup do banco realizado.")
+    except Exception as e:
+        logger.warning(f"Falha no backup do banco: {e}")
+
+
 def executar_automacao_agendada(automacao_id: int):
     """Callback executado pelo scheduler para uma automação específica."""
     db = SessionLocal()
@@ -40,6 +57,7 @@ def executar_automacao_agendada(automacao_id: int):
             return
 
         _running_automations.add(automacao_id)
+        _backup_db()
         logger.info(f"Executando automação agendada: {automacao.nome} (ID={automacao_id})")
 
         try:
@@ -102,3 +120,23 @@ def iniciar_scheduler(db: Session):
     if not scheduler.running:
         scheduler.start()
         logger.info("Scheduler iniciado")
+
+
+def iniciar_watchdog():
+    """Inicia thread que monitora o scheduler e reinicia se morrer."""
+    def _watchdog():
+        while True:
+            time.sleep(60)
+            if not scheduler.running:
+                logger.warning("Scheduler parou! Reiniciando...")
+                try:
+                    db = SessionLocal()
+                    iniciar_scheduler(db)
+                    db.close()
+                    logger.info("Scheduler reiniciado pelo watchdog.")
+                except Exception as e:
+                    logger.error(f"Watchdog falhou ao reiniciar scheduler: {e}")
+
+    t = threading.Thread(target=_watchdog, daemon=True, name="scheduler-watchdog")
+    t.start()
+    logger.info("Watchdog do scheduler iniciado.")

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Saúde do Sistema{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Saúde do Sistema</h1>
+</div>
+
+<div class="page-container">
+
+    <!-- Scheduler status -->
+    <div class="card" style="margin-bottom: var(--space-6);">
+        <div class="card-header">
+            <h2 class="card-title">Scheduler</h2>
+        </div>
+        <div style="padding: var(--space-4) var(--space-6);">
+            {% if scheduler_running %}
+            <span class="badge badge-success" style="font-size:0.9rem;padding:var(--space-2) var(--space-4);">&#9679; Rodando</span>
+            {% else %}
+            <span class="badge badge-error" style="font-size:0.9rem;padding:var(--space-2) var(--space-4);">&#9679; Parado</span>
+            {% endif %}
+        </div>
+
+        {% if jobs %}
+        <div class="table-container" style="margin-top:0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Job</th>
+                        <th>Próxima execução</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td style="color:var(--text-primary);font-weight:500;">{{ job.name }}</td>
+                        <td>{{ job.next_run }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="padding: var(--space-4) var(--space-6); color: var(--text-muted);">Nenhum job agendado.</p>
+        {% endif %}
+    </div>
+
+    <!-- Histórico de runs -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Histórico de Execuções (últimas 50)</h2>
+        </div>
+
+        {% if runs %}
+        <div class="table-container" style="margin-top:0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                        <th>Origem</th>
+                        <th style="text-align:right">Encontrados</th>
+                        <th style="text-align:right">Filtrados</th>
+                        <th style="text-align:right">Duração</th>
+                        <th>Log</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for run in runs %}
+                    <tr>
+                        <td style="color:var(--text-primary);font-weight:500;">{{ run.automacao_nome }}</td>
+                        <td>{{ run.data }}</td>
+                        <td>
+                            {% if run.status == 'sucesso' %}
+                            <span class="badge badge-success">sucesso</span>
+                            {% elif run.status == 'parcial' %}
+                            <span class="badge badge-warning">parcial</span>
+                            {% else %}
+                            <span class="badge badge-error">erro</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if run.agendado %}
+                            <span class="badge" style="background:var(--bg-tertiary);color:var(--text-secondary);">agendado</span>
+                            {% else %}
+                            <span class="badge" style="background:var(--bg-tertiary);color:var(--text-secondary);">manual</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:right">{{ run.registros_encontrados }}</td>
+                        <td style="text-align:right">{{ run.registros_filtrados }}</td>
+                        <td style="text-align:right">
+                            {% if run.duracao is not none %}{{ run.duracao }}s{% else %}—{% endif %}
+                        </td>
+                        <td>
+                            {% if run.log_completo %}
+                            <button class="btn btn-ghost btn-sm"
+                                onclick="document.getElementById('log-modal-{{ run.id }}').style.display='flex'">
+                                Ver log
+                            </button>
+                            <!-- Log modal -->
+                            <div id="log-modal-{{ run.id }}"
+                                style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;"
+                                onclick="if(event.target===this)this.style.display='none'">
+                                <div style="background:var(--bg-secondary);border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:var(--space-6);width:90%;max-width:760px;max-height:80vh;display:flex;flex-direction:column;gap:var(--space-4);">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <strong style="color:var(--text-primary);">{{ run.automacao_nome }} — {{ run.data }}</strong>
+                                        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('log-modal-{{ run.id }}').style.display='none'">✕</button>
+                                    </div>
+                                    <pre style="overflow:auto;font-size:0.78rem;line-height:1.6;color:var(--text-secondary);white-space:pre-wrap;word-break:break-word;flex:1;">{{ run.log_completo }}</pre>
+                                </div>
+                            </div>
+                            {% else %}
+                            <span style="color:var(--text-muted)">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="padding: var(--space-6); color: var(--text-muted);">Nenhuma execução registrada ainda.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

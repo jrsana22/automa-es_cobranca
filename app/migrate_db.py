@@ -197,6 +197,37 @@ def migrate_add_fluxo_campos():
     conn.close()
 
 
+def migrate_add_automacao_runs():
+    """Cria a tabela automacao_runs se não existir."""
+    if not os.path.exists(DB_PATH):
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='automacao_runs'")
+    if cur.fetchone():
+        conn.close()
+        return
+
+    cur.execute("""
+        CREATE TABLE automacao_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            automacao_id INTEGER NOT NULL REFERENCES automacoes(id),
+            data DATETIME NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'sucesso',
+            agendado BOOLEAN NOT NULL DEFAULT 0,
+            registros_encontrados INTEGER DEFAULT 0,
+            registros_filtrados INTEGER DEFAULT 0,
+            log_completo TEXT,
+            duracao_segundos INTEGER
+        )
+    """)
+    conn.commit()
+    conn.close()
+    print("Tabela 'automacao_runs' criada.")
+
+
 if __name__ == "__main__":
     migrate()
     migrate_add_dias_semana()

@@ -9,9 +9,10 @@ from fastapi.templating import Jinja2Templates
 
 from app.database import init_db, SessionLocal
 from app.routers import dashboard, api, executions
-from app.migrate_db import migrate_add_dias_semana, migrate_add_fluxo_campos
+from app.routers import saude as saude_router
+from app.migrate_db import migrate_add_dias_semana, migrate_add_fluxo_campos, migrate_add_automacao_runs
 from app.migrate_multi_erp import migrate_multi_erp
-from app.scheduler import iniciar_scheduler, scheduler
+from app.scheduler import iniciar_scheduler, iniciar_watchdog, scheduler
 
 
 @asynccontextmanager
@@ -20,9 +21,11 @@ async def lifespan(app: FastAPI):
     migrate_add_dias_semana()
     migrate_add_fluxo_campos()
     migrate_multi_erp()
+    migrate_add_automacao_runs()
     db = SessionLocal()
     try:
         iniciar_scheduler(db)
+        iniciar_watchdog()
     finally:
         db.close()
     yield
@@ -38,3 +41,4 @@ templates = Jinja2Templates(directory="app/templates")
 app.include_router(dashboard.router)
 app.include_router(api.router, prefix="/api")
 app.include_router(executions.router, prefix="/api")
+app.include_router(saude_router.router)

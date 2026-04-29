@@ -124,6 +124,7 @@ class Automacao(Base):
     # Relationships
     erp_configs: Mapped[list["ERPConfig"]] = relationship(back_populates="automacao", cascade="all, delete-orphan")
     execucoes: Mapped[list["Execucao"]] = relationship(back_populates="automacao", cascade="all, delete-orphan")
+    runs: Mapped[list["AutomacaoRun"]] = relationship(back_populates="automacao", cascade="all, delete-orphan")
 
     @property
     def all_fluxos(self) -> list["Fluxo"]:
@@ -200,3 +201,21 @@ class Execucao(Base):
     automacao: Mapped["Automacao"] = relationship(back_populates="execucoes")
     erp_config: Mapped[Optional["ERPConfig"]] = relationship(back_populates="execucoes")
     fluxo: Mapped[Optional["Fluxo"]] = relationship(back_populates="execucoes")
+
+
+class AutomacaoRun(Base):
+    """Log completo de cada execução da automação (1 registro por run, não por fluxo)."""
+    __tablename__ = "automacao_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    automacao_id: Mapped[int] = mapped_column(Integer, ForeignKey("automacoes.id"), nullable=False)
+    data: Mapped[datetime] = mapped_column(DateTime, default=_agora_brasilia)
+    # sucesso / parcial / erro
+    status: Mapped[str] = mapped_column(String(20), default="sucesso")
+    agendado: Mapped[bool] = mapped_column(Boolean, default=False)
+    registros_encontrados: Mapped[int] = mapped_column(Integer, default=0)
+    registros_filtrados: Mapped[int] = mapped_column(Integer, default=0)
+    log_completo: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    duracao_segundos: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    automacao: Mapped["Automacao"] = relationship(back_populates="runs")

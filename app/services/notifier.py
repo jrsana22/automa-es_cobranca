@@ -40,6 +40,18 @@ def notify_success(automation_name: str) -> bool:
         return False
 
 
+def _classify_error(error_message: str) -> str:
+    msg = error_message.lower()
+    if any(x in msg for x in ["credencial", "login", "401", "unauthorized", "senha", "invalid"]):
+        return "🔐 ERRO DE CREDENCIAL"
+    elif any(x in msg for x in ["timeout", "connection", "network", "refused", "unreachable"]):
+        return "🌐 ERRO DE REDE"
+    elif any(x in msg for x in ["sheets", "google", "spreadsheet", "aba", "planilha"]):
+        return "📊 ERRO NA PLANILHA"
+    else:
+        return "⚠️ FALHA NA AUTOMAÇÃO"
+
+
 def notify_failure(automation_name: str, error_message: str) -> bool:
     """
     Envia alerta de falha via WhatsApp usando a uazapi.
@@ -51,8 +63,9 @@ def notify_failure(automation_name: str, error_message: str) -> bool:
     Returns:
         True se o alerta foi enviado com sucesso, False caso contrário.
     """
+    tipo = _classify_error(error_message)
     text = (
-        f"⚠️ FALHA NA AUTOMAÇÃO\n\n"
+        f"{tipo}\n\n"
         f"Cliente: {automation_name}\n"
         f"Erro: {error_message}\n"
         f"Horário: {agora().strftime('%d/%m/%Y %H:%M')}"
