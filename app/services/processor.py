@@ -238,13 +238,30 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                     if col_venc and registros_bruto > 0:
                         df[col_venc] = pd.to_datetime(df[col_venc], errors="coerce")
                         if fluxo_data["tipo"] == "vencendo_hoje":
-                            # Vencimento no Dia: filtra pela data completa de hoje
                             df = df[df[col_venc].dt.normalize() == pd.Timestamp(hoje_dt.date())]
                         else:
                             df = df[
                                 (df[col_venc].dt.normalize() >= pd.Timestamp(data_min.date())) &
                                 (df[col_venc].dt.normalize() <= pd.Timestamp(data_max.date()))
                             ]
+
+                    # vencendo_hoje: complementa com form 007 (registros que já venceram hoje e migraram para inadimplência)
+                    if fluxo_data["tipo"] == "vencendo_hoje":
+                        try:
+                            res_007 = client.exportar_inadimplencia(
+                                id_formulario="127000007", id_situacao="", dt_inicial="", dt_final=""
+                            )
+                            df_007 = res_007.dataframe
+                            if "vencimento_Parcela" in df_007.columns:
+                                df_007["vencimento_Parcela"] = pd.to_datetime(df_007["vencimento_Parcela"], errors="coerce")
+                                df_007 = df_007[df_007["vencimento_Parcela"].dt.normalize() == pd.Timestamp(hoje_dt.date())]
+                            else:
+                                df_007 = pd.DataFrame()
+                            if len(df_007) > 0:
+                                df = pd.concat([df, df_007], ignore_index=True)
+                                log_parts.append(f"Form 007: {len(df_007)} registros adicionais com vencimento hoje")
+                        except Exception as _e007:
+                            log_parts.append(f"Aviso: form 007 não consultado para vencendo_hoje — {_e007}")
 
                     registros_encontrados = len(df)
                     total_encontrados += registros_encontrados
