@@ -94,7 +94,7 @@ class SheetsWriter:
     def _ensure_sheet_exists(self, spreadsheet_id: str, aba: str) -> str:
         """
         Verifica se a aba existe na planilha (case-insensitive, ignora espaços extras).
-        Se não existir, cria. Retorna o nome real da aba.
+        Nunca cria abas — lança erro se não encontrar.
         """
         try:
             spreadsheet = self._retry_sheets_call(
@@ -103,7 +103,6 @@ class SheetsWriter:
             ).execute()
             sheets = spreadsheet.get("sheets", [])
 
-            # Comparação case-insensitive e sem espaços extras
             aba_normalizada = aba.strip().lower()
             for s in sheets:
                 title = s["properties"]["title"]
@@ -111,24 +110,12 @@ class SheetsWriter:
                     logger.info(f"Aba '{aba}' encontrada como '{title}'.")
                     return title
 
-            # Não encontrou — criar
-            logger.info(f"Aba '{aba}' não existe. Criando...")
-            request_body = {
-                "addSheet": {
-                    "properties": {
-                        "title": aba,
-                    }
-                }
-            }
-            self._retry_sheets_call(
-                self.service.spreadsheets().batchUpdate,
-                spreadsheetId=spreadsheet_id,
-                body={"requests": [request_body]},
-            ).execute()
-            logger.info(f"Aba '{aba}' criada com sucesso.")
-            return aba
+            abas_disponiveis = [s["properties"]["title"] for s in sheets]
+            raise ValueError(
+                f"Aba '{aba}' não encontrada na planilha. Abas disponíveis: {abas_disponiveis}"
+            )
         except HttpError as e:
-            logger.error(f"Erro ao verificar/criar aba '{aba}': {e}")
+            logger.error(f"Erro ao verificar aba '{aba}': {e}")
             raise
 
     def write_data(
