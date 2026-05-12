@@ -417,6 +417,7 @@ def status_em_tempo_real(db: Session = Depends(get_db)):
                     auto.id in _running_automations
                     and auto.id in _running_fluxo_info
                     and _running_fluxo_info[auto.id].get("fluxo") == fluxo.nome
+                    and _running_fluxo_info[auto.id].get("erp") == erp_config.erp_tipo
                 )
                 if is_running_now:
                     fluxos_status[str(auto.id)][key] = {
