@@ -12,6 +12,7 @@ from app.routers import dashboard, api, executions
 from app.routers import saude as saude_router
 from app.migrate_db import migrate_add_dias_semana, migrate_add_fluxo_campos, migrate_add_automacao_runs, migrate_fix_vencendo_hoje_formulario
 from app.migrate_multi_erp import migrate_multi_erp
+from app.migrate_truck_situacao import migrate_truck_situacao
 from app.scheduler import iniciar_scheduler, iniciar_watchdog, scheduler
 
 
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI):
     migrate_add_fluxo_campos()
     migrate_fix_vencendo_hoje_formulario()
     migrate_multi_erp()
+    migrate_truck_situacao()
     migrate_add_automacao_runs()
     db = SessionLocal()
     try:

@@ -191,6 +191,11 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                     # Registros vencendo hoje estão no form 127000008 (pré-boleto), não no 127000007
                     data_min = hoje_dt
                     data_max = hoje_dt + timedelta(days=1)
+                elif fluxo_data["tipo"] == "cobranca_d1":
+                    # Segunda-feira: captura sexta (boletos do fim de semana não existem)
+                    dias_atras = 3 if hoje_dt.weekday() == 0 else 1
+                    data_min = hoje_dt - timedelta(days=dias_atras)
+                    data_max = data_min
                 else:
                     data_min = hoje_dt + timedelta(days=fluxo_data["filtro_dias_min"])
                     data_max = hoje_dt + timedelta(days=fluxo_data["filtro_dias_max"])
