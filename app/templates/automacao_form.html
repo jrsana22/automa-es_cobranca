@@ -7,7 +7,7 @@
 </div>
 
 <div class="page-container">
-    <form action="/api/automacoes{% if automacao %}/{{ automacao.id }}{% endif %}" method="POST">
+    <form action="/api/automacoes{% if automacao %}/{{ automacao.id }}{% endif %}" method="POST" novalidate>
 
         <!-- Dados Gerais -->
         <div class="card" style="margin-bottom: 1.5rem;">
@@ -111,7 +111,7 @@
                             {% set aba_value = fluxo.sheets_aba if fluxo else nome_padrao %}
                             {% set ativo_checked = fluxo.ativo if fluxo else true %}
                         {% else %}
-                            {% set brasil_abas = {"preboleto": "D-7 - PRÉ-BOLETO", "vencendo_hoje": "VENCIMENTO NO DIA", "cobranca_d1": "D+1 - COBRANÇA", "cobranca_2_30": "COBRANÇA 2-30D", "reativacao": "REATIVAÇÃO"} %}
+                            {% set brasil_abas = {"preboleto": "D-7 - PRÉ-BOLETO", "vencendo_hoje": "VENCIMENTO NO DIA", "cobranca_d1": "D+1 - COBRANÇA", "cobranca_2_30": "COBRANÇA - 2 DIAS VENCIDO A CADA 3 DIAS", "reativacao": "REATIVAÇÃO"} %}
                             {% set aba_value = brasil_abas[tipo] %}
                             {% set ativo_checked = true %}
                         {% endif %}
