@@ -10,7 +10,7 @@ Depois:
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "automacao.db")
+DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "automacao.db")
 
 _TRUCK_SITUACOES = {
     "cobranca_d1":   "2",
