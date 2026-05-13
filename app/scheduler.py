@@ -105,7 +105,7 @@ def atualizar_agendamentos(db: Session):
 
         scheduler.add_job(
             executar_automacao_agendada,
-            trigger=CronTrigger(hour=hora, minute=minuto, day_of_week=dias_cron),
+            trigger=CronTrigger(hour=hora, minute=minuto, day_of_week=dias_cron, timezone=BRASILIA_TZ),
             id=f"automacao_{automacao.id}",
             name=f"Automação: {automacao.nome}",
             args=[automacao.id],
