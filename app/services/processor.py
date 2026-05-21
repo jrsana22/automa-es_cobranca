@@ -273,6 +273,13 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                         except Exception as _e007:
                             log_parts.append(f"Aviso: form 007 não consultado para vencendo_hoje — {_e007}")
 
+                    # Remover duplicatas exatas vindas do ERP
+                    antes_dedup = len(df)
+                    df = df.drop_duplicates()
+                    dedup_removidas = antes_dedup - len(df)
+                    if dedup_removidas > 0:
+                        log_parts.append(f"Duplicatas removidas: {dedup_removidas} ({antes_dedup} → {len(df)})")
+
                     registros_encontrados = len(df)
                     total_encontrados += registros_encontrados
                     log_parts.append(f"Registros após filtro: {registros_encontrados}")
