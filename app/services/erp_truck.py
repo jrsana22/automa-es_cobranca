@@ -52,6 +52,7 @@ class PVSTruckClient(BaseERPClient):
         self._cd_papel: Optional[str] = None
         self._cd_empresa: Optional[str] = None
         self._nr_versao: Optional[str] = None
+        self._id_regional: Optional[str] = None
 
     def _extrair_hidden_fields(self, html: str) -> dict:
         """Extrai campos hidden do ASP.NET WebForms."""
@@ -166,8 +167,9 @@ class PVSTruckClient(BaseERPClient):
         self._cd_papel = hidden_fields.get("cd_papel", "")
         self._cd_empresa = hidden_fields.get("cd_empresa", "")
         self._nr_versao = hidden_fields.get("eng_nrversao", "")
+        self._id_regional = hidden_fields.get("id_regional", "")
 
-        logger.info(f"Tela carregada — eng_token={self._eng_token[:20]}... cd_empresa={self._cd_empresa}")
+        logger.info(f"Tela carregada — eng_token={self._eng_token[:20]}... cd_empresa={self._cd_empresa} id_regional={self._id_regional}")
         return hidden_fields
 
     def exportar_inadimplencia(
@@ -251,9 +253,9 @@ class PVSTruckClient(BaseERPClient):
             "txtid_pessoa_gerente_regional": "[Não selecionado]",
             "id_pessoa_gerente_regional": "",
             "lkpid_pessoa_gerente_regional": "[Não selecionado]",
-            "txtid_regional": "[Não selecionado]",
-            "id_regional": "",
-            "lkpid_regional": "[Não selecionado]",
+            "txtid_regional": self._id_regional or "[Não selecionado]",
+            "id_regional": self._id_regional or "",
+            "lkpid_regional": self._id_regional or "[Não selecionado]",
             "txtid_pessoa_consultor_lider": "[Não selecionado]",
             "id_pessoa_consultor_lider": "",
             "lkpid_pessoa_consultor_lider": "[Não selecionado]",
