@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Form
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, PlainTextResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database import get_db
-from app.models import Automacao, ERPConfig, Execucao, Fluxo, get_fluxos_padrao, ERP_TIPOS
+from app.models import Automacao, AutomacaoRun, ERPConfig, Execucao, Fluxo, get_fluxos_padrao, ERP_TIPOS
 from app.crypto import encrypt_password, decrypt_password
 from app.routers.executions import _run_automation_bg, _running_automations
 from app.scheduler import atualizar_agendamentos
@@ -462,6 +462,21 @@ def status_em_tempo_real(db: Session = Depends(get_db)):
         "running_info": running_info,
         "fluxos_status": fluxos_status,
     }
+
+
+@router.get("/automacoes/{automacao_id}/ultimo-log", response_class=PlainTextResponse)
+def ultimo_log(automacao_id: int, db: Session = Depends(get_db)):
+    """Retorna o log completo do último run da automação (para diagnóstico)."""
+    run = (
+        db.query(AutomacaoRun)
+        .filter(AutomacaoRun.automacao_id == automacao_id)
+        .order_by(AutomacaoRun.id.desc())
+        .first()
+    )
+    if not run:
+        raise HTTPException(status_code=404, detail="Nenhum run encontrado para esta automação")
+    header = f"Run #{run.id} | {run.status} | {run.data.strftime('%d/%m/%Y %H:%M')} | {run.duracao_segundos}s\n{'='*60}\n"
+    return header + (run.log_completo or "")
 
 
 @router.post("/test-login/{erp_config_id}")
