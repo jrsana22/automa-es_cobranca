@@ -239,8 +239,10 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                     log_parts.append(f"Colunas ERP: {list(df.columns)}")
 
                     # Detectar coluna de vencimento (form 127000007=vencimento_Parcela, form 127000008=vencimento)
-                    col_venc = next((c for c in ["vencimento_Parcela", "vencimento"] if c in df.columns), None)
+                    COLUNAS_VENCIMENTO = ["vencimento_Parcela", "vencimento", "dt_vencimento", "Vencimento", "Vencimento_Parcela"]
+                    col_venc = next((c for c in COLUNAS_VENCIMENTO if c in df.columns), None)
                     if col_venc and registros_bruto > 0:
+                        log_parts.append(f"Coluna de vencimento detectada: '{col_venc}'")
                         df[col_venc] = pd.to_datetime(df[col_venc], dayfirst=True, errors="coerce")
                         if fluxo_data["tipo"] == "vencendo_hoje":
                             df = df[df[col_venc].dt.normalize() == pd.Timestamp(hoje_dt.date())]
@@ -249,6 +251,9 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                                 (df[col_venc].dt.normalize() >= pd.Timestamp(data_min.date())) &
                                 (df[col_venc].dt.normalize() <= pd.Timestamp(data_max.date()))
                             ]
+                    elif registros_bruto > 0:
+                        log_parts.append(f"AVISO: coluna de vencimento não encontrada nas colunas do ERP — registros bloqueados para evitar envio sem filtro. Colunas: {list(df.columns)}")
+                        df = df.iloc[0:0]
 
                     # vencendo_hoje: complementa com form 007 (registros que já venceram hoje e migraram para inadimplência)
                     if fluxo_data["tipo"] == "vencendo_hoje":
