@@ -241,7 +241,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                     # Detectar coluna de vencimento (form 127000007=vencimento_Parcela, form 127000008=vencimento)
                     col_venc = next((c for c in ["vencimento_Parcela", "vencimento"] if c in df.columns), None)
                     if col_venc and registros_bruto > 0:
-                        df[col_venc] = pd.to_datetime(df[col_venc], errors="coerce")
+                        df[col_venc] = pd.to_datetime(df[col_venc], dayfirst=True, errors="coerce")
                         if fluxo_data["tipo"] == "vencendo_hoje":
                             df = df[df[col_venc].dt.normalize() == pd.Timestamp(hoje_dt.date())]
                         else:
@@ -258,7 +258,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                             )
                             df_007 = res_007.dataframe
                             if "vencimento_Parcela" in df_007.columns:
-                                df_007["vencimento_Parcela"] = pd.to_datetime(df_007["vencimento_Parcela"], errors="coerce")
+                                df_007["vencimento_Parcela"] = pd.to_datetime(df_007["vencimento_Parcela"], dayfirst=True, errors="coerce")
                                 df_007 = df_007[df_007["vencimento_Parcela"].dt.normalize() == pd.Timestamp(hoje_dt.date())]
                             else:
                                 df_007 = pd.DataFrame()
