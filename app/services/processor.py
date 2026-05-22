@@ -224,6 +224,11 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                                 or "Unauthorized" in _err_str
                                 or "Resposta inesperada" in _err_str
                             )
+                            _network_error = any(x in _err_str.lower() for x in [
+                                "timeout", "connectionerror", "connection error",
+                                "connection refused", "unreachable", "remotedisconnected",
+                                "connection reset", "broken pipe", "chunkedencodingerror",
+                            ])
                             if _retry == 0 and _session_expired:
                                 log_parts.append(f"Sessão expirada ({_err_str[:80]}) — re-login automático...")
                                 client.close()
@@ -231,6 +236,9 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                                 if not client.login():
                                     raise Exception(f"Re-login falhou após 401: {_e}")
                                 log_parts.append("Re-login OK — repetindo exportação...")
+                            elif _retry == 0 and _network_error:
+                                log_parts.append(f"Erro de rede ({_err_str[:80]}) — aguardando 30s e repetindo...")
+                                time.sleep(30)
                             else:
                                 raise
                     df = resultado.dataframe

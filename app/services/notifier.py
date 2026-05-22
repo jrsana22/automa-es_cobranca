@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 UAZAPI_URL = "https://wwwsolucoesdeia.uazapi.com/send/text"
 UAZAPI_TOKEN = "9bd6907a-28b3-4c06-be3f-659b1f34c549"
-NOTIFY_NUMBER = "553186058233"
+NOTIFY_NUMBER = "5531986058233"
 NOTIFY_SUCCESS_NUMBER = "5531986058233"
 
 
