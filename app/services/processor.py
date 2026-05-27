@@ -223,6 +223,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                                 "401" in _err_str
                                 or "Unauthorized" in _err_str
                                 or "Resposta inesperada" in _err_str
+                                or "500 Server Error" in _err_str  # ASP.NET retorna 500 quando sessão expira silenciosamente
                             )
                             _network_error = any(x in _err_str.lower() for x in [
                                 "timeout", "connectionerror", "connection error",

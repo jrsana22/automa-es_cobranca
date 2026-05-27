@@ -311,6 +311,9 @@ class PVSTruckClient(BaseERPClient):
             f"{self.base_url}/Excel.aspx",
             data=export_data,
         )
+        if not resp.ok:
+            snippet = resp.text[:600].replace("\n", " ").replace("\r", "")
+            logger.error(f"Excel.aspx Truck retornou {resp.status_code}. Resposta: {snippet[:400]}")
         resp.raise_for_status()
 
         # Step 4: Verificar se a resposta é XLSX
