@@ -355,12 +355,31 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
 
                 # Escrever no Google Sheets
                 log_parts.append(f"Escrevendo {len(registros)} registros na aba '{fluxo_data['sheets_aba']}'...")
-                resultado_sheets = writer.write_data(
-                    sheets_url=sheets_url,
-                    aba=fluxo_data["sheets_aba"],
-                    data=registros,
-                    mapeamento=mapeamento,
-                )
+                try:
+                    resultado_sheets = writer.write_data(
+                        sheets_url=sheets_url,
+                        aba=fluxo_data["sheets_aba"],
+                        data=registros,
+                        mapeamento=mapeamento,
+                    )
+                except ValueError as e:
+                    # Aba não encontrada — erro de configuração, não derruba os outros fluxos
+                    err = str(e)
+                    log_parts.append(f"ERRO (aba não encontrada): {err}")
+                    notify_failure(automacao_nome, f"Fluxo '{fluxo_data['nome']}' [{erp_data['erp_tipo']}]: {err}")
+                    overall_status = "parcial"
+                    execucao = Execucao(
+                        automacao_id=automacao_id,
+                        erp_config_id=erp_data["id"],
+                        fluxo_id=fluxo_data["id"],
+                        status="erro",
+                        registros_encontrados=registros_encontrados,
+                        registros_filtrados=0,
+                        log=f"Aba não encontrada: {err}",
+                    )
+                    db.add(execucao)
+                    db.commit()
+                    continue
 
                 log_parts.append(f"Resultado: {resultado_sheets['log']}")
 
