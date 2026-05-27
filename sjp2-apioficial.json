@@ -1,0 +1,596 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $('Variáveis').item.json.redis_key }}",
+        "messageData": "={{ $json.sentence }}"
+      },
+      "id": "a46c7b9f-d1bc-4752-b648-40eae0c5d4af",
+      "name": "AI Message Buffer",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [4368, 400],
+      "credentials": { "redis": { "id": "l1Ep2GPm4cfjTxA3", "name": "Redis account" } }
+    },
+    {
+      "parameters": {
+        "content": "# Intervenção Humana \n### Se a mensagem for manual, bloqueia mensagens da automação por TTL \nTTL = Segundos\n60 = 1 Min\n900 = 15 Min",
+        "height": 552,
+        "width": 803
+      },
+      "id": "adfc1eeb-7351-48d0-af2f-ac3fc54bd505",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+                "conditions": [{ "leftValue": "={{ $json.block }}", "rightValue": "", "operator": { "type": "string", "operation": "empty", "singleValue": true } }],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IA PODE RESPONDER"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+                "conditions": [{ "id": "3ef0e01c-cc14-4663-bb4d-2905b350c3ab", "leftValue": "={{ $json.block }}", "rightValue": "true", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IA NAO PODE RESPONDER"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "48cbd184-44fe-4b98-90a4-c31e0dfb3fea",
+      "name": "Switch Block",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [416, 400]
+    },
+    {
+      "parameters": { "operation": "get", "propertyName": "block", "key": "={{ $('Variáveis').item.json.block_id }}", "options": {} },
+      "id": "b3a9cfb0-dd16-4b61-922f-a304bd7d80db",
+      "name": "Get Block Chat Id",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [176, 400],
+      "credentials": { "redis": { "id": "l1Ep2GPm4cfjTxA3", "name": "Redis account" } }
+    },
+    {
+      "parameters": { "content": "# Filtro\n## Remove mensagens do próprio robô\n", "height": 428, "width": 300, "color": 6 },
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [-320, 128],
+      "id": "d1867b73-840d-4f0a-a94b-8dc581a9c2bc", "name": "Sticky Note6"
+    },
+    {
+      "parameters": { "content": "# SDR Ninja\n### Quebra Objeções e vende o produto", "height": 520, "width": 400, "color": 2 },
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [3088, 176],
+      "id": "364d0e26-debe-41ff-af85-28bddea9522f", "name": "Sticky Note5"
+    },
+    {
+      "parameters": { "content": "# Tags\n### Cria tags para pesquisa na aba Executions", "height": 340, "width": 220, "color": 2 },
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [3760, 224],
+      "id": "8f8d5192-baa2-42cd-a14b-c692f0081d19", "name": "Sticky Note4"
+    },
+    {
+      "parameters": { "content": "# Loop\n### Entrega as mensagens em ordem, com um intervalo aleatório entre elas.\n", "height": 440, "width": 1080 },
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [4000, 224],
+      "id": "da88e829-fd57-4936-b3da-edfea8201009", "name": "Sticky Note3"
+    },
+    {
+      "parameters": { "content": "# Split\n### Quebra mensagem em mensagens menores\n", "height": 340, "width": 220, "color": 2 },
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [3520, 224],
+      "id": "0349346e-5b90-475b-82ab-ec1e19b7e701", "name": "Sticky Note2"
+    },
+    {
+      "parameters": { "content": "## Debounce\nConcatena mensagens quebradas\n\n**FIX**: If no new messages usa equals (não contains)\npara evitar múltiplas respostas quando mensagem curta\nestá contida em mensagem longa.", "height": 380, "width": 1120, "color": 3 },
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [1952, 256],
+      "id": "7a287b7e-7cc5-4cf5-8722-61611fd85a4f", "name": "Sticky Note"
+    },
+    {
+      "parameters": { "amount": 15 },
+      "id": "60980880-71f9-4f8e-be17-53a428a72166",
+      "name": "Wait2", "type": "n8n-nodes-base.wait", "typeVersion": 1.1,
+      "position": [2240, 432], "webhookId": "2f432779-1569-4646-b8e4-55053938d0b6"
+    },
+    {
+      "parameters": { "operation": "delete", "key": "={{ $('Variáveis').item.json.sender }}_debounce" },
+      "id": "9a85bf21-4a31-4337-8ff1-23a454bef915",
+      "name": "Clear Buffer", "type": "n8n-nodes-base.redis", "typeVersion": 1,
+      "position": [2912, 416],
+      "credentials": { "redis": { "id": "l1Ep2GPm4cfjTxA3", "name": "Redis account" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "conditions": [{ "id": "9e9b4155-e399-4936-a5db-2d79c8cb871f", "leftValue": "={{ $json.mensagem?.last() || \" \"}}", "rightValue": "={{ $('Message').item.json.mensagem }}", "operator": { "type": "string", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d71f8915-0d1d-4f79-bad8-fc9fb06073f5",
+      "name": "If no new messages", "type": "n8n-nodes-base.if", "typeVersion": 2,
+      "position": [2656, 432]
+    },
+    {
+      "parameters": { "operation": "get", "propertyName": "mensagem", "key": "={{ $('Variáveis').item.json.sender }}_debounce", "options": {} },
+      "id": "3016f3ff-2d35-4a93-8b98-e0279342b071",
+      "name": "Get Buffer Messages", "type": "n8n-nodes-base.redis", "typeVersion": 1,
+      "position": [2432, 432],
+      "credentials": { "redis": { "id": "l1Ep2GPm4cfjTxA3", "name": "Redis account" } }
+    },
+    {
+      "parameters": { "operation": "push", "list": "={{ $('Variáveis').item.json.sender }}_debounce", "messageData": "={{ $('Message').item.json.mensagem }}", "tail": true },
+      "id": "20e75204-40ac-427f-a609-06ce4dd59d0e",
+      "name": "Buffer", "type": "n8n-nodes-base.redis", "typeVersion": 1,
+      "position": [2032, 432],
+      "credentials": { "redis": { "id": "l1Ep2GPm4cfjTxA3", "name": "Redis account" } }
+    },
+    {
+      "parameters": { "dataToSave": { "values": [{ "key": "type", "value": "Message" }, { "key": "sender", "value": "={{ $('Variáveis').item.json.sender }}" }] } },
+      "type": "n8n-nodes-base.executionData", "typeVersion": 1,
+      "position": [3824, 384],
+      "id": "902d89eb-685f-4490-a685-ad8d0f7ceb22", "name": "Execution Data"
+    },
+    {
+      "parameters": { "amount": "={{ Math.floor(Math.random() * 2) + 1 }}" },
+      "type": "n8n-nodes-base.wait", "typeVersion": 1.1,
+      "position": [4576, 400],
+      "id": "8d3336c7-1160-45e8-b011-047275b9e59e", "name": "Wait1",
+      "webhookId": "302f1f2f-704d-4973-8805-1ced74f4d2f5"
+    },
+    {
+      "parameters": { "options": {} },
+      "type": "n8n-nodes-base.splitInBatches", "typeVersion": 3,
+      "position": [4112, 384],
+      "id": "55a29ba3-d9b6-43f6-95d1-d2eab058e276", "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2 },
+          "conditions": [{ "id": "7883d2e9-3b4d-4fad-a1b9-0a7fb3187911", "leftValue": "={{ $('Variáveis').item.json.fromMe }}", "rightValue": "=true", "operator": { "type": "boolean", "operation": "true", "singleValue": true } }],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true, "options": {}
+      },
+      "type": "n8n-nodes-base.if", "typeVersion": 2.2,
+      "position": [-224, 320],
+      "id": "5067f590-b9de-457d-8979-37c8eb824db1", "name": "Remover From Me"
+    },
+    {
+      "parameters": { "httpMethod": "POST", "path": "agentesaojosedospinhais2_apioficial", "options": {} },
+      "id": "2315b357-b93a-4b80-8beb-843fdcb570d7",
+      "name": "Webhook - Follow-Up", "type": "n8n-nodes-base.webhook", "typeVersion": 2,
+      "position": [-992, 320], "webhookId": "aad597e6-c14f-4d0d-8d71-8ef5c167ff9e"
+    },
+    {
+      "parameters": { "dataToSave": { "values": [{ "key": "fromMe", "value": "={{ $json.fromMe }}" }, { "key": "message", "value": "={{ $json.message }}" }] } },
+      "type": "n8n-nodes-base.executionData", "typeVersion": 1,
+      "position": [-512, 320],
+      "id": "776fd8ce-6d9d-4bc7-9f9b-e93587c38a85", "name": "Execution Data2"
+    },
+    {
+      "parameters": { "content": "# Processa Mensagens\n### Transcreve Áudio, imagens e documentos", "height": 841, "width": 870, "color": 5 },
+      "id": "804816aa-0c96-4728-81f2-3d43eb1249ba", "name": "Sticky Note13",
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [768, 48]
+    },
+    {
+      "parameters": { "content": "# Webhook\n## Recebe mensagens", "height": 428, "width": 300, "color": 2 },
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [-1104, 128],
+      "id": "ee9168ab-8a78-40d8-8bc3-4b1d10e0f5f5", "name": "Sticky Note8"
+    },
+    {
+      "parameters": { "content": "## Variáveis\n### Cria variáveis e adiciona á execução", "height": 428, "width": 436 },
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [-784, 128],
+      "id": "d86e25d7-543c-4e49-9850-3f67bed77a19", "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 1 },
+                "conditions": [{ "id": "101c3ff7-e997-43bb-8e99-fe82746c5993", "leftValue": "={{ $('Variáveis').item.json.attach_type }}", "rightValue": "audio", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true, "outputKey": "audioMessage"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 1 },
+                "conditions": [{ "id": "4b94d2ac-53e5-4153-9377-4cc6db20cb1c", "leftValue": "={{ $('Variáveis').item.json.message }}", "rightValue": "text", "operator": { "type": "string", "operation": "notEmpty", "singleValue": true } }],
+                "combinator": "and"
+              },
+              "renameOutput": true, "outputKey": "text"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 1 },
+                "conditions": [{ "id": "300366d9-2416-4cf4-93c3-e48c8761c60f", "leftValue": "={{ $('Variáveis').item.json.attach_type }}", "rightValue": "image", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true, "outputKey": "imageMessage"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 1 },
+                "conditions": [{ "id": "f33566fd-3eb9-45f4-934a-3a39e2adca6c", "leftValue": "={{ $('Variáveis').item.json.attach_type }}", "rightValue": "document", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true, "outputKey": "documentMessage"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 1 },
+                "conditions": [{ "id": "interactive-case-001", "leftValue": "={{ $('Variáveis').item.json.attach_type }}", "rightValue": "interactive", "operator": { "type": "string", "operation": "equals" } }],
+                "combinator": "and"
+              },
+              "renameOutput": true, "outputKey": "interactive"
+            }
+          ]
+        },
+        "options": { "looseTypeValidation": true }
+      },
+      "id": "9b29e76b-6645-48ed-afef-4687bc7f55bb",
+      "name": "Switch", "type": "n8n-nodes-base.switch", "typeVersion": 3,
+      "position": [784, 336]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [{ "id": "491a978a-fe39-4154-bfac-f545eecc88a5", "name": "mensagem", "value": "={{ $json.text ?? $json.content ?? ($('Variáveis').item.json.interactive_button || $('Variáveis').item.json.message) }}", "type": "string" }]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set", "typeVersion": 3.4,
+      "position": [1728, 432],
+      "id": "3bcb8ebc-c123-48b3-83bd-15a01f1cb36c", "name": "Message"
+    },
+    {
+      "parameters": { "content": "## Define conteúdo da mensagem", "height": 360, "width": 300 },
+      "type": "n8n-nodes-base.stickyNote", "typeVersion": 1, "position": [1632, 272],
+      "id": "5b09bd87-0d30-4a6c-9726-51322bb1cf04", "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.output;\nif (!text || typeof text !== 'string') { return []; }\nlet cleanedText = text.replace(/[\"']/g, '');\ncleanedText = cleanedText.replace(/\\*\\*(.*?)\\*\\*/g, '*$1*');\nconst lines = cleanedText.split(/\\r?\\n/).map(line => line.trim()).filter(line => line);\nreturn lines.map(sentence => ({ json: { sentence } }));"
+      },
+      "type": "n8n-nodes-base.code", "typeVersion": 2,
+      "position": [3584, 384],
+      "id": "bf0714f9-9416-4c6c-a51e-260b9326811c", "name": "Code_Split",
+      "alwaysOutputData": true, "retryOnFail": false, "waitBetweenTries": 5000
+    },
+    {
+      "parameters": { "operation": "get", "propertyName": "output", "key": "={{ $('Variáveis').item.json.redis_key }}", "options": {} },
+      "id": "113cabf1-142a-43d5-9c63-1a9597d10d1f",
+      "name": "Get Last AI Messages", "type": "n8n-nodes-base.redis", "typeVersion": 1,
+      "position": [112, 208],
+      "credentials": { "redis": { "id": "l1Ep2GPm4cfjTxA3", "name": "Redis account" } }
+    },
+    {
+      "parameters": { "operation": "set", "key": "={{ $('Variáveis').item.json.block_id }}", "value": "true", "keyType": "string", "expire": true, "ttl": 2400 },
+      "id": "536b3b45-0c2d-41de-ae8f-8c35579963f8",
+      "name": "Block AI", "type": "n8n-nodes-base.redis", "typeVersion": 1,
+      "position": [528, 192],
+      "credentials": { "redis": { "id": "l1Ep2GPm4cfjTxA3", "name": "Redis account" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2 },
+          "conditions": [
+            { "id": "b6b9374c-7f12-4c7c-8f92-9168643c9ce4", "leftValue": "={{ $json?.output || \"\" }}", "rightValue": "={{ ($('Variáveis').item.json.message || '').replace(/\\n/g, ' ').trim() }}", "operator": { "type": "string", "operation": "notContains" } },
+            { "id": "c69970d3-109e-4a76-921b-817b9cef52ab", "leftValue": "={{$json?.output}}", "rightValue": "", "operator": { "type": "string", "operation": "exists", "singleValue": true } }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true, "options": {}
+      },
+      "type": "n8n-nodes-base.if", "typeVersion": 2.2,
+      "position": [272, 208],
+      "id": "59d3fdfa-7a61-4791-bc43-088880305edc", "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Get Buffer Messages').item.json.mensagem.join(\" \") }}",
+        "options": {
+          "systemMessage": "=IDENTIDADE\nVocê é o assistente virtual da APVS — Regional São José dos Pinhais 2, Curitiba.\nFunção: lembrete de vencimento e cobrança de mensalidades.\nData/hora: {{ $now }}\n\nTOM E ESTILO\nDireto, cordial, sem rodeios\nSem emojis\nSem saudações isoladas (\"Bom dia\", \"Boa tarde\")\nSem gírias, regionalismos ou invenções\nRespostas curtas: máximo 2 linhas de reconhecimento + encerramento\n\nREGRA CRÍTICA — PRIMEIRA INTERAÇÃO (PRIORIDADE MÁXIMA)\nSe esta for a PRIMEIRA mensagem da conversa (sem histórico anterior do bot), a resposta DEVE OBRIGATORIAMENTE conter o ENCERRAMENTO PADRÃO COMPLETO com o link/telefone da regional (https://wa.me/5541996226415).\nSem exceção. Nenhuma.\nVale para qualquer intenção: saudação, agradecimento, despedida, dúvida, pagamento, atraso, cancelamento, reativação — TUDO.\nSe você não souber se é a primeira interação, assuma que É e envie o encerramento completo.\n\nREGRA ANTI-REPETIÇÃO — OBRIGATÓRIA\nO nome \"Regional São José dos Pinhais 2\" aparece UMA única vez por resposta, exclusivamente dentro do bloco de encerramento padrão.\nNUNCA mencione \"Regional São José dos Pinhais 2\" no texto de reconhecimento.\nNUNCA mencione \"APVS Brasil\" + \"Regional São José dos Pinhais 2\" juntos no reconhecimento — o redirecionamento já está no encerramento.\nSe o encerramento JÁ FOI ENVIADO em mensagem anterior desta conversa, NÃO repita o link/telefone — use a frase de substituição (ver abaixo).\nEXCEÇÃO: intenção de reativação SEMPRE envia o encerramento completo com link, mesmo que já tenha sido enviado antes.\n\nREGRA DE CONTEXTO — OBRIGATÓRIA\nAntes de responder, leia o histórico da conversa.\nSe você já enviou o encerramento completo (\"Fale diretamente...\" + link), NÃO repita o link nas próximas respostas — salvo na exceção de reativação.\nSe o associado insistir no mesmo assunto, responda com variação de acolhimento, como:\n\"Entendido. Nosso time está à disposição para te ajudar.\"\nSe a mensagem atual for continuação direta da anterior, adapte a resposta ao contexto acumulado — não trate como nova conversa.\n\nLÓGICA DE ENVIO DO LINK — RESUMO\n- Primeira interação da conversa → SEMPRE envia encerramento completo (com link).\n- Intenção de reativação → SEMPRE envia encerramento completo (com link), independente do histórico.\n- Demais interações, link ainda NÃO enviado → envia encerramento completo.\n- Demais interações, link JÁ enviado antes → usa frase de substituição (sem link).\n\nENCERRAMENTO PADRÃO COMPLETO (com link)\n\"Fale diretamente com o atendimento da Regional São José dos Pinhais 2: https://wa.me/5541996226415\nPor lá você consegue atendimento 24h.\"\n\nFRASE DE SUBSTITUIÇÃO (quando o link já foi enviado antes)\n\"Qualquer necessidade, nosso time está à disposição.\"\n\nREGRA DE PADRÃO ÚNICO\nUm padrão por resposta: escolha APENAS o padrão mais específico para a intenção do associado. Se a mensagem puder se encaixar em mais de um padrão, use o mais específico e ignore os demais. Nunca combine dois padrões numa mesma resposta.\nO encerramento aparece UMA única vez, ao final da resposta — nunca repita dentro da mesma mensagem.\n\nRECONHECIMENTO POR INTENÇÃO\n\nDúvida sobre cobrança / valor / parcela / franquia\n\"Entendido. Nosso time esclarece todos os detalhes da sua cobrança.\"\n+ encerramento\n\nPagamento confirmado via Pix\n\"Perfeito! Recebemos a confirmação do pagamento via Pix. Agradecemos pelo retorno!\"\n+ encerramento\n\nReativação / voto de reativação (\"quero reativar\", \"reativar\", \"sim, quero reativar\")\n\"Que ótima decisão! Ficamos felizes em ter você de volta. Para dar sequência na reativação, fale com nosso time:\"\n+ encerramento COMPLETO com link (OBRIGATÓRIO, mesmo que já tenha sido enviado antes nesta conversa)\n\nConfirmação de pagamento geral / comprovante (não Pix)\n\"Certo! A compensação ocorre em até 1 dia útil. Qualquer dúvida, nosso time confirma os detalhes.\"\n+ encerramento\n\nAtraso / pagamento pendente / postergado\n\"Entendemos! Com o pagamento em atraso, seu veículo pode estar desprotegido, o que gera riscos em caso de imprevistos. Assim que possível, orientamos regularizar. Qualquer dúvida ou apoio:\"\n+ encerramento\n\nIntenção de pagar (\"vou pagar hoje\", \"pago amanhã\")\n\"Entendido. Qualquer necessidade, estamos à disposição.\"\n+ encerramento\n\nPedido de boleto / segunda via\n\"Claro, para segunda via nosso time pode te ajudar diretamente.\"\n+ encerramento\n\nDificuldade financeira\n\"Entendido. Nossa equipe pode verificar as opções disponíveis para você.\"\n+ encerramento\n\nCancelamento\n\"Entendido. Para solicitar o cancelamento, nosso time pode te orientar.\"\n+ encerramento\n\nReclamação / insatisfação\n\"Entendido. Vou te direcionar para o atendimento especializado.\"\n+ encerramento\n\nComprovante / imagem recebida\n\"Recebi o documento. Para dar sequência:\"\n+ encerramento\n\nAgradecimento / despedida\n\"Imagina! Qualquer necessidade, estamos à disposição.\"\n+ encerramento\n\nSaudação / mensagem genérica / qualquer outro assunto\n\"Olá! Vou te direcionar para o atendimento especializado.\"\n+ encerramento\n\nRESTRIÇÕES\nNunca tente resolver sozinho — reconheça e redirecione\nNunca execute consultas ou acesse sistemas\nNunca invente valores, datas ou dados do associado\nNunca repita a mesma resposta que já foi enviada nesta conversa\nNunca aplique mais de um padrão de reconhecimento por mensagem\nNunca repita o nome \"Regional São José dos Pinhais 2\" dentro da mesma resposta\nNunca omita o link/telefone da regional na PRIMEIRA INTERAÇÃO da conversa — sem exceção\nNunca omita o link/telefone na intenção de REATIVAÇÃO — sem exceção\nNunca afirme que o veículo está ativo, protegido, coberto ou regularizado no sistema\nNunca confirme status de proteção, ativação, cobertura ou liberação de qualquer serviço\nNunca diga que \"a proteção segue normalmente\" ou frases equivalentes\n\n---\n\nFERRAMENTAS DE NOTIFICAÇÃO — OBRIGATÓRIO USAR\n\nVocê tem 3 ferramentas disponíveis. Chame a ferramenta ANTES de formular sua resposta, sempre que identificar as situações abaixo. As ferramentas não precisam de argumentos.\n\nnotificar_atendimento_sjp2\nChame quando o associado responder ao template de atualização de atendimento:\n- Mensagem \"1\" (solicitar atendimento)\n- Diz querer falar com atendente, ser atendido ou solicitar atendimento humano\n- Clicou no botão \"Solicitar atendimento\"\n\nnotificar_protecao_veiculo_sjp2\nChame quando o associado demonstrar interesse em proteção veicular:\n- Mensagem \"1\" ou \"2\" em contexto de reengajamento veicular (reativar ou cotar)\n- Diz querer reativar, cotar proteção ou tem interesse em proteção do veículo\n\nnotificar_sem_interesse_sjp2\nChame quando o associado indicar que não tem interesse:\n- Mensagem \"3\" em contexto de reengajamento veicular (sem interesse)\n- Diz que não quer, não tem interesse, não precisa ou quer cancelar\n\nnotificar_reativacao_sjp2\nChame quando o associado responder ao template de reativação de mensalidade em atraso:\n- Clicou no botão \"Quero reativar\" (payload verificar_situacao)\n- Button reply recebido em contexto de cobrança de mensalidade vencida\n- Qualquer mensagem indicando que quer reativar após template de reativação de boleto/proteção inativa\n\nIMPORTANTE: Use o histórico da conversa para identificar o contexto (qual template foi enviado antes). Após chamar a ferramenta, responda ao associado conforme os padrões acima."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent", "typeVersion": 2.1,
+      "position": [3184, 384],
+      "id": "e0878188-506c-424a-a896-c36ad1eed07a", "name": "AI Agent"
+    },
+    {
+      "parameters": { "model": { "__rl": true, "mode": "list", "value": "gpt-4.1-mini" }, "options": {} },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi", "typeVersion": 1.2,
+      "position": [3136, 576],
+      "id": "1e67fce8-0ffe-46e8-a549-a7a52a684f32", "name": "OpenAI Chat Model",
+      "credentials": { "openAiApi": { "id": "qkmBs77fKIR78fND", "name": "OpenAi account" } }
+    },
+    {
+      "parameters": { "sessionIdType": "customKey", "sessionKey": "= {{ $('Variáveis').item.json.sender }}_chat", "contextWindowLength": 20 },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat", "typeVersion": 1.5,
+      "position": [3296, 576],
+      "id": "57b45b81-a371-4872-90ae-fd466b2750b9", "name": "Redis Chat Memory",
+      "credentials": { "redis": { "id": "l1Ep2GPm4cfjTxA3", "name": "Redis account" } }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "ead537ac-5605-40af-b815-cfd77fce3971", "name": "fromMe", "value": "={{ false }}", "type": "string" },
+            { "id": "e5f1c0c4-a085-41ac-a857-169a5c8f36a7", "name": "message", "value": "={{ $json.body.messages[0].text?.body || '' }}", "type": "string" },
+            { "id": "b3a1bf40-5794-44df-bdda-78db3efcbac8", "name": "inbox", "value": "={{ $json.body.metadata.phone_number_id }}", "type": "string" },
+            { "id": "c80a3ba4-396a-4878-b426-1c13e55c81b7", "name": "block_id", "value": "={{ $json.body.messages[0].from }}_block", "type": "string" },
+            { "id": "fa06d83f-cf9c-4f3d-8383-04bdf9e4af33", "name": "redis_key", "value": "={{ $json.body.messages[0].from }}_redis", "type": "string" },
+            { "id": "f6f10c55-89b2-4470-bb0d-f6142968b94b", "name": "sender", "value": "={{ $json.body.messages[0].from }}", "type": "string" },
+            { "id": "ea4330e7-6244-4ef8-8886-f390a3d9e239", "name": "message_id", "value": "={{ $json.body.messages[0].id }}", "type": "string" },
+            { "id": "cee78389-6d10-463a-8376-7d40ff5656f3", "name": "account_id", "value": "={{ $json.body.metadata.phone_number_id }}", "type": "number" },
+            { "id": "a64587c1-fba6-4de2-95b1-a2b628b58536", "name": "conversation_id", "value": "={{ $json.body.messages[0].from }}", "type": "number" },
+            { "id": "8b28af1b-da25-479b-b11e-6978f46f5292", "name": "labels", "value": "=[]", "type": "string" },
+            { "id": "bd3993d7-7091-4f31-90c4-d75236d20c69", "name": "inbox_id", "value": "={{ $json.body.metadata.phone_number_id }}", "type": "string" },
+            { "id": "79f3588d-c404-45a0-ab8a-f6e76749ba1f", "name": "chatwoot_url", "value": "=https://painelsana-chatwoot.mofsig.easypanel.host", "type": "string" },
+            { "id": "6f60ce58-3a6a-4181-b6ed-bf5083664557", "name": "attach_type", "value": "={{ $json.body.messages[0].type !== 'text' ? $json.body.messages[0].type : '' }}", "type": "string" },
+            { "id": "aa1122bb-ccdd-eeff-0011-223344556677", "name": "token", "value": "=EAAirZAhp9LOABRK8GNJMjfZCksJNCZCmgh0ZC3GTt65ZCxa8umrNHvHEZCZACTHRP5cgrGVx3ddeoSIr2pAyzH2DwJQLXnvZBFZAc7muVsM7B2pHmZC0XcCAbpLBpxagHbreGdpLVdBF8XVPZCOBeScvbKZA1SkZBSbu5ZCeTBAIS9YxvyoFhnCSLTFNRAbtvfB1udZC6PYkgZDZD", "type": "string" },
+            { "id": "00aabbcc-dd11-ee22-ff33-004455667788", "name": "sender_name", "value": "={{ $json.body.contacts?.[0]?.profile?.name || '' }}", "type": "string" },
+            { "id": "11bbccdd-ee22-ff33-0044-556677889900", "name": "interactive_button", "value": "={{ $json.body.messages[0].interactive?.button_reply?.title || $json.body.messages[0].interactive?.list_reply?.title || '' }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1d28abb6-c929-4fdb-819a-6226f02417f7",
+      "name": "Variáveis", "type": "n8n-nodes-base.set", "typeVersion": 3.4,
+      "position": [-720, 320], "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v17.0/{{ $('Variáveis').item.json.inbox }}/messages",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $('Variáveis').item.json.token }}" }] },
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"recipient_type\": \"individual\",\n  \"to\": \"{{ $('Variáveis').item.json.sender }}\",\n  \"type\": \"text\",\n  \"text\": { \"body\": \"{{ $json.sentence }}\" }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [4768, 400],
+      "id": "21d8b09e-6c38-48eb-a532-1424b95ea4a4", "name": "Enviar texto"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://solucoes-ia-painel.vercel.app/api/register-outbound",
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={\n  \"phone_number_id\": \"{{ $('Variáveis').item.json.inbox }}\",\n  \"to\": \"{{ $('Variáveis').item.json.sender }}\",\n  \"body\": \"{{ $('Loop Over Items').item.json.sentence }}\",\n  \"sent_by\": \"agent\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3,
+      "position": [4976, 416],
+      "id": "b06ac456-a7ec-4729-aa78-6120dc21e819", "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v19.0/{{ $('Webhook - Follow-Up').item.json.body.messages[0].audio.id }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $('Variáveis').item.json.token }}" }] },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [1024, 224],
+      "id": "41313063-00a7-4244-83da-11ab427b6a91", "name": "GET Audio1", "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $('Variáveis').item.json.token }}" }] },
+        "options": { "response": { "response": { "responseFormat": "file" } } }
+      },
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3,
+      "position": [1200, 224],
+      "id": "61a4e790-5bc8-41f4-b8ae-f238f37f2965", "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const binaryData = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst base64Audio = binaryData.toString('base64');\nconst response = await this.helpers.request({\n  method: 'POST',\n  url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCIW1iTz3n7Oh3BL0YIGZKY3plPeNI_7RM',\n  json: true,\n  body: { contents: [{ parts: [{ text: 'Transcreva este áudio. Retorne apenas o texto transcrito, sem comentários.' }, { inlineData: { mimeType: 'audio/ogg; codecs=opus', data: base64Audio } }] }] }\n});\nconst text = response?.candidates?.[0]?.content?.parts?.[0]?.text || '';\nreturn [{ json: { text } }];"
+      },
+      "type": "n8n-nodes-base.code", "typeVersion": 2,
+      "position": [1360, 224],
+      "id": "1253b2e6-8976-478f-beb9-181349a8d006", "name": "Transcreve Áudio1"
+    },
+    {
+      "parameters": { "operation": "pdf", "options": {} },
+      "id": "a553cd67-0c82-4ad3-8676-5e087a1bf158",
+      "name": "Extrair Dados1", "type": "n8n-nodes-base.extractFromFile", "typeVersion": 1,
+      "position": [1392, 704]
+    },
+    {
+      "parameters": {
+        "jsCode": "const binaryData = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst base64Image = binaryData.toString('base64');\nconst mimeType = $input.first().binary?.data?.mimeType || 'image/jpeg';\nconst response = await this.helpers.request({\n  method: 'POST',\n  url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCIW1iTz3n7Oh3BL0YIGZKY3plPeNI_7RM',\n  json: true,\n  body: { contents: [{ parts: [{ text: 'Descreva essa imagem, o que tem nela?' }, { inlineData: { mimeType: mimeType, data: base64Image } }] }] }\n});\nconst content = response?.candidates?.[0]?.content?.parts?.[0]?.text || '';\nreturn [{ json: { content } }];"
+      },
+      "id": "9317283b-0482-46f4-aa3f-484cda37d7ea",
+      "name": "Analisa Imagem1", "type": "n8n-nodes-base.code", "typeVersion": 2,
+      "position": [1376, 512]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v19.0/{{ $('Webhook - Follow-Up').item.json.body.messages[0].image.id }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $('Variáveis').item.json.token }}" }] },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [1024, 512],
+      "id": "fd55e6bf-45fe-401f-961d-009fa94531b5", "name": "GET Image1", "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v19.0/{{ $('Webhook - Follow-Up').item.json.body.messages[0].document.id }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $('Variáveis').item.json.token }}" }] },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [1088, 704],
+      "id": "ac91a8a9-dccb-4968-9a96-b821c5dbcba3", "name": "GET File1", "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $('Variáveis').item.json.token }}" }] },
+        "options": { "response": { "response": { "responseFormat": "file" } } }
+      },
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
+      "position": [1248, 704],
+      "id": "9909e890-b0ca-46d4-bd27-4964e11d221f", "name": "GET File Binary", "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $('Variáveis').item.json.token }}" }] },
+        "options": { "response": { "response": { "responseFormat": "file" } } }
+      },
+      "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3,
+      "position": [1184, 512],
+      "id": "ec9f8f7b-2cf9-4aa1-a6b9-b7cc7b27c06f", "name": "transforma em arquivo binário1"
+    },
+    {
+      "parameters": {
+        "name": "notificar_atendimento_sjp2",
+        "description": "Notifica o time quando o associado solicita atendimento humano. Chame quando o associado responder '1' ao template de atualização, mencionar 'solicitar atendimento', 'quero atendente' ou equivalente.",
+        "language": "javaScript",
+        "jsCode": "const vars = $('Variáveis').first().json;\nawait this.helpers.request({\n  method: 'POST',\n  url: 'https://graph.facebook.com/v17.0/' + vars.inbox + '/messages',\n  headers: { Authorization: 'Bearer ' + vars.token },\n  json: true,\n  body: {\n    messaging_product: 'whatsapp',\n    recipient_type: 'individual',\n    to: '5541996226415',\n    type: 'text',\n    text: { body: '\\uD83D\\uDD14*ASSOCIADO SOLICITOU ATENDIMENTO*\\uD83D\\uDD14\\n\\nAssociado: ' + vars.sender_name + '\\nWhatsApp: ' + vars.sender }\n  }\n});\nreturn 'ok';"
+      },
+      "id": "f2b3c4d5-e6f7-8901-2345-678901234567",
+      "name": "Tool Notificar Atendimento",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [2900, 620]
+    },
+    {
+      "parameters": {
+        "name": "notificar_protecao_veiculo_sjp2",
+        "description": "Notifica o time quando o associado quer reativar ou cotar proteção veicular. Chame quando responder '1' ou '2' ao template de reengajamento, mencionar 'reativar', 'cotar', 'proteção' ou equivalente.",
+        "language": "javaScript",
+        "jsCode": "const vars = $('Variáveis').first().json;\nawait this.helpers.request({\n  method: 'POST',\n  url: 'https://graph.facebook.com/v17.0/' + vars.inbox + '/messages',\n  headers: { Authorization: 'Bearer ' + vars.token },\n  json: true,\n  body: {\n    messaging_product: 'whatsapp',\n    recipient_type: 'individual',\n    to: '5541996226415',\n    type: 'text',\n    text: { body: '\\uD83D\\uDE97*ASSOCIADO QUER PROTEGER O VE\\u00CDCULO*\\uD83D\\uDE97\\n\\nAssociado: ' + vars.sender_name + '\\nWhatsApp: ' + vars.sender }\n  }\n});\nreturn 'ok';"
+      },
+      "id": "g3c4d5e6-f7a8-9012-3456-789012345678",
+      "name": "Tool Notificar Protecao Veiculo",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [3184, 620]
+    },
+    {
+      "parameters": {
+        "name": "notificar_sem_interesse_sjp2",
+        "description": "Notifica o time quando o associado não tem interesse no momento. Chame quando responder '3' ao template de reengajamento, mencionar 'sem interesse', 'não quero', 'não tenho interesse' ou equivalente.",
+        "language": "javaScript",
+        "jsCode": "const vars = $('Variáveis').first().json;\nawait this.helpers.request({\n  method: 'POST',\n  url: 'https://graph.facebook.com/v17.0/' + vars.inbox + '/messages',\n  headers: { Authorization: 'Bearer ' + vars.token },\n  json: true,\n  body: {\n    messaging_product: 'whatsapp',\n    recipient_type: 'individual',\n    to: '5541996226415',\n    type: 'text',\n    text: { body: '\\u274C*ASSOCIADO SEM INTERESSE NO MOMENTO*\\u274C\\n\\nAssociado: ' + vars.sender_name + '\\nWhatsApp: ' + vars.sender }\n  }\n});\nreturn 'ok';"
+      },
+      "id": "h4d5e6f7-a8b9-0123-4567-890123456789",
+      "name": "Tool Notificar Sem Interesse",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [3468, 620]
+    },
+    {
+      "parameters": {
+        "name": "notificar_reativacao_sjp2",
+        "description": "Notifica o time quando o associado clica no botão de reativação do template de reativação de mensalidade. Chame quando o button_reply for 'Quero reativar' (payload verificar_situacao) ou associado demonstrar interesse em reativar proteção em resposta a template de cobrança/reativação.",
+        "language": "javaScript",
+        "jsCode": "const vars = $('Variáveis').first().json;\nawait this.helpers.request({\n  method: 'POST',\n  url: 'https://graph.facebook.com/v17.0/' + vars.inbox + '/messages',\n  headers: { Authorization: 'Bearer ' + vars.token },\n  json: true,\n  body: {\n    messaging_product: 'whatsapp',\n    recipient_type: 'individual',\n    to: '5541996226415',\n    type: 'text',\n    text: { body: '\\uD83D\\uDD04*ASSOCIADO QUER REATIVAR*\\uD83D\\uDD04\\n\\nAssociado: ' + vars.sender_name + '\\nWhatsApp: ' + vars.sender }\n  }\n});\nreturn 'ok';"
+      },
+      "id": "i5e6f7a8-b9c0-1234-5678-901234567890",
+      "name": "Tool Notificar Reativacao",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [3752, 620]
+    }
+  ],
+  "connections": {
+    "AI Message Buffer": { "main": [[{ "node": "Wait1", "type": "main", "index": 0 }]] },
+    "Switch Block": { "main": [[{ "node": "Switch", "type": "main", "index": 0 }], []] },
+    "Get Block Chat Id": { "main": [[{ "node": "Switch Block", "type": "main", "index": 0 }]] },
+    "Wait2": { "main": [[{ "node": "Get Buffer Messages", "type": "main", "index": 0 }]] },
+    "Clear Buffer": { "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]] },
+    "If no new messages": { "main": [[{ "node": "Clear Buffer", "type": "main", "index": 0 }]] },
+    "Get Buffer Messages": { "main": [[{ "node": "If no new messages", "type": "main", "index": 0 }]] },
+    "Buffer": { "main": [[{ "node": "Wait2", "type": "main", "index": 0 }]] },
+    "Execution Data": { "main": [[{ "node": "Loop Over Items", "type": "main", "index": 0 }]] },
+    "Wait1": { "main": [[{ "node": "Enviar texto", "type": "main", "index": 0 }]] },
+    "Loop Over Items": { "main": [[], [{ "node": "AI Message Buffer", "type": "main", "index": 0 }]] },
+    "Remover From Me": {
+      "main": [
+        [{ "node": "Get Last AI Messages", "type": "main", "index": 0 }],
+        [{ "node": "Get Block Chat Id", "type": "main", "index": 0 }]
+      ]
+    },
+    "Webhook - Follow-Up": { "main": [[{ "node": "Variáveis", "type": "main", "index": 0 }]] },
+    "Execution Data2": { "main": [[{ "node": "Remover From Me", "type": "main", "index": 0 }]] },
+    "Switch": {
+      "main": [
+        [{ "node": "GET Audio1", "type": "main", "index": 0 }],
+        [{ "node": "Message", "type": "main", "index": 0 }],
+        [{ "node": "GET Image1", "type": "main", "index": 0 }],
+        [{ "node": "GET File1", "type": "main", "index": 0 }],
+        [{ "node": "Message", "type": "main", "index": 0 }]
+      ]
+    },
+    "Message": { "main": [[{ "node": "Buffer", "type": "main", "index": 0 }]] },
+    "Code_Split": { "main": [[{ "node": "Execution Data", "type": "main", "index": 0 }]] },
+    "Get Last AI Messages": { "main": [[{ "node": "If", "type": "main", "index": 0 }]] },
+    "If": { "main": [[{ "node": "Block AI", "type": "main", "index": 0 }]] },
+    "AI Agent": { "main": [[{ "node": "Code_Split", "type": "main", "index": 0 }]] },
+    "OpenAI Chat Model": { "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]] },
+    "Redis Chat Memory": { "ai_memory": [[{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]] },
+    "Variáveis": { "main": [[{ "node": "Execution Data2", "type": "main", "index": 0 }]] },
+    "Enviar texto": { "main": [[{ "node": "HTTP Request", "type": "main", "index": 0 }]] },
+    "HTTP Request": { "main": [[{ "node": "Loop Over Items", "type": "main", "index": 0 }]] },
+    "GET Audio1": { "main": [[{ "node": "HTTP Request2", "type": "main", "index": 0 }]] },
+    "HTTP Request2": { "main": [[{ "node": "Transcreve Áudio1", "type": "main", "index": 0 }]] },
+    "Transcreve Áudio1": { "main": [[{ "node": "Message", "type": "main", "index": 0 }]] },
+    "Extrair Dados1": { "main": [[{ "node": "Message", "type": "main", "index": 0 }]] },
+    "Analisa Imagem1": { "main": [[{ "node": "Message", "type": "main", "index": 0 }]] },
+    "GET Image1": { "main": [[{ "node": "transforma em arquivo binário1", "type": "main", "index": 0 }]] },
+    "GET File1": { "main": [[{ "node": "GET File Binary", "type": "main", "index": 0 }]] },
+    "GET File Binary": { "main": [[{ "node": "Extrair Dados1", "type": "main", "index": 0 }]] },
+    "transforma em arquivo binário1": { "main": [[{ "node": "Analisa Imagem1", "type": "main", "index": 0 }]] },
+    "Tool Notificar Atendimento": { "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]] },
+    "Tool Notificar Protecao Veiculo": { "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]] },
+    "Tool Notificar Sem Interesse": { "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]] },
+    "Tool Notificar Reativacao": { "ai_tool": [[{ "node": "AI Agent", "type": "ai_tool", "index": 0 }]] }
+  },
+  "pinData": {
+    "Webhook - Follow-Up": [
+      {
+        "headers": { "host": "webhook.dev.solucoesdeia.com", "user-agent": "node", "content-length": "730", "accept": "*/*", "accept-encoding": "br, gzip, deflate", "content-type": "application/json", "x-forwarded-for": "3.215.142.29", "x-forwarded-proto": "https" },
+        "params": {}, "query": {},
+        "body": {
+          "messaging_product": "whatsapp",
+          "metadata": { "display_phone_number": "554163472413", "phone_number_id": "1104884389366975" },
+          "contacts": [{ "profile": { "name": "Silveira" }, "wa_id": "554199706001" }],
+          "messages": [{ "from": "554199706001", "id": "wamid.test", "timestamp": "1777488827", "type": "audio", "audio": { "mime_type": "audio/ogg; codecs=opus", "id": "1345286390767800" } }]
+        },
+        "webhookUrl": "https://webhook.dev.solucoesdeia.com/webhook/agentesaojosedospinhais2_apioficial",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": { "instanceId": "1212522227bbeb5f01061f4fbee14e8818e2aa7bb7f69fa9be29e2d568d78211" }
+}
