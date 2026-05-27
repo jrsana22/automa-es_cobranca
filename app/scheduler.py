@@ -21,7 +21,7 @@ from app.database import SessionLocal
 from app.models import Automacao, Execucao
 from app.services.processor import processar_automacao
 from app.services.notifier import notify_failure
-from app.routers.executions import _running_automations, _mark_running, _clear_running
+from app.routers.executions import _running_automations, _mark_running, _clear_running, _purge_stale_running
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +50,14 @@ def executar_automacao_agendada(automacao_id: int):
             logger.info(f"Automação {automacao_id} não encontrada ou inativa. Pulando.")
             return
 
+        # Limpar locks travados (>2h) antes de verificar
+        _purge_stale_running()
+
         # Lock: verificar se já está em execução
         if automacao_id in _running_automations:
-            msg = f"Automação {automacao.nome} (ID={automacao_id}) já está em execução. Pulando."
+            msg = f"Automação {automacao.nome} (ID={automacao_id}) já está em execução. Pulando execução agendada."
             logger.warning(msg)
+            notify_failure(automacao.nome, "Execução agendada pulada — lock ativo (automação ainda em execução ou travada). Acesse /saude para verificar ou use /api/clear-lock para liberar.")
             return
 
         _mark_running(automacao_id)
@@ -110,6 +114,9 @@ def atualizar_agendamentos(db: Session):
             name=f"Automação: {automacao.nome}",
             args=[automacao.id],
             replace_existing=True,
+            max_instances=1,
+            misfire_grace_time=3600,  # aceita execuções atrasadas em até 1h (ex: restart do container)
+            coalesce=True,  # se perdeu N execuções, roda só 1 vez ao recuperar
         )
         logger.info(f"Agendado: {automacao.nome} às {hora:02d}:{minuto:02d} dias={dias_cron}")
 

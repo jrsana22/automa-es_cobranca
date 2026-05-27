@@ -161,6 +161,23 @@ def executar_fluxo(automacao_id: int, fluxo_id: int, db: Session = Depends(get_d
     return {"status": "executando", "message": f"Fluxo '{fluxo.nome}' iniciado."}
 
 
+@router.post("/clear-lock/{automacao_id}")
+def clear_lock(automacao_id: int, db: Session = Depends(get_db)):
+    """Força a limpeza do lock de execução de uma automação (para desbloquear estado travado)."""
+    automacao = db.query(Automacao).filter(Automacao.id == automacao_id).first()
+    if not automacao:
+        raise HTTPException(status_code=404, detail="Automação não encontrada")
+
+    estava_travada = automacao_id in _running_automations
+    _clear_running(automacao_id)
+    return {
+        "ok": True,
+        "automacao": automacao.nome,
+        "lock_removido": estava_travada,
+        "message": "Lock removido com sucesso." if estava_travada else "Automação não estava com lock ativo.",
+    }
+
+
 @router.post("/executar-todos")
 def executar_todos(db: Session = Depends(get_db)):
     automacoes = db.query(Automacao).filter(Automacao.ativo == True).all()
