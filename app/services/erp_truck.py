@@ -127,16 +127,32 @@ class PVSTruckClient(BaseERPClient):
             allow_redirects=True,
         )
 
-        # Verificar se login foi bem sucedido
-        if "[Login]" in resp.text or ("cd_usuario" in resp.text and "nm_senha" in resp.text and resp.url.rstrip("/").endswith("Default.aspx")):
-            logger.error("Login falhou — credenciais recusadas pelo ERP Truck")
+        # Verificar se login foi bem sucedido.
+        # Indicador confiável: presença de input type=password com name=nm_senha
+        # significa que ainda está na página de login (credencial recusada).
+        # NÃO usar substring no texto — o ERP pode incluir esses nomes em JS ou
+        # hidden fields após login bem-sucedido, gerando falso-positivo.
+        soup_resp = BeautifulSoup(resp.text, "html.parser")
+        password_field = soup_resp.find("input", {"name": "nm_senha", "type": "password"})
+
+        if password_field:
+            snippet = resp.text[:500].replace("\n", " ").replace("\r", "")
+            logger.error(
+                f"Login Truck falhou — página de login ainda presente. "
+                f"URL final: {resp.url} | Status: {resp.status_code} | "
+                f"Snippet: {snippet[:300]}"
+            )
             return False
 
         if "WebClient.aspx" in resp.url:
-            logger.error("Login falhou — redirecionado de volta para login")
+            snippet = resp.text[:300].replace("\n", " ").replace("\r", "")
+            logger.error(
+                f"Login Truck falhou — redirecionado para WebClient. "
+                f"URL: {resp.url} | Snippet: {snippet[:200]}"
+            )
             return False
 
-        logger.info("Login APVS Truck realizado com sucesso")
+        logger.info(f"Login APVS Truck realizado com sucesso. URL final: {resp.url}")
         return True
 
     def _carregar_tela_relatorio(self) -> dict:

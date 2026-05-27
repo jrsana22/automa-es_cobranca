@@ -6,7 +6,7 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models import Automacao, AutomacaoRun, ERPConfig, Execucao, Fluxo, get_fluxos_padrao, ERP_TIPOS
 from app.crypto import encrypt_password, decrypt_password
-from app.routers.executions import _run_automation_bg, _running_automations
+from app.routers.executions import _run_automation_bg, _running_automations, _mark_running
 from app.scheduler import atualizar_agendamentos
 from app.services.erp_factory import criar_erp_client
 
@@ -163,6 +163,7 @@ def criar_automacao(
     # Executar imediatamente se solicitado
     if executar_agora:
         import threading
+        _mark_running(automacao.id)
         thread = threading.Thread(
             target=_run_automation_bg,
             args=(automacao.id,),
