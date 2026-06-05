@@ -43,6 +43,7 @@ def criar_automacao(
     horario_execucao: str = Form("06:00"),
     dias_semana: str = Form("0,1,2,3,4"),
     dia_cobranca_base: int = Form(1),
+    whatsapp_destinatario: str = Form(""),
     mapeamento: str = Form("{}"),
     executar_agora: bool = Form(False),
     # ERP Brasil
@@ -86,6 +87,7 @@ def criar_automacao(
         horario_execucao=horario_execucao,
         dias_semana=dias_semana,
         dia_cobranca_base=dia_cobranca_base,
+        whatsapp_destinatario=whatsapp_destinatario or None,
         mapeamento_json=mapeamento if mapeamento else "{}",
     )
     db.add(automacao)
@@ -185,6 +187,7 @@ def atualizar_automacao(
     dias_semana: str = Form("0,1,2,3,4"),
     dia_cobranca_base: int = Form(1),
     ativo: bool = Form(True),
+    whatsapp_destinatario: str = Form(""),
     mapeamento: str = Form("{}"),
     # ERP Brasil
     brasil_erp_url: str = Form(""),
@@ -229,6 +232,7 @@ def atualizar_automacao(
     automacao.dias_semana = dias_semana
     automacao.dia_cobranca_base = dia_cobranca_base
     automacao.ativo = ativo
+    automacao.whatsapp_destinatario = whatsapp_destinatario or None
     automacao.mapeamento_json = mapeamento if mapeamento else "{}"
 
     # Processar ERPs

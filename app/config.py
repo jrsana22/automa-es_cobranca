@@ -16,6 +16,7 @@ class Settings:
     )
     APP_HOST: str = os.getenv("APP_HOST", "0.0.0.0")
     APP_PORT: int = int(os.getenv("APP_PORT", "8000"))
+    N8N_WEBHOOK_URL: str = os.getenv("N8N_WEBHOOK_URL", "")
 
 
 settings = Settings()

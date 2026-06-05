@@ -77,6 +77,9 @@ class Automacao(Base):
     # Ciclo de 3 dias para cobrança 2-30D: controla o dia base (1 = dias 1,4,7...)
     dia_cobranca_base: Mapped[int] = mapped_column(Integer, default=1)
 
+    # WhatsApp destinatário da notificação (formato: 5511999999999)
+    whatsapp_destinatario: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
     # Mapeamento de colunas ERP → Sheets (JSON, compartilhado entre fluxos)
     mapeamento_json: Mapped[str] = mapped_column(Text, default="{}")
 

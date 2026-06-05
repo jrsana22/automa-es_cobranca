@@ -12,9 +12,9 @@ from app.tz import agora, hoje
 
 import pandas as pd
 
-from app.models import Automacao, ERPConfig, Fluxo, Execucao, AutomacaoRun
+from app.models import Automacao, Execucao, AutomacaoRun
 from app.services.erp_factory import criar_erp_client
-from app.services.notifier import notify_failure, notify_result, build_fluxo_resumo_text
+from app.services.notifier import notify_failure, notify_result
 from app.services.sheets import SheetsWriter
 from app.crypto import decrypt_password
 
@@ -57,6 +57,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
         # Isso evita problemas com objetos detached/expired após db.commit()
         automacao_id = automacao.id
         automacao_nome = automacao.nome
+        automacao_whatsapp = getattr(automacao, "whatsapp_destinatario", None) or ""
         sheets_url = automacao.sheets_url
         mapeamento = automacao.mapeamento or automacao.MAPEAMENTO_PADRAO
 
@@ -146,7 +147,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
             if not login_ok:
                 error_msg = f"Falha no login após {ERP_LOGIN_MAX_RETRIES} tentativas ({erp_data['erp_tipo']}): {last_error}"
                 log_parts.append(f"ERRO: {error_msg}")
-                notify_failure(automacao_nome, error_msg)
+                notify_failure(automacao_nome, error_msg, whatsapp_destinatario=automacao_whatsapp)
                 for fluxo_data in erp_data["fluxos"]:
                     execucao = Execucao(
                         automacao_id=automacao_id,
@@ -295,7 +296,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                 except Exception as e:
                     log_parts.append(f"Erro ao exportar fluxo {fluxo_data['nome']}: {e}")
                     overall_status = "parcial"
-                    notify_failure(automacao_nome, f"Erro ao exportar fluxo {fluxo_data['nome']} [{erp_data['erp_tipo']}]: {e}")
+                    notify_failure(automacao_nome, f"Erro ao exportar fluxo {fluxo_data['nome']} [{erp_data['erp_tipo']}]: {e}", whatsapp_destinatario=automacao_whatsapp)
                     execucao = Execucao(
                         automacao_id=automacao_id,
                         erp_config_id=erp_data["id"],
@@ -367,7 +368,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                     # Aba não encontrada — erro de configuração, não derruba os outros fluxos
                     err = str(e)
                     log_parts.append(f"ERRO (aba não encontrada): {err}")
-                    notify_failure(automacao_nome, f"Fluxo '{fluxo_data['nome']}' [{erp_data['erp_tipo']}]: {err}")
+                    notify_failure(automacao_nome, f"Fluxo '{fluxo_data['nome']}' [{erp_data['erp_tipo']}]: {err}", whatsapp_destinatario=automacao_whatsapp)
                     overall_status = "parcial"
                     execucao = Execucao(
                         automacao_id=automacao_id,
@@ -388,7 +389,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
                 if resultado_sheets["status"] == "erro":
                     status_fluxo = "erro"
                     overall_status = "parcial"
-                    notify_failure(automacao_nome, f"Erro no fluxo {fluxo_data['nome']} [{erp_data['erp_tipo']}]: {resultado_sheets['log']}")
+                    notify_failure(automacao_nome, f"Erro no fluxo {fluxo_data['nome']} [{erp_data['erp_tipo']}]: {resultado_sheets['log']}", whatsapp_destinatario=automacao_whatsapp)
                 elif resultado_sheets["linhas_escritas"] < len(registros):
                     status_fluxo = "parcial"
                     overall_status = "parcial"
@@ -420,7 +421,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
         )
         db.add(run)
         db.commit()
-        notify_result(automacao_nome, overall_status, fluxo_resumo=fluxo_resumo)
+        notify_result(automacao_nome, overall_status, fluxo_resumo=fluxo_resumo, whatsapp_destinatario=automacao_whatsapp)
         return {
             "status": overall_status,
             "registros_encontrados": total_encontrados,
@@ -432,7 +433,7 @@ def processar_automacao(automacao: Automacao, db, agendado: bool = False, on_flu
         logger.exception(f"Erro ao processar automação")
         error_msg = str(e)
         log_parts.append(f"ERRO: {error_msg}")
-        notify_failure(f"Automação", error_msg)
+        notify_failure(automacao_nome, error_msg, whatsapp_destinatario=automacao_whatsapp)
         try:
             _duracao = int(_time.monotonic() - _run_start)
             run = AutomacaoRun(

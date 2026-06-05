@@ -33,6 +33,12 @@
                 </div>
                 <input type="hidden" name="coluna_vencimento" value="{{ automacao.coluna_vencimento if automacao else 'vencimento_Parcela' }}">
 
+                <div class="form-group">
+                    <label class="form-label">WhatsApp Destinatário</label>
+                    <input type="text" class="form-input" name="whatsapp_destinatario" value="{{ automacao.whatsapp_destinatario if automacao and automacao.whatsapp_destinatario else '' }}" placeholder="5511999999999" maxlength="20">
+                    <div class="form-hint">Número que receberá a notificação após cada execução (formato: 5511999999999)</div>
+                </div>
+
                 <!-- Dias da Semana -->
                 <div class="form-group">
                     <label class="form-label">Dias de Execução</label>
