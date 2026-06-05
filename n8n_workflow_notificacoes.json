@@ -1,0 +1,73 @@
+{
+  "name": "Automação Cobrança - Notificações WhatsApp",
+  "nodes": [
+    {
+      "id": "wh-01",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "automacao-cobranca",
+        "options": {}
+      },
+      "webhookId": "automacao-cobranca-notif"
+    },
+    {
+      "id": "code-01",
+      "name": "Monta Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "jsCode": "const { status, nome, resumo, horario, whatsapp, tipo_erro } = $input.item.json;\n\nif (!whatsapp) {\n  throw new Error('whatsapp_destinatario vazio para cliente: ' + nome);\n}\n\nlet header;\nif (status === 'sucesso') {\n  header = '✅ PLANILHA ATUALIZADA';\n} else if (status === 'parcial') {\n  header = '⚠️ PLANILHA COM ALERTAS';\n} else {\n  const icones = { credencial: '🔐', rede: '🌐', planilha: '📊', generico: '⚠️' };\n  header = (icones[tipo_erro] || '⚠️') + ' FALHA NA AUTOMAÇÃO';\n}\n\nconst body = status === 'sucesso'\n  ? `O preenchimento da planilha de cobrança foi concluído.\\n${resumo ? resumo + '\\n' : ''}`\n  : `Erro: ${resumo}\\n`;\n\nconst text = `${header}\\n\\nCliente: ${nome}\\n${body}Horário: ${horario}`;\n\nreturn [{ json: { whatsapp, text, nome, status } }];"
+      }
+    },
+    {
+      "id": "http-01",
+      "name": "Envia WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://wwwsolucoesdeia.uazapi.com/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "9bd6907a-28b3-4c06-be3f-659b1f34c549"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.whatsapp, text: $json.text }) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [{ "node": "Monta Mensagem", "type": "main", "index": 0 }]
+      ]
+    },
+    "Monta Mensagem": {
+      "main": [
+        [{ "node": "Envia WhatsApp", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": []
+}
