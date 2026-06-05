@@ -11,6 +11,7 @@ services:
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-change-me-32bytes-encryption!}
       - GOOGLE_CREDENTIALS_PATH=/app/credentials.json
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
     restart: unless-stopped
 
   # Descomente para usar PostgreSQL em produção:
