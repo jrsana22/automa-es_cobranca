@@ -93,10 +93,11 @@
                     <div class="form-group">
                         <label class="form-label">Login</label>
                         <input type="text" class="form-input" name="brasil_erp_login" value="{{ brasil_erp.erp_login if brasil_erp else '' }}" placeholder="usuario.erp">
+                        {% if not brasil_erp %}<div class="form-hint">Deixe vazio para enviar link ao cliente preencher</div>{% endif %}
                     </div>
                     <div class="form-group">
                         <label class="form-label">Senha{% if brasil_erp %} (vazio = manter){% endif %}</label>
-                        <input type="password" class="form-input" name="brasil_erp_senha" {% if not brasil_erp %}required{% endif %} placeholder="••••••••">
+                        <input type="password" class="form-input" name="brasil_erp_senha" placeholder="••••••••">
                     </div>
                 </div>
 
@@ -171,6 +172,7 @@
                     <div class="form-group">
                         <label class="form-label">Login</label>
                         <input type="text" class="form-input" name="truck_erp_login" value="{{ truck_erp.erp_login if truck_erp else '' }}" placeholder="usuario.erp">
+                        {% if not truck_erp %}<div class="form-hint">Deixe vazio para enviar link ao cliente preencher</div>{% endif %}
                     </div>
                     <div class="form-group">
                         <label class="form-label">Senha{% if truck_erp %} (vazio = manter){% endif %}</label>
