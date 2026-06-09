@@ -17,6 +17,9 @@ class Settings:
     APP_HOST: str = os.getenv("APP_HOST", "0.0.0.0")
     APP_PORT: int = int(os.getenv("APP_PORT", "8000"))
     N8N_WEBHOOK_URL: str = os.getenv("N8N_WEBHOOK_URL", "")
+    APP_BASE_URL: str = os.getenv("APP_BASE_URL", "http://178.105.74.196:8000")
+    APVS_BRASIL_URL: str = os.getenv("APVS_BRASIL_URL", "https://erp.apvs.com.br")
+    APVS_TRUCK_URL: str = os.getenv("APVS_TRUCK_URL", "https://truck.apvs.com.br")
 
 
 settings = Settings()

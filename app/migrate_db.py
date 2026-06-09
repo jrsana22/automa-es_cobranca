@@ -248,6 +248,34 @@ def migrate_add_automacao_runs():
     print("Tabela 'automacao_runs' criada.")
 
 
+def migrate_add_form_tokens():
+    """Cria a tabela form_tokens se não existir."""
+    if not os.path.exists(DB_PATH):
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='form_tokens'")
+    if cur.fetchone():
+        conn.close()
+        return
+
+    cur.execute("""
+        CREATE TABLE form_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token VARCHAR(100) NOT NULL UNIQUE,
+            automacao_id INTEGER NOT NULL REFERENCES automacoes(id),
+            expires_at DATETIME NOT NULL,
+            used BOOLEAN NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+    print("Tabela 'form_tokens' criada.")
+
+
 if __name__ == "__main__":
     migrate()
     migrate_add_dias_semana()

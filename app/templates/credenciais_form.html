@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Credenciais ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .card {
+            background: #1a1d27;
+            border: 1px solid #2d3148;
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1rem; color: #fff;
+            flex-shrink: 0;
+        }
+        .logo-text { font-size: 0.95rem; color: #94a3b8; font-weight: 500; }
+
+        .page-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 0.4rem;
+        }
+        .page-sub {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+        .page-sub strong { color: #94a3b8; }
+
+        .section {
+            margin-bottom: 1.75rem;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .badge-brasil {
+            background: rgba(99,102,241,0.18);
+            color: #818cf8;
+            border: 1px solid rgba(99,102,241,0.3);
+        }
+        .badge-truck {
+            background: rgba(234,88,12,0.18);
+            color: #fb923c;
+            border: 1px solid rgba(234,88,12,0.3);
+        }
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        .field { margin-bottom: 0.875rem; }
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 0.35rem;
+        }
+        .field input {
+            width: 100%;
+            background: #0f1117;
+            border: 1px solid #2d3148;
+            border-radius: 8px;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            font-family: inherit;
+            transition: border-color 0.15s;
+            outline: none;
+        }
+        .field input:focus { border-color: #6366f1; }
+        .field input::placeholder { color: #475569; }
+
+        .divider {
+            height: 1px;
+            background: #2d3148;
+            margin: 1.5rem 0;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+            font-family: inherit;
+        }
+        .btn-submit:hover { opacity: 0.9; }
+        .btn-submit:active { transform: scale(0.98); }
+
+        .hint {
+            font-size: 0.775rem;
+            color: #475569;
+            text-align: center;
+            margin-top: 1rem;
+            line-height: 1.5;
+        }
+
+        .error-box {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            color: #f87171;
+            margin-bottom: 1.25rem;
+        }
+
+        /* States */
+        .state-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .state-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: center;
+            color: #f1f5f9;
+            margin-bottom: 0.5rem;
+        }
+        .state-text {
+            font-size: 0.875rem;
+            color: #64748b;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .state-success .state-title { color: #4ade80; }
+        .state-warning .state-title { color: #fbbf24; }
+        .state-error .state-title { color: #f87171; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="logo">
+        <div class="logo-icon">AC</div>
+        <span class="logo-text">Automação Cobrança</span>
+    </div>
+
+    {% if estado == "ok" %}
+
+    <div class="page-title">Configurar Credenciais ERP</div>
+    <div class="page-sub">
+        Preencha os dados de acesso ao sistema APVS para o cliente
+        <strong>{{ automacao.nome }}</strong>.<br>
+        Essas informações são transmitidas de forma segura e criptografada.
+    </div>
+
+    {% if erro %}
+    <div class="error-box">{{ erro }}</div>
+    {% endif %}
+
+    <form method="POST" action="/form/{{ token }}">
+        <!-- APVS Brasil -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-badge badge-brasil">APVS Brasil</span>
+                <span class="section-title">Credenciais Brasil</span>
+            </div>
+            <div class="field">
+                <label for="brasil_login">Login</label>
+                <input type="text" id="brasil_login" name="brasil_login"
+                       placeholder="Seu usuário no APVS Brasil"
+                       autocomplete="off" spellcheck="false"
+                       value="{{ request.form.get('brasil_login', '') if request.method == 'POST' else '' }}">
+            </div>
+            <div class="field">
+                <label for="brasil_senha">Senha</label>
+                <input type="password" id="brasil_senha" name="brasil_senha"
+                       placeholder="Sua senha no APVS Brasil"
+                       autocomplete="new-password">
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- APVS Truck -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-badge badge-truck">APVS Truck</span>
+                <span class="section-title">Credenciais Truck</span>
+            </div>
+            <div class="field">
+                <label for="truck_login">Login</label>
+                <input type="text" id="truck_login" name="truck_login"
+                       placeholder="Seu usuário no APVS Truck"
+                       autocomplete="off" spellcheck="false"
+                       value="{{ request.form.get('truck_login', '') if request.method == 'POST' else '' }}">
+            </div>
+            <div class="field">
+                <label for="truck_senha">Senha</label>
+                <input type="password" id="truck_senha" name="truck_senha"
+                       placeholder="Sua senha no APVS Truck"
+                       autocomplete="new-password">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Enviar Credenciais</button>
+    </form>
+
+    <p class="hint">
+        Preencha apenas os sistemas que você utiliza.<br>
+        Este link é de uso único e expira em 72 horas.
+    </p>
+
+    {% elif estado == "sucesso" %}
+
+    <div class="state-success">
+        <div class="state-icon">✅</div>
+        <div class="state-title">Credenciais recebidas!</div>
+        <div class="state-text">
+            Suas credenciais foram salvas com sucesso para
+            <strong style="color:#94a3b8">{{ automacao.nome }}</strong>.<br><br>
+            Pode fechar esta página.
+        </div>
+    </div>
+
+    {% elif estado == "usado" %}
+
+    <div class="state-warning">
+        <div class="state-icon">🔒</div>
+        <div class="state-title">Link já utilizado</div>
+        <div class="state-text">
+            Este link já foi usado para enviar as credenciais.<br>
+            Se precisar atualizar, solicite um novo link.
+        </div>
+    </div>
+
+    {% elif estado == "expirado" %}
+
+    <div class="state-warning">
+        <div class="state-icon">⏳</div>
+        <div class="state-title">Link expirado</div>
+        <div class="state-text">
+            Este link era válido por 72 horas e já expirou.<br>
+            Solicite um novo link para continuar.
+        </div>
+    </div>
+
+    {% else %}
+
+    <div class="state-error">
+        <div class="state-icon">❌</div>
+        <div class="state-title">Link inválido</div>
+        <div class="state-text">
+            Este link não é válido ou foi removido.<br>
+            Solicite um novo link.
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+</body>
+</html>

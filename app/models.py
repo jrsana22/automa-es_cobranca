@@ -222,3 +222,15 @@ class AutomacaoRun(Base):
     duracao_segundos: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     automacao: Mapped["Automacao"] = relationship(back_populates="runs")
+
+
+class FormToken(Base):
+    """Token de acesso único para o cliente preencher credenciais ERP via link."""
+    __tablename__ = "form_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    token: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    automacao_id: Mapped[int] = mapped_column(Integer, ForeignKey("automacoes.id"), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    used: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_agora_brasilia)
