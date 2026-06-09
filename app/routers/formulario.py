@@ -18,6 +18,7 @@ from app.models import (
     _agora_brasilia,
     get_fluxos_padrao,
 )
+from app.scheduler import atualizar_agendamentos
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -175,6 +176,7 @@ def salvar_credenciais(
 
     form_token.used = True
     db.commit()
+    atualizar_agendamentos(db)
 
     return templates.TemplateResponse(
         "credenciais_form.html",
