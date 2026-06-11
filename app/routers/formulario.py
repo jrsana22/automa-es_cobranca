@@ -149,6 +149,7 @@ def salvar_credenciais(
         if erp_config:
             erp_config.erp_login = login
             erp_config.erp_senha = encrypt_password(senha)
+            erp_config.ativo = True
         else:
             erp_config = ERPConfig(
                 automacao_id=automacao.id,
