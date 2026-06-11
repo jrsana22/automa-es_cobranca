@@ -62,11 +62,11 @@
         </div>
 
         <!-- ========== ERP BRASIL ========== -->
-        {% set brasil_erp = none %}
         {% if automacao %}
-            {% for erp in automacao.erp_configs %}
-                {% if erp.erp_tipo == 'apvs_brasil' %}{% set brasil_erp = erp %}{% endif %}
-            {% endfor %}
+            {% set _brasil_list = automacao.erp_configs | selectattr('erp_tipo', 'equalto', 'apvs_brasil') | list %}
+            {% set brasil_erp = _brasil_list[0] if _brasil_list else none %}
+        {% else %}
+            {% set brasil_erp = none %}
         {% endif %}
 
         <div class="erp-form-section erp-form-section-brasil {% if not brasil_erp and automacao %}inactive{% endif %}" style="margin-bottom: 1.5rem;">
@@ -141,11 +141,11 @@
         </div>
 
         <!-- ========== ERP TRUCK ========== -->
-        {% set truck_erp = none %}
         {% if automacao %}
-            {% for erp in automacao.erp_configs %}
-                {% if erp.erp_tipo == 'apvs_truck' %}{% set truck_erp = erp %}{% endif %}
-            {% endfor %}
+            {% set _truck_list = automacao.erp_configs | selectattr('erp_tipo', 'equalto', 'apvs_truck') | list %}
+            {% set truck_erp = _truck_list[0] if _truck_list else none %}
+        {% else %}
+            {% set truck_erp = none %}
         {% endif %}
 
         <div class="erp-form-section erp-form-section-truck {% if not truck_erp and automacao %}inactive{% endif %}" style="margin-bottom: 1.5rem;">

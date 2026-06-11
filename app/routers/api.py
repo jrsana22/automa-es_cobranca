@@ -284,7 +284,8 @@ def atualizar_automacao(
         if erp_config:
             # Atualizar existente
             erp_config.erp_url = erp_data["url"]
-            erp_config.erp_login = erp_data["login"]
+            if erp_data["login"]:
+                erp_config.erp_login = erp_data["login"]
             if erp_data["senha"]:
                 erp_config.erp_senha = encrypt_password(erp_data["senha"])
             erp_config.ativo = erp_data["ativo"]
