@@ -213,7 +213,7 @@
                 <input type="text" id="brasil_login" name="brasil_login"
                        placeholder="Seu usuário no APVS Brasil"
                        autocomplete="off" spellcheck="false"
-                       value="{{ request.form.get('brasil_login', '') if request.method == 'POST' else '' }}">
+                       value="{{ brasil_login_val | default('') }}">
             </div>
             <div class="field">
                 <label for="brasil_senha">Senha</label>
@@ -236,7 +236,7 @@
                 <input type="text" id="truck_login" name="truck_login"
                        placeholder="Seu usuário no APVS Truck"
                        autocomplete="off" spellcheck="false"
-                       value="{{ request.form.get('truck_login', '') if request.method == 'POST' else '' }}">
+                       value="{{ truck_login_val | default('') }}">
             </div>
             <div class="field">
                 <label for="truck_senha">Senha</label>

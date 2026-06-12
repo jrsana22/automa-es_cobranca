@@ -141,6 +141,8 @@ def salvar_credenciais(
                 "erp_brasil": erp_brasil,
                 "erp_truck": erp_truck,
                 "erro": "Preencha login e senha de pelo menos um sistema.",
+                "brasil_login_val": brasil_login,
+                "truck_login_val": truck_login,
             },
         )
 
