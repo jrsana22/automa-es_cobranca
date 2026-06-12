@@ -10,10 +10,11 @@ from app.models import Automacao, Execucao, Fluxo, ERPConfig
 from app.services.processor import processar_automacao
 from app.services.notifier import notify_failure
 from app.tz import agora
+from app.auth import require_auth
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_auth)])
 
 # Lock por automação + estado do que está rodando
 _running_automations: set[int] = set()

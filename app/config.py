@@ -20,6 +20,7 @@ class Settings:
     APP_BASE_URL: str = os.getenv("APP_BASE_URL", "http://178.105.74.196:8000")
     APVS_BRASIL_URL: str = os.getenv("APVS_BRASIL_URL", "https://erp.apvs.com.br")
     APVS_TRUCK_URL: str = os.getenv("APVS_TRUCK_URL", "https://erp.apvstruck.org.br/")
+    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "dev-only-nao-usar-em-producao")
 
 
 settings = Settings()

@@ -9,8 +9,9 @@ from app.crypto import encrypt_password, decrypt_password
 from app.routers.executions import _run_automation_bg, _running_automations, _mark_running
 from app.scheduler import atualizar_agendamentos
 from app.services.erp_factory import criar_erp_client
+from app.auth import require_auth
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_auth)])
 
 
 def _parse_erp_forms(form_data: dict, prefix: str) -> dict:

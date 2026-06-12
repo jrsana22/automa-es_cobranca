@@ -6,13 +6,14 @@ from sqlalchemy import func
 
 from app.database import get_db
 from app.models import Automacao, Execucao, Fluxo, ERPConfig
+from app.auth import require_auth
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/", response_class=HTMLResponse)
-def dashboard(request: Request, db: Session = Depends(get_db)):
+def dashboard(request: Request, db: Session = Depends(get_db), _: None = Depends(require_auth)):
     automacoes = db.query(Automacao).order_by(Automacao.nome).all()
 
     # Últimas execuções com fluxo
@@ -31,7 +32,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/automacoes/novo", response_class=HTMLResponse)
-def nova_automacao(request: Request):
+def nova_automacao(request: Request, _: None = Depends(require_auth)):
     return templates.TemplateResponse("automacao_form.html", {
         "request": request,
         "automacao": None,
@@ -39,7 +40,7 @@ def nova_automacao(request: Request):
 
 
 @router.get("/automacoes/{automacao_id}/editar", response_class=HTMLResponse)
-def editar_automacao(automacao_id: int, request: Request, db: Session = Depends(get_db)):
+def editar_automacao(automacao_id: int, request: Request, db: Session = Depends(get_db), _: None = Depends(require_auth)):
     automacao = db.query(Automacao).filter(Automacao.id == automacao_id).first()
     if not automacao:
         return RedirectResponse("/", status_code=302)
@@ -50,7 +51,7 @@ def editar_automacao(automacao_id: int, request: Request, db: Session = Depends(
 
 
 @router.get("/logs", response_class=HTMLResponse)
-def logs(request: Request, db: Session = Depends(get_db)):
+def logs(request: Request, db: Session = Depends(get_db), _: None = Depends(require_auth)):
     execucoes = (
         db.query(Execucao)
         .outerjoin(Fluxo)

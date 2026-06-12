@@ -6,13 +6,14 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Automacao, AutomacaoRun
 from app.scheduler import scheduler
+from app.auth import require_auth
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/saude", response_class=HTMLResponse)
-def saude(request: Request, db: Session = Depends(get_db)):
+def saude(request: Request, db: Session = Depends(get_db), _: None = Depends(require_auth)):
     jobs = []
     for job in scheduler.get_jobs():
         next_run = job.next_run_time

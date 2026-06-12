@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Automação Cobrança</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { display: flex; align-items: center; justify-content: center; min-height: 100dvh; margin: 0; }
+        .login-box {
+            background: var(--surface, #1e2130);
+            border: 1px solid var(--border, #2d3148);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .login-brand {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 32px;
+        }
+        .login-brand-icon {
+            width: 40px; height: 40px;
+            background: var(--primary, #6366f1);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px; color: white;
+        }
+        .login-brand-text { font-weight: 700; font-size: 18px; }
+        .login-label { font-size: 13px; font-weight: 500; color: var(--text-secondary, #8b92a5); margin-bottom: 8px; display: block; }
+        .login-input {
+            width: 100%; padding: 12px 14px;
+            background: var(--surface2, #252840);
+            border: 1px solid var(--border, #2d3148);
+            border-radius: 8px; color: inherit;
+            font-size: 15px; font-family: inherit;
+            box-sizing: border-box;
+        }
+        .login-input:focus { outline: none; border-color: var(--primary, #6366f1); }
+        .login-btn {
+            width: 100%; margin-top: 20px;
+            padding: 12px; background: var(--primary, #6366f1);
+            border: none; border-radius: 8px;
+            color: white; font-size: 15px; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+        }
+        .login-btn:hover { opacity: 0.9; }
+        .login-error {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 8px; padding: 10px 14px;
+            font-size: 13px; color: #f87171;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="login-brand">
+            <div class="login-brand-icon">AC</div>
+            <span class="login-brand-text">Automação Cobrança</span>
+        </div>
+        {% if error %}
+        <div class="login-error">Senha incorreta. Tente novamente.</div>
+        {% endif %}
+        <form method="post" action="/login">
+            <input type="hidden" name="next" value="{{ next }}">
+            <label class="login-label">Senha</label>
+            <input class="login-input" type="password" name="password" autofocus autocomplete="current-password">
+            <button class="login-btn" type="submit">Entrar</button>
+        </form>
+    </div>
+</body>
+</html>
