@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import logging
 from datetime import date, datetime
+from typing import Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
@@ -21,6 +22,15 @@ templates = Jinja2Templates(directory="app/templates")
 
 _BRASILIA = ZoneInfo("America/Sao_Paulo")
 ERP_SENHA = "Rcarol@2025"
+
+
+def _parse_data(data: str) -> Optional[date]:
+    if not data:
+        return None
+    try:
+        return date.fromisoformat(data)
+    except ValueError:
+        return None
 
 
 def _client_key() -> str:
@@ -113,8 +123,9 @@ def _run_extracao_background():
 
 
 @router.get("/relatorio", response_class=HTMLResponse)
-def relatorio_dashboard(request: Request, db: Session = Depends(get_db), _: None = Depends(require_auth)):
-    ctx = _contexto_relatorio(db)
+def relatorio_dashboard(request: Request, data: str = "", db: Session = Depends(get_db), _: None = Depends(require_auth)):
+    data_ref = _parse_data(data)
+    ctx = _contexto_relatorio(db, data_ref)
     ctx["request"] = request
     ctx["client_key"] = _client_key()
     return templates.TemplateResponse("relatorio_capitao.html", ctx)
@@ -197,18 +208,19 @@ def relatorio_manual(
     return JSONResponse({"ok": True, "msg": f"Dados de {data_ref} salvos."})
 
 
-def _contexto_relatorio(db: Session) -> dict:
+def _contexto_relatorio(db: Session, data_ref: Optional[date] = None) -> dict:
     """Monta o contexto compartilhado entre a view admin e a view cliente."""
-    hoje = date.today()
-    ano_ant, mes_ant_n = _mes_anterior(hoje)
+    import calendar as cal_mod
+    data_ref = data_ref or date.today()
+    hoje_real = date.today()
+    ano_ant, mes_ant_n = _mes_anterior(data_ref)
     try:
-        mesmo_dia_mes_passado = date(ano_ant, mes_ant_n, hoje.day)
+        mesmo_dia_mes_passado = date(ano_ant, mes_ant_n, data_ref.day)
     except ValueError:
-        import calendar
-        last_day = calendar.monthrange(ano_ant, mes_ant_n)[1]
+        last_day = cal_mod.monthrange(ano_ant, mes_ant_n)[1]
         mesmo_dia_mes_passado = date(ano_ant, mes_ant_n, last_day)
 
-    snap_hoje = _buscar_snapshot(db, hoje)
+    snap_hoje = _buscar_snapshot(db, data_ref)
     snap_mes_passado = _buscar_snapshot(db, mesmo_dia_mes_passado)
     historico = (
         db.query(RelatorioCapitaoDiario)
@@ -216,22 +228,33 @@ def _contexto_relatorio(db: Session) -> dict:
         .limit(30)
         .all()
     )
+    # Datas adjacentes com dados para navegação
+    datas_disponiveis = [
+        str(r.data_ref) for r in historico
+    ]
     return {
-        "hoje": hoje.strftime("%d/%m/%Y"),
+        "data_ref": data_ref.strftime("%Y-%m-%d"),
+        "data_ref_fmt": data_ref.strftime("%d/%m/%Y"),
+        "hoje": hoje_real.strftime("%d/%m/%Y"),
+        "hoje_iso": str(hoje_real),
         "mesmo_dia_mes_passado": mesmo_dia_mes_passado.strftime("%d/%m/%Y"),
+        "mesmo_dia_mes_passado_iso": str(mesmo_dia_mes_passado),
         "snap_hoje": _snap_para_dict(snap_hoje),
         "snap_mes_passado": _snap_para_dict(snap_mes_passado),
         "historico": [_snap_para_dict(r) for r in historico],
         "extracao_em_andamento": _extracao_em_andamento,
+        "datas_disponiveis": datas_disponiveis,
+        "eh_hoje": data_ref == hoje_real,
     }
 
 
 @router.get("/relatorio/cliente", response_class=HTMLResponse)
-def relatorio_cliente(request: Request, key: str = "", db: Session = Depends(get_db)):
+def relatorio_cliente(request: Request, key: str = "", data: str = "", db: Session = Depends(get_db)):
     expected = _client_key()
     if not hmac.compare_digest(key, expected):
         return HTMLResponse("<h2>Acesso negado</h2>", status_code=403)
-    ctx = _contexto_relatorio(db)
+    data_ref = _parse_data(data)
+    ctx = _contexto_relatorio(db, data_ref)
     ctx["request"] = request
     ctx["client_key"] = key
     return templates.TemplateResponse("relatorio_capitao_cliente.html", ctx)

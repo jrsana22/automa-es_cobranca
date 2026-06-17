@@ -100,8 +100,13 @@
     <div class="rel-header">
         <h1 class="page-title" style="margin:0;">Relatório Regional Capitão</h1>
         <div style="display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;">
-            <span style="font-size:0.85rem;color:var(--text-muted);">Hoje: <strong style="color:var(--text-primary);">{{ hoje }}</strong></span>
-            <span style="font-size:0.85rem;color:var(--text-muted);">Ref. mês passado: <strong style="color:var(--text-primary);">{{ mesmo_dia_mes_passado }}</strong></span>
+            <form method="get" style="display:flex;align-items:center;gap:6px;">
+                <label style="font-size:0.82rem;color:var(--text-muted);">Data:</label>
+                <input type="date" name="data" value="{{ data_ref }}" max="{{ hoje_iso }}"
+                       onchange="this.form.submit()"
+                       style="background:var(--bg-secondary);border:1px solid var(--border-default);color:var(--text-primary);border-radius:6px;padding:4px 8px;font-size:0.82rem;cursor:pointer;">
+            </form>
+            <span style="font-size:0.82rem;color:var(--text-muted);">vs <strong style="color:var(--text-primary);">{{ mesmo_dia_mes_passado }}</strong></span>
             <a href="/relatorio/link-cliente" target="_blank" class="btn btn-ghost btn-sm">&#128279; Link Cliente</a>
             <button id="btn-extrair" class="btn btn-primary btn-sm" onclick="iniciarExtracao()">
                 {% if extracao_em_andamento %}<span class="spinner"></span>Extraindo...{% else %}&#8635; Extrair Agora{% endif %}

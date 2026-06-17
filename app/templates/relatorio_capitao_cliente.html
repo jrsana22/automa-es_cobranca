@@ -272,9 +272,18 @@
             <div class="header-sub"><span class="live-dot"></span>Atualizado diariamente via ERP</div>
         </div>
     </div>
-    <div class="header-date">
-        <div>Dados de <strong>{{ hoje }}</strong></div>
-        <div>Comparação com <strong>{{ mesmo_dia_mes_passado }}</strong></div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="header-date" style="text-align:left;">
+            <div>Dados de <strong>{{ data_ref_fmt }}</strong></div>
+            <div style="color:var(--dim);">vs <strong style="color:var(--muted);">{{ mesmo_dia_mes_passado }}</strong></div>
+        </div>
+        <form method="get" style="display:flex;align-items:center;gap:6px;">
+            <input type="hidden" name="key" value="{{ client_key }}">
+            <input type="date" name="data" value="{{ data_ref }}"
+                   max="{{ hoje_iso }}"
+                   onchange="this.form.submit()"
+                   style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:6px 10px;font-size:0.82rem;cursor:pointer;font-family:'Inter',sans-serif;">
+        </form>
     </div>
 </header>
 
