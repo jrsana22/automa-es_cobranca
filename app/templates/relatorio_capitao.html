@@ -430,6 +430,46 @@
 </div>
 {% endif %}
 
+<!-- Configuração WhatsApp (Admin) -->
+<div class="card" style="margin-bottom:var(--space-6);">
+    <div class="card-header" style="cursor:pointer;" onclick="toggleWzAdmin()">
+        <h2 class="card-title">&#128241; Configuração WhatsApp (Admin)</h2>
+    </div>
+    <div id="wz-admin-panel" style="display:none;padding:var(--space-6);">
+        <div id="wz-admin-status" style="display:flex;align-items:center;gap:10px;margin-bottom:var(--space-5);padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border-default);border-radius:8px;">
+            <div id="wz-admin-dot" style="width:10px;height:10px;border-radius:50%;background:#374151;flex-shrink:0;"></div>
+            <div>
+                <div id="wz-admin-status-txt" style="font-size:.85rem;font-weight:600;color:var(--text-secondary);">Não verificado</div>
+                <div id="wz-admin-status-sub" style="font-size:.75rem;color:var(--text-muted);margin-top:2px;"></div>
+            </div>
+            <button onclick="checkWzAdminStatus()" style="margin-left:auto;background:transparent;border:1px solid var(--border-default);color:var(--text-muted);border-radius:6px;padding:4px 10px;font-size:.78rem;cursor:pointer;">Testar Conexão</button>
+        </div>
+
+        <form onsubmit="salvarWzAdmin(event)">
+            <div class="manual-form-grid" style="grid-template-columns:1fr 1fr;">
+                <div class="form-group">
+                    <label class="form-label">URL do Servidor UAZapi</label>
+                    <input type="text" id="wz-server-url" name="server_url" class="form-input"
+                           placeholder="https://xxx.uazapi.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Token da Instância</label>
+                    <input type="password" id="wz-instance-token" name="instance_token" class="form-input"
+                           placeholder="Token da instância UAZapi">
+                </div>
+            </div>
+            <div style="margin-top:var(--space-5);display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;">
+                <button type="submit" class="btn btn-primary">Salvar Credenciais</button>
+                <span id="wz-admin-save-msg" style="font-size:.82rem;color:var(--text-muted);display:none;"></span>
+            </div>
+        </form>
+
+        <div style="margin-top:var(--space-4);padding:var(--space-3) var(--space-4);background:#0f172a;border-radius:6px;font-size:.78rem;color:#6b7280;line-height:1.6;">
+            <strong style="color:#4b5563;">Como usar:</strong> Crie a instância no painel UAZapi → copie a URL do servidor e o token → salve aqui → clique em "Testar Conexão". Se conectado, o cliente configura números e horários no painel dele.
+        </div>
+    </div>
+</div>
+
 </div><!-- /page-container -->
 {% endblock %}
 
@@ -481,5 +521,69 @@ async function salvarManual(e) {
 // Recarrega a cada 15s enquanto extração está rodando
 setTimeout(() => location.reload(), 15000);
 {% endif %}
+
+function toggleWzAdmin() {
+    const p = document.getElementById('wz-admin-panel');
+    const wasHidden = p.style.display === 'none';
+    p.style.display = wasHidden ? 'block' : 'none';
+    if (wasHidden) { loadWzAdminCfg(); }
+}
+
+async function loadWzAdminCfg() {
+    try {
+        const r = await fetch('/relatorio/admin/wz-cfg');
+        const d = await r.json();
+        if (d.ok) {
+            document.getElementById('wz-server-url').value = d.server_url || '';
+            document.getElementById('wz-instance-token').value = d.instance_token || '';
+        }
+    } catch(e) {}
+}
+
+async function checkWzAdminStatus() {
+    const dot = document.getElementById('wz-admin-dot');
+    const txt = document.getElementById('wz-admin-status-txt');
+    const sub = document.getElementById('wz-admin-status-sub');
+    dot.style.background = '#374151';
+    txt.textContent = 'Verificando...';
+    sub.textContent = '';
+    try {
+        const r = await fetch('/relatorio/admin/wz-status');
+        const d = await r.json();
+        if (d.conectado) {
+            dot.style.background = '#22c55e';
+            dot.style.boxShadow = '0 0 6px rgba(34,197,94,.5)';
+            txt.textContent = 'Conectado';
+            sub.textContent = d.nome_instancia ? `Instância: ${d.nome_instancia}` : '';
+        } else {
+            dot.style.background = '#ef4444';
+            dot.style.boxShadow = 'none';
+            txt.textContent = 'Desconectado';
+            sub.textContent = d.motivo || '';
+        }
+    } catch(e) {
+        txt.textContent = 'Erro ao verificar';
+        sub.textContent = String(e);
+    }
+}
+
+async function salvarWzAdmin(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const msg = document.getElementById('wz-admin-save-msg');
+    msg.style.display = 'none';
+    try {
+        const r = await fetch('/relatorio/admin/wz-config', { method: 'POST', body: fd });
+        const d = await r.json();
+        msg.style.display = 'inline';
+        msg.style.color = d.ok ? '#4ade80' : '#f87171';
+        msg.textContent = d.msg;
+        if (d.ok) checkWzAdminStatus();
+    } catch(e) {
+        msg.style.display = 'inline';
+        msg.style.color = '#f87171';
+        msg.textContent = 'Erro ao salvar';
+    }
+}
 </script>
 {% endblock %}

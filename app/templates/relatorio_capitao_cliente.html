@@ -485,11 +485,30 @@
 
     <div class="card card-top" style="--accent:var(--cyan);">
         <div class="kpi">
-            <div class="kpi-lbl">Recebimento<span>{{ ns.v_label }}</span></div>
-            <div class="kpi-val md">{{ ns.r_qtd }}</div>
-            <div class="kpi-sub">placas pagas</div>
-            <div class="kpi-money">R$ {{ "%.2f"|format(ns.r_val) }}</div>
-            {{ badge_r(ns.r_val, ns.a_r) }}
+            <div class="kpi-lbl">Recebimento <span>por regional</span></div>
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:0;">
+                <div style="display:grid;grid-template-columns:76px auto 1fr;align-items:center;gap:4px 8px;padding:6px 0;border-bottom:1px solid var(--border);">
+                    <div style="font-size:.73rem;color:var(--r1);font-weight:600;display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--r1);flex-shrink:0;"></div>Capitão</div>
+                    <div style="font-size:.85rem;font-weight:700;">{{ h.receb_capitao_qtd }}</div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:.71rem;color:var(--muted);text-align:right;">R$ {{ "%.0f"|format(h.receb_capitao_valor) }}</div>
+                </div>
+                <div style="display:grid;grid-template-columns:76px auto 1fr;align-items:center;gap:4px 8px;padding:6px 0;border-bottom:1px solid var(--border);">
+                    <div style="font-size:.73rem;color:var(--r2);font-weight:600;display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--r2);flex-shrink:0;"></div>Capitão 2</div>
+                    <div style="font-size:.85rem;font-weight:700;">{{ h.receb_capitao2_qtd }}</div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:.71rem;color:var(--muted);text-align:right;">R$ {{ "%.0f"|format(h.receb_capitao2_valor) }}</div>
+                </div>
+                <div style="display:grid;grid-template-columns:76px auto 1fr;align-items:center;gap:4px 8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+                    <div style="font-size:.73rem;color:var(--r3);font-weight:600;display:flex;align-items:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--r3);flex-shrink:0;"></div>Jardim E.</div>
+                    <div style="font-size:.85rem;font-weight:700;">{{ h.receb_jardim_europa_qtd }}</div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:.71rem;color:var(--muted);text-align:right;">R$ {{ "%.0f"|format(h.receb_jardim_europa_valor) }}</div>
+                </div>
+                <div style="display:grid;grid-template-columns:76px auto 1fr;align-items:center;gap:4px 8px;padding:6px 0;">
+                    <div style="font-size:.69rem;color:var(--dim);font-weight:500;">Total</div>
+                    <div style="font-size:.95rem;font-weight:800;color:var(--cyan);">{{ h.receb_total_qtd }}</div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:.71rem;color:var(--cyan);text-align:right;">R$ {{ "%.0f"|format(h.receb_total_valor) }}</div>
+                </div>
+            </div>
+            {{ badge_r(h.receb_total_valor, a.receb_total_valor if a else none) }}
         </div>
     </div>
 

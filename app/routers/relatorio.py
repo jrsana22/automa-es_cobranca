@@ -627,3 +627,43 @@ def cliente_wz_cfg_get(key: str = "", db: Session = Depends(get_db)):
         "dias_envio": cfg.dias_envio,
         "ativo": cfg.ativo,
     })
+
+
+# ── Admin WhatsApp routes (requer autenticação admin) ───────────────────────
+
+@router.get("/relatorio/admin/wz-cfg")
+def admin_wz_cfg_get(db: Session = Depends(get_db), _: None = Depends(require_auth)):
+    cfg = _wz_config_get(db)
+    return JSONResponse({
+        "ok": True,
+        "server_url": cfg.server_url or "",
+        "instance_token": cfg.instance_token or "",
+    })
+
+
+@router.get("/relatorio/admin/wz-status")
+def admin_wz_status(db: Session = Depends(get_db), _: None = Depends(require_auth)):
+    cfg = _wz_config_get(db)
+    return JSONResponse({"ok": True, **_wz_status(cfg)})
+
+
+@router.post("/relatorio/admin/wz-config")
+def admin_wz_config_save(
+    db: Session = Depends(get_db),
+    _: None = Depends(require_auth),
+    server_url: str = Form(""),
+    instance_token: str = Form(""),
+):
+    cfg = _wz_config_get(db)
+    cfg.server_url = server_url.strip()
+    cfg.instance_token = instance_token.strip()
+    cfg.atualizado_em = datetime.now(_BRASILIA).replace(tzinfo=None)
+    db.commit()
+
+    try:
+        from app.scheduler import _reagendar_whatsapp
+        _reagendar_whatsapp(cfg)
+    except Exception:
+        pass
+
+    return JSONResponse({"ok": True, "msg": "Credenciais salvas com sucesso."})
