@@ -406,7 +406,7 @@
                             <span style="color:var(--muted);">Capitão</span>
                         </div>
                         <div style="text-align:right;">
-                            <div class="legend-val">{{ h.receb_capitao_qtd }} parcelas</div>
+                            <div class="legend-val">{{ h.receb_capitao_qtd }} placas</div>
                             <div style="font-size:0.7rem;color:var(--dim);">R$ {{ "%.0f"|format(h.receb_capitao_valor) }}</div>
                         </div>
                     </div>
@@ -416,7 +416,7 @@
                             <span style="color:var(--muted);">Capitão 2</span>
                         </div>
                         <div style="text-align:right;">
-                            <div class="legend-val">{{ h.receb_capitao2_qtd }} parcelas</div>
+                            <div class="legend-val">{{ h.receb_capitao2_qtd }} placas</div>
                             <div style="font-size:0.7rem;color:var(--dim);">R$ {{ "%.0f"|format(h.receb_capitao2_valor) }}</div>
                         </div>
                     </div>
@@ -426,7 +426,7 @@
                             <span style="color:var(--muted);">Jardim Europa</span>
                         </div>
                         <div style="text-align:right;">
-                            <div class="legend-val">{{ h.receb_jardim_europa_qtd }} parcelas</div>
+                            <div class="legend-val">{{ h.receb_jardim_europa_qtd }} placas</div>
                             <div style="font-size:0.7rem;color:var(--dim);">R$ {{ "%.0f"|format(h.receb_jardim_europa_valor) }}</div>
                         </div>
                     </div>
@@ -511,7 +511,7 @@
             {{ crow("Venc. mês passado", h.inadi_mes_ant_qtd, a.inadi_mes_ant_qtd) }}
             {{ crow("Venc. mês atual", h.inadi_mes_atual_qtd, a.inadi_mes_atual_qtd) }}
             <tr class="grp"><td colspan="4">Recebimento</td></tr>
-            {{ crow("Total parcelas", h.receb_total_qtd, a.receb_total_qtd) }}
+            {{ crow("Total placas", h.receb_total_qtd, a.receb_total_qtd) }}
             {{ crow("Total (R$)", h.receb_total_valor, a.receb_total_valor, 'r') }}
             {{ crow("Capitão (qtd)", h.receb_capitao_qtd, a.receb_capitao_qtd) }}
             {{ crow("Capitão (R$)", h.receb_capitao_valor, a.receb_capitao_valor, 'r') }}
