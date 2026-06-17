@@ -256,11 +256,43 @@
         .wz-dot.off { background:var(--red); }
         .wz-status-text { font-size:.85rem; font-weight:600; }
         .wz-status-sub  { font-size:.75rem; color:var(--muted); margin-top:2px; }
-        .wz-section-label { font-size:.65rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; margin:20px 0 10px; }
         .wz-form { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:22px; }
-        .wz-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-        @media(max-width:600px){ .wz-form-grid { grid-template-columns:1fr; } }
-        .wz-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:1px solid var(--border); margin-top:14px; }
+        .wz-form-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+        @media(max-width:700px){ .wz-form-grid { grid-template-columns:1fr; } }
+        .num-wrap { display:flex; align-items:center; gap:0; }
+        .num-prefix {
+            background:var(--bg3); border:1px solid var(--border); border-right:none;
+            padding:8px 10px; border-radius:8px 0 0 8px;
+            font-size:.82rem; font-family:'JetBrains Mono',monospace;
+            color:var(--dim); white-space:nowrap; flex-shrink:0;
+        }
+        .num-wrap input {
+            flex:1; background:var(--bg3); border:1px solid var(--border);
+            border-left:none; color:var(--text); border-radius:0 8px 8px 0;
+            padding:8px 10px; font-size:.85rem; font-family:'JetBrains Mono',monospace;
+        }
+        .num-wrap input:focus { outline:none; border-color:var(--blue); }
+        /* day checkboxes */
+        .day-checks { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+        .day-cb { display:none; }
+        .day-cb + label {
+            padding:6px 12px; border-radius:8px; font-size:.78rem; font-weight:600;
+            border:1px solid var(--border); color:var(--muted); cursor:pointer;
+            transition:all .15s; user-select:none;
+        }
+        .day-cb:checked + label { background:rgba(99,102,241,.15); border-color:var(--r1); color:var(--r1); }
+        .day-cb + label:hover { border-color:var(--border2); color:var(--text); }
+        /* time */
+        .wz-time-wrap { display:flex; gap:8px; align-items:center; margin-top:10px; }
+        .wz-time-wrap select {
+            background:var(--bg3); border:1px solid var(--border);
+            color:var(--text); border-radius:8px; padding:8px 10px;
+            font-size:.85rem; font-family:'JetBrains Mono',monospace; cursor:pointer;
+            appearance:none; text-align:center;
+        }
+        .wz-time-wrap select:focus { outline:none; border-color:var(--blue); }
+        .wz-time-sep { font-size:1.2rem; font-weight:700; color:var(--dim); }
+        .wz-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-top:1px solid var(--border); margin-top:18px; }
         .wz-toggle-label { font-size:.85rem; font-weight:600; }
         .wz-toggle-sub { font-size:.75rem; color:var(--muted); }
         .toggle-switch { position:relative; width:44px; height:24px; flex-shrink:0; }
@@ -506,7 +538,7 @@
 </div>
 
 <!-- Inadimplência -->
-<div class="section-label">Inadimplência em Cobrança</div>
+<div class="section-label">Inadimplência — Cobrança</div>
 <div class="grid g3">
     <div class="card card-top" style="--accent:var(--red);">
         <div class="kpi"><div class="kpi-lbl">Total em cobrança</div><div class="kpi-val md">{{ h.inadi_total_qtd }}</div><div class="kpi-money">R$ {{ "%.2f"|format(h.inadi_total_valor) }}</div>{{ badge(h.inadi_total_qtd, a.inadi_total_qtd if a else none) }}</div>
@@ -680,43 +712,65 @@
     <div class="wz-form">
         <form id="form-wz" onsubmit="saveWzConfig(event)">
             <input type="hidden" name="key" value="{{ client_key }}">
+
+            <!-- Números destinatários -->
+            <div class="form-group" style="margin-bottom:14px;">
+                <label style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Números que receberão o relatório</label>
+            </div>
             <div class="wz-form-grid">
-                <div class="form-group" style="grid-column:1/-1;">
-                    <label>URL do servidor UAZapi</label>
-                    <input type="url" name="server_url" id="wz-server-url" placeholder="https://wwwsolucoesdeia.uazapi.com">
-                </div>
-                <div class="form-group" style="grid-column:1/-1;">
-                    <label>Token da instância</label>
-                    <input type="text" name="instance_token" id="wz-token" placeholder="Token de acesso da instância">
+                <div class="form-group">
+                    <label>Destinatário 1</label>
+                    <div class="num-wrap"><span class="num-prefix">+55</span><input type="tel" name="numero_1" id="wz-n1" placeholder="31 9 9999-0001" maxlength="15"></div>
                 </div>
                 <div class="form-group">
-                    <label>Número destinatário 1</label>
-                    <input type="text" name="numero_1" id="wz-n1" placeholder="5511999990000">
+                    <label>Destinatário 2</label>
+                    <div class="num-wrap"><span class="num-prefix">+55</span><input type="tel" name="numero_2" id="wz-n2" placeholder="31 9 9999-0002" maxlength="15"></div>
                 </div>
                 <div class="form-group">
-                    <label>Número destinatário 2</label>
-                    <input type="text" name="numero_2" id="wz-n2" placeholder="5511999990001">
-                </div>
-                <div class="form-group">
-                    <label>Número destinatário 3</label>
-                    <input type="text" name="numero_3" id="wz-n3" placeholder="5511999990002">
-                </div>
-                <div class="form-group">
-                    <label>Horário do envio automático</label>
-                    <input type="time" name="horario_envio" id="wz-hora" value="07:00">
-                </div>
-                <div class="form-group">
-                    <label>Dias (APScheduler: 0=Seg … 6=Dom)</label>
-                    <input type="text" name="dias_envio" id="wz-dias" value="0,1,2,3,4" placeholder="0,1,2,3,4">
+                    <label>Destinatário 3</label>
+                    <div class="num-wrap"><span class="num-prefix">+55</span><input type="tel" name="numero_3" id="wz-n3" placeholder="31 9 9999-0003" maxlength="15"></div>
                 </div>
             </div>
+
+            <!-- Dias -->
+            <div class="form-group" style="margin-top:18px;">
+                <label style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Dias de envio</label>
+                <div class="day-checks">
+                    <input class="day-cb" type="checkbox" name="dias" value="0" id="d0"><label for="d0">Seg</label>
+                    <input class="day-cb" type="checkbox" name="dias" value="1" id="d1"><label for="d1">Ter</label>
+                    <input class="day-cb" type="checkbox" name="dias" value="2" id="d2"><label for="d2">Qua</label>
+                    <input class="day-cb" type="checkbox" name="dias" value="3" id="d3"><label for="d3">Qui</label>
+                    <input class="day-cb" type="checkbox" name="dias" value="4" id="d4"><label for="d4">Sex</label>
+                    <input class="day-cb" type="checkbox" name="dias" value="5" id="d5"><label for="d5">Sáb</label>
+                    <input class="day-cb" type="checkbox" name="dias" value="6" id="d6"><label for="d6">Dom</label>
+                </div>
+            </div>
+
+            <!-- Horário -->
+            <div class="form-group" style="margin-top:18px;">
+                <label style="font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Horário do envio automático</label>
+                <div class="wz-time-wrap">
+                    <select id="wz-hora" name="hora">
+                        {% for h in range(0,24) %}
+                        <option value="{{ '%02d'|format(h) }}" {% if h == 7 %}selected{% endif %}>{{ '%02d'|format(h) }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="wz-time-sep">:</span>
+                    <select id="wz-min" name="minuto">
+                        {% for m in [0,5,10,15,20,25,30,35,40,45,50,55] %}
+                        <option value="{{ '%02d'|format(m) }}">{{ '%02d'|format(m) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
             <div class="wz-toggle-row">
                 <div>
                     <div class="wz-toggle-label">Envio automático ativo</div>
-                    <div class="wz-toggle-sub">Envia o relatório no horário configurado</div>
+                    <div class="wz-toggle-sub">Envia o relatório nos dias e horário selecionados</div>
                 </div>
                 <label class="toggle-switch">
-                    <input type="checkbox" name="ativo" id="wz-ativo">
+                    <input type="checkbox" id="wz-ativo">
                     <span class="toggle-slider"></span>
                 </label>
             </div>
@@ -846,14 +900,20 @@ async function loadWzConfig() {
         const r = await fetch('/relatorio/cliente/wz-cfg?key={{ client_key }}');
         const d = await r.json();
         if (!d.ok) return;
-        document.getElementById('wz-server-url').value = d.server_url || '';
-        document.getElementById('wz-token').value      = d.instance_token || '';
-        document.getElementById('wz-n1').value         = d.numero_1 || '';
-        document.getElementById('wz-n2').value         = d.numero_2 || '';
-        document.getElementById('wz-n3').value         = d.numero_3 || '';
-        document.getElementById('wz-hora').value       = d.horario_envio || '07:00';
-        document.getElementById('wz-dias').value       = d.dias_envio || '0,1,2,3,4';
-        document.getElementById('wz-ativo').checked    = d.ativo;
+        document.getElementById('wz-n1').value = d.numero_1 || '';
+        document.getElementById('wz-n2').value = d.numero_2 || '';
+        document.getElementById('wz-n3').value = d.numero_3 || '';
+        // Horário
+        const [hh, mm] = (d.horario_envio || '07:00').split(':');
+        document.getElementById('wz-hora').value = hh || '07';
+        document.getElementById('wz-min').value  = mm || '00';
+        // Dias
+        const dias = (d.dias_envio || '').split(',').map(s => s.trim());
+        for (let i=0;i<7;i++) {
+            const cb = document.getElementById('d'+i);
+            if (cb) cb.checked = dias.includes(String(i));
+        }
+        document.getElementById('wz-ativo').checked = d.ativo;
     } catch {}
 }
 
@@ -864,7 +924,12 @@ async function saveWzConfig(e) {
     const btn  = form.querySelector('button[type=submit]');
     btn.disabled = true; btn.textContent = 'Salvando...';
     const fd = new FormData(form);
-    if (!document.getElementById('wz-ativo').checked) fd.set('ativo', 'false');
+    // Construir horario_envio a partir dos selects
+    const hora = document.getElementById('wz-hora').value;
+    const min  = document.getElementById('wz-min').value;
+    fd.append('horario_envio', hora + ':' + min);
+    // Toggle ativo (checkbox não envia value=false nativo)
+    fd.set('ativo', document.getElementById('wz-ativo').checked ? 'true' : 'false');
     try {
         const r = await fetch('/relatorio/cliente/wz-config', { method:'POST', body: fd });
         const d = await r.json();

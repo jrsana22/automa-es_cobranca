@@ -549,35 +549,37 @@ def cliente_wz_status(key: str = "", db: Session = Depends(get_db)):
     return JSONResponse({"ok": True, **_wz_status(cfg)})
 
 
+def _add55(n: str) -> str:
+    n = "".join(c for c in n if c.isdigit())
+    if not n:
+        return ""
+    return n if n.startswith("55") else "55" + n
+
+
+def _strip55(n: str) -> str:
+    return n[2:] if n and n.startswith("55") else n
+
+
 @router.post("/relatorio/cliente/wz-config")
-def cliente_wz_config(
-    db: Session = Depends(get_db),
-    key: str = Form(...),
-    server_url: str = Form(""),
-    instance_token: str = Form(""),
-    numero_1: str = Form(""),
-    numero_2: str = Form(""),
-    numero_3: str = Form(""),
-    horario_envio: str = Form("07:00"),
-    dias_envio: str = Form("0,1,2,3,4"),
-    ativo: bool = Form(False),
-):
+async def cliente_wz_config(request: Request, db: Session = Depends(get_db)):
+    form = await request.form()
+    key = form.get("key", "")
     if not _validar_key(key):
         return JSONResponse({"ok": False, "msg": "Acesso negado"}, status_code=403)
 
+    dias_list = form.getlist("dias")
+    dias_envio = ",".join(sorted(dias_list, key=lambda x: int(x))) if dias_list else "0"
+
     cfg = _wz_config_get(db)
-    cfg.server_url = server_url.strip()
-    cfg.instance_token = instance_token.strip()
-    cfg.numero_1 = numero_1.strip()
-    cfg.numero_2 = numero_2.strip()
-    cfg.numero_3 = numero_3.strip()
-    cfg.horario_envio = horario_envio.strip()
-    cfg.dias_envio = dias_envio.strip()
-    cfg.ativo = ativo
+    cfg.numero_1 = _add55(form.get("numero_1", ""))
+    cfg.numero_2 = _add55(form.get("numero_2", ""))
+    cfg.numero_3 = _add55(form.get("numero_3", ""))
+    cfg.horario_envio = form.get("horario_envio", "07:00")
+    cfg.dias_envio = dias_envio
+    cfg.ativo = form.get("ativo") == "true"
     cfg.atualizado_em = datetime.now(_BRASILIA).replace(tzinfo=None)
     db.commit()
 
-    # Recarregar job no scheduler
     try:
         from app.scheduler import _reagendar_whatsapp
         _reagendar_whatsapp(cfg)
@@ -618,11 +620,9 @@ def cliente_wz_cfg_get(key: str = "", db: Session = Depends(get_db)):
     cfg = _wz_config_get(db)
     return JSONResponse({
         "ok": True,
-        "server_url": cfg.server_url,
-        "instance_token": cfg.instance_token,
-        "numero_1": cfg.numero_1,
-        "numero_2": cfg.numero_2,
-        "numero_3": cfg.numero_3,
+        "numero_1": _strip55(cfg.numero_1),
+        "numero_2": _strip55(cfg.numero_2),
+        "numero_3": _strip55(cfg.numero_3),
         "horario_envio": cfg.horario_envio,
         "dias_envio": cfg.dias_envio,
         "ativo": cfg.ativo,
