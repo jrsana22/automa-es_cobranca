@@ -276,6 +276,60 @@ def migrate_add_form_tokens():
     print("Tabela 'form_tokens' criada.")
 
 
+def migrate_add_relatorio_capitao():
+    """Cria a tabela relatorio_capitao_diario se não existir."""
+    if not os.path.exists(DB_PATH):
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='relatorio_capitao_diario'")
+    if cur.fetchone():
+        conn.close()
+        return
+
+    cur.execute("""
+        CREATE TABLE relatorio_capitao_diario (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            data_ref DATE NOT NULL UNIQUE,
+            extraido_em DATETIME NOT NULL,
+            vendas_total INTEGER DEFAULT 0,
+            vendas_capitao INTEGER DEFAULT 0,
+            vendas_capitao2 INTEGER DEFAULT 0,
+            vendas_jardim_europa INTEGER DEFAULT 0,
+            cotacoes_mes INTEGER DEFAULT 0,
+            cotacoes_dia_anterior INTEGER DEFAULT 0,
+            reativacao_qtd INTEGER DEFAULT 0,
+            reativacao_valor REAL DEFAULT 0.0,
+            pb_total INTEGER DEFAULT 0,
+            pb_pagos INTEGER DEFAULT 0,
+            pb_valor REAL DEFAULT 0.0,
+            inadi_total_qtd INTEGER DEFAULT 0,
+            inadi_total_valor REAL DEFAULT 0.0,
+            inadi_mes_ant_qtd INTEGER DEFAULT 0,
+            inadi_mes_ant_valor REAL DEFAULT 0.0,
+            inadi_mes_atual_qtd INTEGER DEFAULT 0,
+            inadi_mes_atual_valor REAL DEFAULT 0.0,
+            cancelamento_qtd INTEGER DEFAULT 0,
+            receb_total_qtd INTEGER DEFAULT 0,
+            receb_total_valor REAL DEFAULT 0.0,
+            receb_capitao_qtd INTEGER DEFAULT 0,
+            receb_capitao_valor REAL DEFAULT 0.0,
+            receb_capitao2_qtd INTEGER DEFAULT 0,
+            receb_capitao2_valor REAL DEFAULT 0.0,
+            receb_jardim_europa_qtd INTEGER DEFAULT 0,
+            receb_jardim_europa_valor REAL DEFAULT 0.0,
+            log TEXT,
+            erros TEXT,
+            manual BOOLEAN DEFAULT 0
+        )
+    """)
+    conn.commit()
+    conn.close()
+    print("Tabela 'relatorio_capitao_diario' criada.")
+
+
 if __name__ == "__main__":
     migrate()
     migrate_add_dias_semana()

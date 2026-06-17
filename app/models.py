@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import Integer, String, Boolean, Text, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Integer, String, Boolean, Text, DateTime, Float, Date, ForeignKey, UniqueConstraint
 
 _BRASILIA = ZoneInfo("America/Sao_Paulo")
 
@@ -234,3 +234,57 @@ class FormToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     used: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_agora_brasilia)
+
+
+
+class RelatorioCapitaoDiario(Base):
+    """Snapshot diário de métricas extraídas do ERP para a Regional Capitão."""
+    __tablename__ = "relatorio_capitao_diario"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    data_ref: Mapped[datetime] = mapped_column(Date, unique=True, nullable=False)
+    extraido_em: Mapped[datetime] = mapped_column(DateTime, default=_agora_brasilia)
+
+    # Vendas
+    vendas_total: Mapped[int] = mapped_column(Integer, default=0)
+    vendas_capitao: Mapped[int] = mapped_column(Integer, default=0)
+    vendas_capitao2: Mapped[int] = mapped_column(Integer, default=0)
+    vendas_jardim_europa: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Cotações (placeholder V1)
+    cotacoes_mes: Mapped[int] = mapped_column(Integer, default=0)
+    cotacoes_dia_anterior: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Reativação
+    reativacao_qtd: Mapped[int] = mapped_column(Integer, default=0)
+    reativacao_valor: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # Primeiro Boleto
+    pb_total: Mapped[int] = mapped_column(Integer, default=0)
+    pb_pagos: Mapped[int] = mapped_column(Integer, default=0)
+    pb_valor: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # Inadimplência Cobrança
+    inadi_total_qtd: Mapped[int] = mapped_column(Integer, default=0)
+    inadi_total_valor: Mapped[float] = mapped_column(Float, default=0.0)
+    inadi_mes_ant_qtd: Mapped[int] = mapped_column(Integer, default=0)
+    inadi_mes_ant_valor: Mapped[float] = mapped_column(Float, default=0.0)
+    inadi_mes_atual_qtd: Mapped[int] = mapped_column(Integer, default=0)
+    inadi_mes_atual_valor: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # Cancelamento (placeholder V1)
+    cancelamento_qtd: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Recebimento
+    receb_total_qtd: Mapped[int] = mapped_column(Integer, default=0)
+    receb_total_valor: Mapped[float] = mapped_column(Float, default=0.0)
+    receb_capitao_qtd: Mapped[int] = mapped_column(Integer, default=0)
+    receb_capitao_valor: Mapped[float] = mapped_column(Float, default=0.0)
+    receb_capitao2_qtd: Mapped[int] = mapped_column(Integer, default=0)
+    receb_capitao2_valor: Mapped[float] = mapped_column(Float, default=0.0)
+    receb_jardim_europa_qtd: Mapped[int] = mapped_column(Integer, default=0)
+    receb_jardim_europa_valor: Mapped[float] = mapped_column(Float, default=0.0)
+
+    log: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    erros: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    manual: Mapped[bool] = mapped_column(Boolean, default=False)

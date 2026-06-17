@@ -335,3 +335,134 @@ class APVSClient(BaseERPClient):
                 f"Resposta inesperada do ERP. Content-Type: {content_type}, "
                 f"Content-Disposition: {content_disposition}"
             )
+
+    def exportar_relatorio(
+        self,
+        id_formulario: str,
+        id_situacao_inadimplente: str = "",
+        id_ano_consulta: str = "",
+        id_mes_consulta: str = "",
+        cd_referencia: str = "",
+    ) -> ExportResult:
+        """
+        Exporta qualquer formulário da tela Auto Impressão 2ª Via.
+        Suporta filtros de ano/mês (Novos Contratos, Recebimento) e
+        situação (Inadimplência/Reativação) e referência (Recebimento).
+        """
+        logger.info(
+            f"exportar_relatorio form={id_formulario} sit={id_situacao_inadimplente} "
+            f"{id_ano_consulta}/{id_mes_consulta} ref={cd_referencia}"
+        )
+        self._carregar_tela_relatorio()
+
+        export_data = {
+            "eng_token": self._eng_token,
+            "eng_sessao_aberta": self._eng_sessao_aberta,
+            "eng_formmode": "ficha",
+            "eng_DataAction": "",
+            "eng_idmodulo": ID_MODULO,
+            "eng_idtela": ID_TELA,
+            "eng_nrversao": self._nr_versao,
+            "eng_pagina": "1",
+            "eng_registro": "1",
+            "eng_filtropadrao": "",
+            "eng_chk": self._eng_chk,
+            "eng_filtro": "",
+            "eng_idrelatorio": id_formulario,
+            "eng_acao": "",
+            "eng_contenttype": "",
+            "eng_detalhe": "s",
+            "eng_lookup": "",
+            "eng_lookupchave": "",
+            "eng_lookupvalor": "",
+            "eng_lookuplista": "",
+            "eng_lookupaux": "0",
+            "eng_refreshaux": "0",
+            "eng_query": "",
+            "eng_orderby": "",
+            "eng_idmenu": ID_MENU,
+            "eng_historico": " Auto Impressão de 2ª Via",
+            "eng_detalheaux": "",
+            "eng_tema": "#004182",
+            "eng_idioma": "207",
+            "eng_idacao": "",
+            "eng_selpagina": "",
+            "eng_edicao": "",
+            "eng_atualiza_opener": "",
+            "eng_indiceacaoregistro": "",
+            "eng_indicerelatorioregistro": "",
+            "ecm_chavedominio": "",
+            "wex_instancia": "",
+            "eng_tipo_excel": "xlsx",
+            "eng_download_token": "",
+            "eng_formatoData": "dd/MM/yyyy",
+            "tela_leitura": "",
+            "eng_ecm_naoexibeinserir": "",
+            "eng_erroaux": "0",
+            "eng_dataactionaux": "ModoFicha",
+            "eng_validade_eis": "0",
+            "eng_chave": "id_processo=0",
+            "eng_chkch": self._eng_chkch,
+            "id_formulario": id_formulario,
+            "id_situacao_inadimplente": id_situacao_inadimplente,
+            "id_ano_consulta": id_ano_consulta,
+            "id_mes_consulta": id_mes_consulta,
+            "cd_referencia": cd_referencia,
+            "id_processo": "0",
+            "cd_papel": self._cd_papel,
+            "cd_usuario_login": self.erp_login,
+            "cd_empresa": self._cd_empresa,
+            "txtid_pessoa_diretor_estado": "[Não selecionado]",
+            "id_pessoa_diretor_estado": "",
+            "lkpid_pessoa_diretor_estado": "[Não selecionado]",
+            "txtid_pessoa_gerente_regional": "[Não selecionado]",
+            "id_pessoa_gerente_regional": "",
+            "lkpid_pessoa_gerente_regional": "[Não selecionado]",
+            "txtid_regional": "[Não selecionado]",
+            "id_regional": "",
+            "lkpid_regional": "[Não selecionado]",
+            "txtid_pessoa_consultor_lider": "[Não selecionado]",
+            "id_pessoa_consultor_lider": "",
+            "lkpid_pessoa_consultor_lider": "[Não selecionado]",
+            "txtid_pessoa_consultor": "[Não selecionado]",
+            "id_pessoa_consultor": "",
+            "lkpid_pessoa_consultor": "[Não selecionado]",
+            "txtid_identificacao_externa": "[Não selecionado]",
+            "id_identificacao_externa": "",
+            "lkpid_identificacao_externa": "[Não selecionado]",
+            "txtid_pessoa": "[Não selecionado]",
+            "id_pessoa": "",
+            "lkpid_pessoa": "[Não selecionado]",
+            "idsituacao": "",
+            "id_mes_pendencia": "",
+            "nr_ano_pendencia": str(pd.Timestamp.now().year),
+            "dv_ativo": "",
+            f"dt_inicial_id{id_formulario}": "",
+            f"dt_final_id{id_formulario}": "",
+            "dt_inicio": "",
+            "dt_fim": "",
+            "dt_pagto": "",
+            "dt_agendamento_inicio": "",
+            "dt_agendamento_fim": "",
+            "dt_movimento": "",
+            "dt_fup_inicio": "",
+            "dt_fup_fim": "",
+            "dt_inicial": "",
+            "dt_final": "",
+        }
+
+        resp = self.session.post(f"{self.base_url}/Excel.aspx", data=export_data)
+        resp.raise_for_status()
+
+        content_type = resp.headers.get("Content-Type", "")
+        content_disposition = resp.headers.get("Content-Disposition", "")
+
+        if "spreadsheet" in content_type or "octet-stream" in content_type or ".xlsx" in content_disposition:
+            df = pd.read_excel(BytesIO(resp.content), engine="openpyxl")
+            logger.info(f"exportar_relatorio: {len(df)} registros, colunas: {list(df.columns)}")
+            return ExportResult(dataframe=df, total_registros=len(df), log=f"{len(df)} registros")
+        else:
+            raise Exception(
+                f"ERP não retornou XLSX para form {id_formulario}: "
+                f"Content-Type={content_type}"
+            )

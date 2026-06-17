@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+{% block title %}Relatório Regional Capitão{% endblock %}
+
+{% block head %}
+<style>
+.rel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+.rel-badge {
+    font-size: 0.75rem;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+.rel-badge-manual { background: #2d2a1e; color: #f5c842; border: 1px solid #5c4e10; }
+.rel-badge-auto   { background: #132113; color: #4ade80; border: 1px solid #14532d; }
+.rel-badge-missing{ background: #1e1e1e; color: #6b7280; border: 1px solid #374151; }
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+.metric-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+}
+.metric-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--space-2);
+}
+.metric-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.metric-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: var(--space-2);
+}
+.metric-delta {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: var(--space-2);
+}
+.delta-up   { color: #4ade80; }
+.delta-down { color: #f87171; }
+.delta-zero { color: #6b7280; }
+.delta-na   { color: #4b5563; }
+
+.compare-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.compare-table td.val { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+.compare-table tr.group-header td {
+    font-weight: 700;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    font-size: 0.8rem;
+    padding-top: var(--space-4);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.manual-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-3);
+}
+.manual-form-grid .form-group { margin-bottom: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="rel-header">
+        <h1 class="page-title" style="margin:0;">Relatório Regional Capitão</h1>
+        <div style="display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;">
+            <span style="font-size:0.85rem;color:var(--text-muted);">Hoje: <strong style="color:var(--text-primary);">{{ hoje }}</strong></span>
+            <span style="font-size:0.85rem;color:var(--text-muted);">Ref. mês passado: <strong style="color:var(--text-primary);">{{ mesmo_dia_mes_passado }}</strong></span>
+            <button id="btn-extrair" class="btn btn-primary btn-sm" onclick="iniciarExtracao()">
+                {% if extracao_em_andamento %}<span class="spinner"></span>Extraindo...{% else %}&#8635; Extrair Agora{% endif %}
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="page-container">
+
+{% if extracao_em_andamento %}
+<div class="card" style="margin-bottom:var(--space-4);border-color:#1d4ed8;background:#0f172a;">
+    <div style="padding:var(--space-4) var(--space-6);color:#93c5fd;font-size:0.9rem;">
+        <span class="spinner"></span> Extração em andamento. A página vai atualizar automaticamente.
+    </div>
+</div>
+{% endif %}
+
+<!-- Cards de destaque: HOJE -->
+<div style="margin-bottom:var(--space-2);font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Hoje{% if snap_hoje %} — atualizado às {{ snap_hoje.extraido_em.strftime('%H:%M') if snap_hoje.extraido_em else '' }}{% endif %}</div>
+
+{% if snap_hoje %}
+<div class="metric-grid">
+    {% set ant = snap_mes_passado %}
+
+    {% macro delta(v_hoje, v_ant) %}
+        {% if v_ant is not none and v_ant != 0 %}
+            {% set d = v_hoje - v_ant %}
+            {% if d > 0 %}<span class="metric-delta delta-up">&#9650; +{{ d }}</span>
+            {% elif d < 0 %}<span class="metric-delta delta-down">&#9660; {{ d }}</span>
+            {% else %}<span class="metric-delta delta-zero">= sem variação</span>{% endif %}
+        {% elif v_ant == 0 %}<span class="metric-delta delta-na">sem dado mês passado</span>
+        {% endif %}
+    {% endmacro %}
+
+    <!-- Vendas -->
+    <div class="metric-card">
+        <div class="metric-label">Vendas (mês atual)</div>
+        <div class="metric-value">{{ snap_hoje.vendas_total }}</div>
+        <div class="metric-sub">Cap: {{ snap_hoje.vendas_capitao }} | Cap2: {{ snap_hoje.vendas_capitao2 }} | JE: {{ snap_hoje.vendas_jardim_europa }}</div>
+        {% if ant %}{{ delta(snap_hoje.vendas_total, ant.vendas_total) }}{% endif %}
+    </div>
+
+    <!-- Reativação -->
+    <div class="metric-card">
+        <div class="metric-label">Reativação</div>
+        <div class="metric-value">{{ snap_hoje.reativacao_qtd }}</div>
+        <div class="metric-sub">R$ {{ "%.2f"|format(snap_hoje.reativacao_valor) }}</div>
+        {% if ant %}{{ delta(snap_hoje.reativacao_qtd, ant.reativacao_qtd) }}{% endif %}
+    </div>
+
+    <!-- Primeiro Boleto -->
+    <div class="metric-card">
+        <div class="metric-label">1º Boleto</div>
+        <div class="metric-value">{{ snap_hoje.pb_pagos }}<span style="font-size:1rem;color:var(--text-muted);">/{{ snap_hoje.pb_total }}</span></div>
+        <div class="metric-sub">Pagos / Total mês anterior</div>
+        {% if snap_hoje.pb_total > 0 %}
+        <div class="metric-sub">{{ "%.1f"|format(snap_hoje.pb_pagos / snap_hoje.pb_total * 100) }}% convertido</div>
+        {% endif %}
+        {% if ant %}{{ delta(snap_hoje.pb_pagos, ant.pb_pagos) }}{% endif %}
+    </div>
+
+    <!-- Inadimplência -->
+    <div class="metric-card">
+        <div class="metric-label">Inadimplência total</div>
+        <div class="metric-value">{{ snap_hoje.inadi_total_qtd }}</div>
+        <div class="metric-sub">R$ {{ "%.2f"|format(snap_hoje.inadi_total_valor) }}</div>
+        {% if ant %}{{ delta(snap_hoje.inadi_total_qtd, ant.inadi_total_qtd) }}{% endif %}
+    </div>
+
+    <!-- Inadimplência por mês -->
+    <div class="metric-card">
+        <div class="metric-label">Inadi. mês passado / atual</div>
+        <div class="metric-value" style="font-size:1.3rem;">
+            {{ snap_hoje.inadi_mes_ant_qtd }} <span style="color:var(--text-muted);font-size:1rem;">/ {{ snap_hoje.inadi_mes_atual_qtd }}</span>
+        </div>
+        <div class="metric-sub">
+            R$ {{ "%.2f"|format(snap_hoje.inadi_mes_ant_valor) }} / R$ {{ "%.2f"|format(snap_hoje.inadi_mes_atual_valor) }}
+        </div>
+    </div>
+
+    <!-- Recebimento -->
+    <div class="metric-card">
+        <div class="metric-label">Recebimento (mês atual)</div>
+        <div class="metric-value">{{ snap_hoje.receb_total_qtd }}</div>
+        <div class="metric-sub">R$ {{ "%.2f"|format(snap_hoje.receb_total_valor) }}</div>
+        <div class="metric-sub">
+            Cap: {{ snap_hoje.receb_capitao_qtd }} (R$ {{ "%.0f"|format(snap_hoje.receb_capitao_valor) }}) |
+            Cap2: {{ snap_hoje.receb_capitao2_qtd }} |
+            JE: {{ snap_hoje.receb_jardim_europa_qtd }}
+        </div>
+        {% if ant %}{{ delta(snap_hoje.receb_total_qtd, ant.receb_total_qtd) }}{% endif %}
+    </div>
+
+</div>
+{% else %}
+<div class="card" style="margin-bottom:var(--space-6);">
+    <div style="padding:var(--space-8) var(--space-6);text-align:center;color:var(--text-muted);">
+        Nenhum dado extraído para hoje ainda.<br>
+        <button class="btn btn-primary" style="margin-top:var(--space-4);" onclick="iniciarExtracao()">Extrair Agora</button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabela comparativa -->
+{% if snap_hoje or snap_mes_passado %}
+<div class="card" style="margin-bottom:var(--space-6);">
+    <div class="card-header">
+        <h2 class="card-title">Comparação: hoje vs mesmo dia mês passado</h2>
+    </div>
+    <div class="table-container" style="margin-top:0;">
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th>Métrica</th>
+                    <th>{{ hoje }}</th>
+                    <th>{{ mesmo_dia_mes_passado }}</th>
+                    <th>Delta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% macro row(label, hoje_val, ant_val, fmt='n') %}
+                <tr>
+                    <td style="color:var(--text-secondary);">{{ label }}</td>
+                    <td class="val">
+                        {% if hoje_val is not none %}
+                            {% if fmt == 'r' %}R$ {{ "%.2f"|format(hoje_val) }}{% else %}{{ hoje_val }}{% endif %}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="val" style="color:var(--text-muted);">
+                        {% if ant_val is not none %}
+                            {% if fmt == 'r' %}R$ {{ "%.2f"|format(ant_val) }}{% else %}{{ ant_val }}{% endif %}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="val">
+                        {% if hoje_val is not none and ant_val is not none %}
+                            {% set d = hoje_val - ant_val %}
+                            {% if d > 0 %}<span class="delta-up">+{{ d if fmt == 'n' else "R$ %.2f"|format(d) }}</span>
+                            {% elif d < 0 %}<span class="delta-down">{{ d if fmt == 'n' else "R$ %.2f"|format(d) }}</span>
+                            {% else %}<span class="delta-zero">=</span>{% endif %}
+                        {% else %}<span class="delta-na">—</span>{% endif %}
+                    </td>
+                </tr>
+                {% endmacro %}
+
+                {% set h = snap_hoje %}
+                {% set a = snap_mes_passado %}
+                <tr class="group-header"><td colspan="4">Vendas</td></tr>
+                {{ row("Total", h.vendas_total if h else none, a.vendas_total if a else none) }}
+                {{ row("Regional Capitão", h.vendas_capitao if h else none, a.vendas_capitao if a else none) }}
+                {{ row("Regional Capitão 2", h.vendas_capitao2 if h else none, a.vendas_capitao2 if a else none) }}
+                {{ row("Regional Jardim Europa", h.vendas_jardim_europa if h else none, a.vendas_jardim_europa if a else none) }}
+
+                <tr class="group-header"><td colspan="4">Reativação</td></tr>
+                {{ row("Quantidade", h.reativacao_qtd if h else none, a.reativacao_qtd if a else none) }}
+                {{ row("Valor", h.reativacao_valor if h else none, a.reativacao_valor if a else none, 'r') }}
+
+                <tr class="group-header"><td colspan="4">Primeiro Boleto (1º mês)</td></tr>
+                {{ row("Total contratos mês ant.", h.pb_total if h else none, a.pb_total if a else none) }}
+                {{ row("Pagos", h.pb_pagos if h else none, a.pb_pagos if a else none) }}
+
+                <tr class="group-header"><td colspan="4">Inadimplência Cobrança</td></tr>
+                {{ row("Total (qtd)", h.inadi_total_qtd if h else none, a.inadi_total_qtd if a else none) }}
+                {{ row("Total (valor)", h.inadi_total_valor if h else none, a.inadi_total_valor if a else none, 'r') }}
+                {{ row("Venc. mês passado (qtd)", h.inadi_mes_ant_qtd if h else none, a.inadi_mes_ant_qtd if a else none) }}
+                {{ row("Venc. mês atual (qtd)", h.inadi_mes_atual_qtd if h else none, a.inadi_mes_atual_qtd if a else none) }}
+
+                <tr class="group-header"><td colspan="4">Recebimento (mês atual)</td></tr>
+                {{ row("Total (qtd)", h.receb_total_qtd if h else none, a.receb_total_qtd if a else none) }}
+                {{ row("Total (valor)", h.receb_total_valor if h else none, a.receb_total_valor if a else none, 'r') }}
+                {{ row("Capitão (qtd)", h.receb_capitao_qtd if h else none, a.receb_capitao_qtd if a else none) }}
+                {{ row("Capitão (valor)", h.receb_capitao_valor if h else none, a.receb_capitao_valor if a else none, 'r') }}
+                {{ row("Capitão 2 (qtd)", h.receb_capitao2_qtd if h else none, a.receb_capitao2_qtd if a else none) }}
+                {{ row("Jardim Europa (qtd)", h.receb_jardim_europa_qtd if h else none, a.receb_jardim_europa_qtd if a else none) }}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Entrada manual de dados históricos -->
+<div class="card" style="margin-bottom:var(--space-6);">
+    <div class="card-header" style="cursor:pointer;" onclick="toggleManual()">
+        <h2 class="card-title">&#43; Inserir Dados Manualmente (mês passado)</h2>
+    </div>
+    <div id="manual-form" style="display:none;padding:var(--space-6);">
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:var(--space-4);">
+            Use para inserir dados do mês passado manualmente, para ter comparação desde o primeiro dia.
+        </p>
+        <form onsubmit="salvarManual(event)">
+            <div class="manual-form-grid">
+                <div class="form-group">
+                    <label class="form-label">Data de Referência</label>
+                    <input type="date" name="data_ref" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vendas Capitão</label>
+                    <input type="number" name="vendas_capitao" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vendas Capitão 2</label>
+                    <input type="number" name="vendas_capitao2" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vendas Jardim Europa</label>
+                    <input type="number" name="vendas_jardim_europa" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reativação (qtd)</label>
+                    <input type="number" name="reativacao_qtd" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reativação (valor R$)</label>
+                    <input type="number" name="reativacao_valor" class="form-input" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">1º Boleto total</label>
+                    <input type="number" name="pb_total" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">1º Boleto pagos</label>
+                    <input type="number" name="pb_pagos" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Inadimpl. total (qtd)</label>
+                    <input type="number" name="inadi_total_qtd" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Inadimpl. total (R$)</label>
+                    <input type="number" name="inadi_total_valor" class="form-input" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receb. total (qtd)</label>
+                    <input type="number" name="receb_total_qtd" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receb. total (R$)</label>
+                    <input type="number" name="receb_total_valor" class="form-input" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receb. Capitão (qtd)</label>
+                    <input type="number" name="receb_capitao_qtd" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receb. Capitão (R$)</label>
+                    <input type="number" name="receb_capitao_valor" class="form-input" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receb. Capitão 2 (qtd)</label>
+                    <input type="number" name="receb_capitao2_qtd" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receb. Capitão 2 (R$)</label>
+                    <input type="number" name="receb_capitao2_valor" class="form-input" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receb. Jardim Europa (qtd)</label>
+                    <input type="number" name="receb_jardim_europa_qtd" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Receb. Jardim Europa (R$)</label>
+                    <input type="number" name="receb_jardim_europa_valor" class="form-input" value="0" step="0.01" min="0">
+                </div>
+            </div>
+            <div style="margin-top:var(--space-5);">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Histórico -->
+{% if historico %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Histórico (últimas 30 extrações)</h2>
+    </div>
+    <div class="table-container" style="margin-top:0;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Vendas</th>
+                    <th>Reat.</th>
+                    <th>1ºBol. Pg/Tot</th>
+                    <th>Inadi. total</th>
+                    <th>Receb. total</th>
+                    <th>Receb. R$</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in historico %}
+                <tr>
+                    <td style="color:var(--text-primary);font-weight:500;">
+                        {{ r.data_ref.strftime('%d/%m/%Y') if r.data_ref else '—' }}
+                        {% if r.manual %}<span class="rel-badge rel-badge-manual">manual</span>{% endif %}
+                    </td>
+                    <td>{{ r.vendas_total }}</td>
+                    <td>{{ r.reativacao_qtd }}</td>
+                    <td>{{ r.pb_pagos }}/{{ r.pb_total }}</td>
+                    <td>{{ r.inadi_total_qtd }}</td>
+                    <td>{{ r.receb_total_qtd }}</td>
+                    <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">R$ {{ "%.0f"|format(r.receb_total_valor) }}</td>
+                    <td>
+                        {% if r.erros %}
+                        <span title="{{ r.erros }}" style="color:#f87171;cursor:help;font-size:0.8rem;">&#9888; erros</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+</div><!-- /page-container -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleManual() {
+    const el = document.getElementById('manual-form');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function iniciarExtracao() {
+    const btn = document.getElementById('btn-extrair');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Iniciando...';
+    try {
+        const resp = await fetch('/relatorio/extrair', { method: 'POST' });
+        const data = await resp.json();
+        if (data.ok) {
+            showToast(data.msg, 'success');
+            btn.innerHTML = '<span class="spinner"></span>Extraindo...';
+            // Poll até ter dado novo
+            setTimeout(() => location.reload(), 65000);
+        } else {
+            showToast(data.msg, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '&#8635; Extrair Agora';
+        }
+    } catch(e) {
+        showToast('Erro ao iniciar extração', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '&#8635; Extrair Agora';
+    }
+}
+
+async function salvarManual(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const resp = await fetch('/relatorio/manual', { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (data.ok) {
+        showToast(data.msg, 'success');
+        setTimeout(() => location.reload(), 1200);
+    } else {
+        showToast(data.msg, 'error');
+    }
+}
+
+{% if extracao_em_andamento %}
+// Recarrega a cada 15s enquanto extração está rodando
+setTimeout(() => location.reload(), 15000);
+{% endif %}
+</script>
+{% endblock %}
