@@ -1,7 +1,9 @@
+import calendar as _cal
 import hashlib
 import hmac
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from math import ceil
 from typing import Optional
 from zoneinfo import ZoneInfo
 
@@ -73,6 +75,96 @@ def _snap_para_dict(r: RelatorioCapitaoDiario) -> dict:
 
 def _buscar_snapshot(db: Session, ref: date) -> RelatorioCapitaoDiario | None:
     return db.query(RelatorioCapitaoDiario).filter(RelatorioCapitaoDiario.data_ref == ref).first()
+
+
+def _fmt_data_label(iso_str: str, hoje: date) -> str:
+    try:
+        d = date.fromisoformat(iso_str)
+        if d == hoje:
+            return f"Hoje — {d.strftime('%d/%m')}"
+        if d == hoje - timedelta(days=1):
+            return f"Ontem — {d.strftime('%d/%m')}"
+        dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+        return f"{dias[d.weekday()]} {d.strftime('%d/%m')}"
+    except Exception:
+        return iso_str
+
+
+def _gerar_insights(snap: dict, data_ref: date) -> list[dict]:
+    if not snap:
+        return []
+    insights = []
+    day_n = data_ref.day
+    days_in_month = _cal.monthrange(data_ref.year, data_ref.month)[1]
+
+    vendas_total = snap.get("vendas_total") or 0
+    vendas_cap  = snap.get("vendas_capitao") or 0
+    vendas_cap2 = snap.get("vendas_capitao2") or 0
+    vendas_je   = snap.get("vendas_jardim_europa") or 0
+
+    pb_total = snap.get("pb_total") or 0
+    pb_pagos = snap.get("pb_pagos") or 0
+
+    reativ    = snap.get("reativacao_qtd") or 0
+    inadi_tot = snap.get("inadi_total_qtd") or 0
+    inadi_ma  = snap.get("inadi_mes_atual_qtd") or 0
+    inadi_mp  = snap.get("inadi_mes_ant_qtd") or 0
+
+    rc  = snap.get("receb_capitao_valor") or 0.0
+    rc2 = snap.get("receb_capitao2_valor") or 0.0
+    rje = snap.get("receb_jardim_europa_valor") or 0.0
+    receb_tot = snap.get("receb_total_valor") or 0.0
+
+    # 1. Projeção de vendas
+    if day_n > 0 and vendas_total > 0:
+        proj = round(vendas_total / day_n * days_in_month)
+        insights.append({
+            "icon": "📈",
+            "text": f"Ritmo atual projeta {proj} vendas até o fim do mês ({vendas_total} em {day_n} dias)",
+            "level": "info",
+        })
+
+    # 2. 1º Boleto vs meta 70%
+    META_PB = 70
+    if pb_total > 0:
+        pct = pb_pagos / pb_total * 100
+        if pct >= META_PB:
+            insights.append({"icon": "✅", "text": f"1º Boleto acima da meta: {pct:.0f}% de conversão ({pb_pagos}/{pb_total} pagos)", "level": "good"})
+        else:
+            faltam = ceil(pb_total * META_PB / 100) - pb_pagos
+            insights.append({"icon": "⚠️", "text": f"1º Boleto em {pct:.0f}% — faltam {faltam} pagamentos para atingir {META_PB}%", "level": "warn"})
+
+    # 3. Taxa de recuperação
+    pool = reativ + inadi_tot
+    if pool > 0:
+        taxa = reativ / pool * 100
+        if taxa >= 35:
+            insights.append({"icon": "✅", "text": f"Recuperação saudável: {taxa:.0f}% dos inadimplentes foram reativados ({reativ} de {pool})", "level": "good"})
+        else:
+            insights.append({"icon": "🔴", "text": f"Recuperação baixa: apenas {taxa:.0f}% dos inadimplentes reativados ({reativ} de {pool})", "level": "alert"})
+
+    # 4. Concentração de inadimplência
+    if inadi_ma > 0 and inadi_mp > 0 and inadi_ma > inadi_mp * 2:
+        insights.append({"icon": "🔴", "text": f"Inadimplência concentrada no mês atual: {inadi_ma} contratos vs {inadi_mp} do mês anterior", "level": "alert"})
+    elif inadi_mp > 30:
+        insights.append({"icon": "⚠️", "text": f"{inadi_mp} contratos do mês passado ainda em aberto — priorizar cobrança de vencidos", "level": "warn"})
+
+    # 5. Líder de vendas
+    if vendas_total > 0:
+        ranking = sorted([("Capitão", vendas_cap), ("Capitão 2", vendas_cap2), ("Jardim Europa", vendas_je)], key=lambda x: x[1], reverse=True)
+        lider, lider_qtd = ranking[0]
+        ultimo, ultimo_qtd = ranking[-1]
+        insights.append({"icon": "🏆", "text": f"{lider} lidera vendas com {lider_qtd} contratos no mês", "level": "info"})
+        if lider_qtd >= 5 and ultimo_qtd < lider_qtd * 0.35:
+            insights.append({"icon": "⚠️", "text": f"{ultimo} abaixo do esperado: {ultimo_qtd} vendas vs {lider_qtd} do líder", "level": "warn"})
+
+    # 6. Recebimento: regional com maior arrecadação
+    if receb_tot > 0 and rc + rc2 + rje > 0:
+        lider_r = max([("Capitão", rc), ("Capitão 2", rc2), ("Jardim Europa", rje)], key=lambda x: x[1])
+        pct_r = lider_r[1] / receb_tot * 100
+        insights.append({"icon": "💰", "text": f"{lider_r[0]} concentra {pct_r:.0f}% do recebimento (R$ {lider_r[1]:,.0f})", "level": "info"})
+
+    return insights
 
 
 def _salvar_snapshot(db: Session, snap, manual: bool = False):
@@ -228,10 +320,10 @@ def _contexto_relatorio(db: Session, data_ref: Optional[date] = None) -> dict:
         .limit(30)
         .all()
     )
-    # Datas adjacentes com dados para navegação
-    datas_disponiveis = [
-        str(r.data_ref) for r in historico
-    ]
+    datas_disponiveis = [str(r.data_ref) for r in historico]
+    snap_dict = _snap_para_dict(snap_hoje)
+    insights = _gerar_insights(snap_dict, data_ref)
+    datas_fmt = [(d, _fmt_data_label(d, hoje_real)) for d in datas_disponiveis]
     return {
         "data_ref": data_ref.strftime("%Y-%m-%d"),
         "data_ref_fmt": data_ref.strftime("%d/%m/%Y"),
@@ -239,17 +331,19 @@ def _contexto_relatorio(db: Session, data_ref: Optional[date] = None) -> dict:
         "hoje_iso": str(hoje_real),
         "mesmo_dia_mes_passado": mesmo_dia_mes_passado.strftime("%d/%m/%Y"),
         "mesmo_dia_mes_passado_iso": str(mesmo_dia_mes_passado),
-        "snap_hoje": _snap_para_dict(snap_hoje),
+        "snap_hoje": snap_dict,
         "snap_mes_passado": _snap_para_dict(snap_mes_passado),
         "historico": [_snap_para_dict(r) for r in historico],
         "extracao_em_andamento": _extracao_em_andamento,
         "datas_disponiveis": datas_disponiveis,
+        "datas_fmt": datas_fmt,
         "eh_hoje": data_ref == hoje_real,
+        "insights": insights,
     }
 
 
 @router.get("/relatorio/cliente", response_class=HTMLResponse)
-def relatorio_cliente(request: Request, key: str = "", data: str = "", db: Session = Depends(get_db)):
+def relatorio_cliente(request: Request, key: str = "", data: str = "", regional: str = "", db: Session = Depends(get_db)):
     expected = _client_key()
     if not hmac.compare_digest(key, expected):
         return HTMLResponse("<h2>Acesso negado</h2>", status_code=403)
@@ -257,6 +351,7 @@ def relatorio_cliente(request: Request, key: str = "", data: str = "", db: Sessi
     ctx = _contexto_relatorio(db, data_ref)
     ctx["request"] = request
     ctx["client_key"] = key
+    ctx["regional"] = regional if regional in ("capitao", "capitao2", "jardim") else "all"
     return templates.TemplateResponse("relatorio_capitao_cliente.html", ctx)
 
 

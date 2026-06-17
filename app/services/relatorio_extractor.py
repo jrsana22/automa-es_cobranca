@@ -231,7 +231,7 @@ class RelatorioExtractor:
                     snap.pb_valor = float(df_pb[col_val].sum()) if len(df_pb) > 0 else 0.0
 
                 logs.append(
-                    f"Recebimento: {snap.receb_total_qtd} parcelas R${snap.receb_total_valor:,.2f} | "
+                    f"Recebimento: {snap.receb_total_qtd} placas R${snap.receb_total_valor:,.2f} | "
                     f"1º Boleto pagos={snap.pb_pagos}/{snap.pb_total}"
                 )
             except Exception as e:

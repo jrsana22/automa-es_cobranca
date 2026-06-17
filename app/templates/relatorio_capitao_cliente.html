@@ -12,231 +12,211 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg: #07090f;
-            --bg2: #0f1623;
-            --bg3: #1a2236;
-            --border: #1e2d47;
+            --bg:      #07090f;
+            --bg2:     #0f1623;
+            --bg3:     #1a2236;
+            --border:  #1e2d47;
             --border2: #2d3f5e;
-            --text: #e8edf5;
-            --muted: #8899b4;
-            --dim: #4a5e7a;
-            --green: #22c55e;
-            --green-dim: #052e16;
-            --red: #ef4444;
-            --red-dim: #2d0a0a;
-            --yellow: #f59e0b;
-            --blue: #3b82f6;
-            --purple: #8b5cf6;
-            --cyan: #06b6d4;
-            --r1: #6366f1; /* Capitão */
-            --r2: #06b6d4; /* Capitão 2 */
-            --r3: #10b981; /* Jardim Europa */
+            --text:    #e8edf5;
+            --muted:   #8899b4;
+            --dim:     #4a5e7a;
+            --green:   #22c55e;
+            --red:     #ef4444;
+            --yellow:  #f59e0b;
+            --blue:    #3b82f6;
+            --cyan:    #06b6d4;
+            --r1:      #6366f1;
+            --r2:      #06b6d4;
+            --r3:      #10b981;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100dvh;
-        }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100dvh; }
 
         /* ── TOPBAR ─────────────────────────────── */
         .topbar {
-            background: var(--bg2);
-            border-bottom: 1px solid var(--border);
-            padding: 0 24px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            gap: 16px;
+            background:var(--bg2); border-bottom:1px solid var(--border);
+            padding:0 20px; height:56px;
+            display:flex; align-items:center; justify-content:space-between; gap:12px;
+            position:sticky; top:0; z-index:200;
         }
-        .topbar-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
+        .topbar-brand { display:flex; align-items:center; gap:10px; flex-shrink:0; }
         .brand-icon {
-            width: 32px; height: 32px;
-            background: linear-gradient(135deg, var(--r1), #4f46e5);
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 12px; color: #fff;
+            width:32px; height:32px;
+            background:linear-gradient(135deg,var(--r1),#4f46e5);
+            border-radius:8px; display:flex; align-items:center; justify-content:center;
+            font-weight:800; font-size:12px; color:#fff;
         }
-        .brand-name { font-size: 0.9rem; font-weight: 700; color: var(--text); }
-        .brand-sub  { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+        .brand-name { font-size:.9rem; font-weight:700; }
+        .brand-sub  { font-size:.65rem; color:var(--muted); }
 
-        .topbar-center {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        /* ── CUSTOM DATE PICKER ─────────────────── */
+        .dp-wrap { position:relative; }
+        .dp-btn {
+            display:flex; align-items:center; gap:6px;
+            background:var(--bg3); border:1px solid var(--border2);
+            color:var(--text); border-radius:8px;
+            padding:5px 12px; font-size:.82rem; font-weight:600;
+            cursor:pointer; white-space:nowrap; font-family:'Inter',sans-serif;
+            transition:border-color .15s;
         }
-        .date-nav-btn {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            color: var(--muted);
-            border-radius: 6px;
-            padding: 4px 10px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            text-decoration: none;
-            line-height: 1.6;
+        .dp-btn:hover { border-color:var(--blue); }
+        .dp-btn svg { opacity:.5; }
+        .dp-menu {
+            display:none; position:absolute; top:calc(100% + 6px); left:0;
+            background:var(--bg2); border:1px solid var(--border2); border-radius:10px;
+            min-width:200px; max-height:300px; overflow-y:auto;
+            box-shadow:0 8px 32px rgba(0,0,0,.6); z-index:300;
         }
-        .date-nav-btn:hover { border-color: var(--border2); color: var(--text); }
-        .date-current {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text);
-            padding: 4px 12px;
-            background: var(--bg3);
-            border: 1px solid var(--border2);
-            border-radius: 6px;
+        .dp-menu.open { display:block; }
+        .dp-opt {
+            display:block; padding:8px 14px; font-size:.82rem; color:var(--muted);
+            text-decoration:none; border-bottom:1px solid var(--border);
+            transition:background .1s,color .1s;
         }
-        .date-picker-input {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 6px;
-            padding: 4px 10px;
-            font-size: 0.82rem;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
+        .dp-opt:last-child { border-bottom:none; }
+        .dp-opt:hover { background:var(--bg3); color:var(--text); }
+        .dp-opt.active { color:var(--blue); font-weight:700; background:rgba(59,130,246,.07); }
+        .dp-native {
+            padding:8px 12px 10px;
+            border-top:1px solid var(--border);
+        }
+        .dp-native label { font-size:.7rem; color:var(--dim); display:block; margin-bottom:4px; }
+        .dp-native input[type=date] {
+            width:100%; background:var(--bg3); border:1px solid var(--border);
+            color:var(--text); border-radius:6px; padding:4px 8px; font-size:.8rem;
+            font-family:'Inter',sans-serif; cursor:pointer;
         }
 
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
-        }
-        .live-dot {
-            width: 7px; height: 7px;
-            background: var(--green);
-            border-radius: 50%;
-            animation: pulse 2.5s infinite;
-        }
+        .topbar-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+        .live-dot { width:7px; height:7px; background:var(--green); border-radius:50%; animation:pulse 2.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
-        .live-label { font-size: 0.72rem; color: var(--muted); }
+        .live-label { font-size:.7rem; color:var(--muted); }
+
+        /* ── INTEL BLOCK ────────────────────────── */
+        .intel-block {
+            background:var(--bg2); border-bottom:1px solid var(--border);
+            padding:10px 20px; display:flex; flex-direction:column; gap:5px;
+        }
+        .intel-item {
+            display:flex; align-items:flex-start; gap:8px;
+            font-size:.8rem; line-height:1.4; padding:4px 0;
+        }
+        .intel-icon { flex-shrink:0; font-size:.9rem; line-height:1.4; }
+        .intel-text { color:var(--muted); }
+        .intel-good  .intel-text { color:#4ade80; }
+        .intel-warn  .intel-text { color:#fbbf24; }
+        .intel-alert .intel-text { color:#f87171; }
+        .intel-info  .intel-text { color:#93c5fd; }
+        .intel-header {
+            font-size:.65rem; font-weight:700; color:var(--dim);
+            text-transform:uppercase; letter-spacing:.1em;
+            padding-bottom:4px; margin-bottom:2px;
+            border-bottom:1px solid var(--border);
+        }
+
+        /* ── REGIONAL FILTER ────────────────────── */
+        .rfil-bar {
+            display:flex; gap:6px; padding:14px 20px 0;
+            flex-wrap:wrap;
+        }
+        .rfil {
+            padding:5px 14px; border-radius:20px; font-size:.78rem; font-weight:600;
+            border:1px solid var(--border); color:var(--muted);
+            text-decoration:none; transition:all .15s; cursor:pointer;
+        }
+        .rfil:hover { border-color:var(--border2); color:var(--text); }
+        .rfil.r-all.active    { background:rgba(99,102,241,.15); border-color:var(--r1); color:var(--r1); }
+        .rfil.r-cap.active    { background:rgba(99,102,241,.15); border-color:var(--r1); color:var(--r1); }
+        .rfil.r-cap2.active   { background:rgba(6,182,212,.15);  border-color:var(--r2); color:var(--r2); }
+        .rfil.r-je.active     { background:rgba(16,185,129,.15); border-color:var(--r3); color:var(--r3); }
 
         /* ── LAYOUT ─────────────────────────────── */
-        .main { padding: 20px 24px 48px; max-width: 1200px; margin: 0 auto; }
-
+        .main { padding:16px 20px 60px; max-width:1200px; margin:0 auto; }
         .section-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            color: var(--dim);
-            text-transform: uppercase;
-            letter-spacing: .12em;
-            margin: 24px 0 10px;
+            font-size:.65rem; font-weight:700; color:var(--dim);
+            text-transform:uppercase; letter-spacing:.12em;
+            margin:22px 0 10px;
         }
+        .grid { display:grid; gap:12px; }
+        .g4 { grid-template-columns:repeat(4,1fr); }
+        .g2 { grid-template-columns:repeat(2,1fr); }
+        .g3 { grid-template-columns:repeat(3,1fr); }
+        @media(max-width:900px){ .g4{grid-template-columns:repeat(2,1fr);} }
+        @media(max-width:600px){ .g4,.g3,.g2{grid-template-columns:1fr;} }
 
-        .grid { display: grid; gap: 12px; }
-        .g2 { grid-template-columns: repeat(2,1fr); }
-        .g4 { grid-template-columns: repeat(4,1fr); }
-        .g3 { grid-template-columns: repeat(3,1fr); }
-        @media(max-width:900px) { .g4 { grid-template-columns: repeat(2,1fr); } }
-        @media(max-width:600px) { .g4,.g3,.g2 { grid-template-columns: 1fr; } }
-
-        /* ── CARD BASE ──────────────────────────── */
-        .card {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            overflow: hidden;
-        }
-        .card-top {
-            border-top: 2px solid var(--accent, transparent);
-            border-radius: 14px 14px 0 0;
-        }
-
-        /* ── KPI CARDS ──────────────────────────── */
-        .kpi { padding: 18px 20px; }
-        .kpi-lbl {
-            font-size: 0.68rem; font-weight: 600;
-            color: var(--muted); text-transform: uppercase;
-            letter-spacing: .08em; margin-bottom: 8px;
-        }
-        .kpi-val {
-            font-size: 2rem; font-weight: 800;
-            color: var(--text); line-height: 1;
-        }
-        .kpi-val.md { font-size: 1.4rem; }
-        .kpi-sub { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
-        .kpi-money {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem; color: var(--text);
-            margin-top: 4px;
-        }
+        /* ── CARDS ──────────────────────────────── */
+        .card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .card-top { border-top:2px solid var(--accent,transparent); border-radius:14px 14px 0 0; }
+        .kpi { padding:18px 20px; }
+        .kpi-lbl { font-size:.67rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; }
+        .kpi-lbl span { font-weight:400; color:var(--dim); text-transform:none; letter-spacing:0; margin-left:4px; }
+        .kpi-val { font-size:2rem; font-weight:800; line-height:1; }
+        .kpi-val.md { font-size:1.4rem; }
+        .kpi-sub { font-size:.78rem; color:var(--muted); margin-top:5px; }
+        .kpi-money { font-family:'JetBrains Mono',monospace; font-size:.85rem; color:var(--text); margin-top:4px; }
         .badge {
-            display: inline-flex; align-items: center; gap: 3px;
-            font-size: 0.73rem; font-weight: 700;
-            padding: 2px 8px; border-radius: 20px;
-            margin-top: 8px;
+            display:inline-flex; align-items:center; gap:3px;
+            font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:8px;
         }
-        .badge-up   { background: rgba(34,197,94,.12); color: var(--green); }
-        .badge-down { background: rgba(239,68,68,.12);  color: var(--red); }
-        .badge-zero { background: rgba(255,255,255,.05); color: var(--dim); }
+        .badge-up   { background:rgba(34,197,94,.12); color:var(--green); }
+        .badge-down { background:rgba(239,68,68,.12);  color:var(--red); }
+        .badge-zero { background:rgba(255,255,255,.05); color:var(--dim); }
 
         /* ── PROGRESS ───────────────────────────── */
-        .prog-wrap { margin-top: 10px; }
-        .prog-lbl  { display:flex; justify-content:space-between; font-size:.73rem; color:var(--muted); margin-bottom:5px; }
-        .prog-lbl strong { font-weight:700; }
-        .prog-bar  { height:7px; background:var(--bg3); border-radius:4px; overflow:hidden; }
-        .prog-fill { height:100%; border-radius:4px; transition: width .6s ease; }
+        .prog-wrap  { margin-top:10px; }
+        .prog-lbl   { display:flex; justify-content:space-between; font-size:.73rem; color:var(--muted); margin-bottom:5px; }
+        .prog-bar   { height:7px; background:var(--bg3); border-radius:4px; overflow:hidden; }
+        .prog-fill  { height:100%; border-radius:4px; transition:width .6s ease; }
 
-        /* ── CHART CARDS ────────────────────────── */
-        .chart-card { padding: 20px; }
-        .chart-title { font-size:0.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:16px; }
-        .chart-wrap  { position:relative; }
-        .chart-center-label {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%,-50%);
-            text-align: center;
-            pointer-events: none;
+        /* ── CHARTS ─────────────────────────────── */
+        .chart-card { padding:20px; }
+        .chart-title { font-size:.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:16px; }
+        .chart-inner { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+        .chart-wrap  { position:relative; width:150px; height:150px; flex-shrink:0; }
+        .chart-center {
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+            text-align:center; pointer-events:none;
         }
-        .chart-center-val { font-size:1.3rem; font-weight:800; color:var(--text); line-height:1; }
-        .chart-center-sub { font-size:0.65rem; color:var(--muted); margin-top:3px; }
+        .chart-center-val { font-size:1.25rem; font-weight:800; line-height:1; }
+        .chart-center-sub { font-size:.62rem; color:var(--muted); margin-top:2px; }
+        .legend { flex:1; display:flex; flex-direction:column; gap:7px; }
+        .li { display:flex; align-items:center; justify-content:space-between; font-size:.78rem; padding:4px 0; border-bottom:1px solid var(--border); }
+        .li:last-child { border-bottom:none; }
+        .li-name { display:flex; align-items:center; gap:8px; }
+        .li-dot  { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+        .li-dot.dim { opacity:.25; }
+        .li-vals { text-align:right; }
+        .li-q    { font-weight:700; font-size:.82rem; }
+        .li-r    { font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--dim); }
 
-        .legend { margin-top:14px; display:flex; flex-direction:column; gap:6px; }
-        .legend-item { display:flex; align-items:center; justify-content:space-between; font-size:0.78rem; }
-        .legend-dot-name { display:flex; align-items:center; gap:8px; }
-        .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-        .legend-val { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--text); }
-
-        /* ── INADI TABLE ────────────────────────── */
-        .inadi-row {
-            display:flex; justify-content:space-between; align-items:center;
-            padding:8px 20px; border-bottom:1px solid var(--border);
-            font-size:0.82rem;
-        }
+        /* ── INADI ──────────────────────────────── */
+        .inadi-row { display:flex; justify-content:space-between; align-items:center; padding:8px 20px; border-bottom:1px solid var(--border); font-size:.82rem; }
         .inadi-row:last-child { border-bottom:none; }
         .inadi-row .label { color:var(--muted); }
-        .inadi-row .vals { display:flex; gap:16px; align-items:center; }
-        .inadi-row .qtd { color:var(--text); font-weight:600; min-width:30px; text-align:right; }
-        .inadi-row .money { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--muted); }
+        .inadi-row .vals  { display:flex; gap:14px; align-items:center; }
+        .inadi-row .qtd   { color:var(--text); font-weight:600; min-width:28px; text-align:right; }
+        .inadi-row .money { font-family:'JetBrains Mono',monospace; font-size:.74rem; color:var(--muted); }
 
         /* ── COMPARE TABLE ──────────────────────── */
-        .cmp-table { width:100%; border-collapse:collapse; font-size:0.8rem; }
-        .cmp-table th {
-            background:var(--bg3); padding:8px 16px;
-            text-align:left; font-size:0.65rem; font-weight:700;
-            color:var(--dim); text-transform:uppercase; letter-spacing:.08em;
+        .cmp-wrap details summary { cursor:pointer; list-style:none; }
+        .cmp-wrap details summary::-webkit-details-marker { display:none; }
+        .cmp-summary-btn {
+            display:inline-flex; align-items:center; gap:6px;
+            font-size:.72rem; color:var(--dim); padding:6px 0;
+            user-select:none;
         }
-        .cmp-table td { padding:8px 16px; border-top:1px solid var(--border); }
-        .cmp-table .grp td { background:var(--bg3); font-weight:700; font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; padding:5px 16px; }
+        .cmp-summary-btn:hover { color:var(--muted); }
+        .cmp-table { width:100%; border-collapse:collapse; font-size:.8rem; margin-top:2px; }
+        .cmp-table th { background:var(--bg3); padding:7px 14px; text-align:left; font-size:.63rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; }
+        .cmp-table td { padding:7px 14px; border-top:1px solid var(--border); }
+        .cmp-table .grp td { background:var(--bg3); font-weight:700; font-size:.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; padding:4px 14px; }
         .cmp-table tr:hover td { background:rgba(255,255,255,.015); }
         .mono { font-family:'JetBrains Mono',monospace; }
 
         /* ── EMPTY ──────────────────────────────── */
         .empty-state {
-            background:var(--bg2); border:1px solid var(--border);
-            border-radius:14px; padding:56px 32px;
-            text-align:center; margin-top:24px;
+            background:var(--bg2); border:1px solid var(--border); border-radius:14px;
+            padding:56px 32px; text-align:center; margin-top:20px;
         }
     </style>
 </head>
@@ -252,29 +232,90 @@
         </div>
     </div>
 
-    <!-- Navegação de data -->
-    <div class="topbar-center">
-        <form method="get" id="date-form">
-            <input type="hidden" name="key" value="{{ client_key }}">
-            <input type="date" name="data" value="{{ data_ref }}" max="{{ hoje_iso }}"
-                   class="date-picker-input"
-                   onchange="document.getElementById('date-form').submit()">
-        </form>
-        <span class="date-current">{{ data_ref_fmt }}</span>
-        <span style="font-size:0.75rem;color:var(--dim);">vs {{ mesmo_dia_mes_passado }}</span>
+    <!-- Custom date picker -->
+    <div class="dp-wrap" id="dp-wrap">
+        <button class="dp-btn" onclick="toggleDp(event)" type="button">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {{ data_ref_fmt }}
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="dp-menu" id="dp-menu">
+            {% for iso, label in datas_fmt %}
+            <a href="/relatorio/cliente?key={{ client_key }}&data={{ iso }}&regional={{ regional }}"
+               class="dp-opt{% if iso == data_ref %} active{% endif %}">{{ label }}</a>
+            {% endfor %}
+            {% if not datas_fmt %}
+            <div class="dp-opt" style="color:var(--dim);">Nenhum dado ainda</div>
+            {% endif %}
+            <div class="dp-native">
+                <label>Escolher data específica</label>
+                <form method="get" action="/relatorio/cliente">
+                    <input type="hidden" name="key" value="{{ client_key }}">
+                    <input type="hidden" name="regional" value="{{ regional }}">
+                    <input type="date" name="data" value="{{ data_ref }}" max="{{ hoje_iso }}"
+                           onchange="this.form.submit()">
+                </form>
+            </div>
+        </div>
     </div>
 
     <div class="topbar-right">
         <div class="live-dot"></div>
-        <span class="live-label">Auto-atualiza a cada 30 min</span>
+        <span class="live-label">Atualiza 30min</span>
     </div>
 </header>
+
+<!-- INTELLIGENCE BLOCK -->
+{% if insights %}
+<div class="intel-block">
+    <div class="intel-header">Inteligência de Gestão</div>
+    {% for item in insights %}
+    <div class="intel-item intel-{{ item.level }}">
+        <span class="intel-icon">{{ item.icon }}</span>
+        <span class="intel-text">{{ item.text }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- REGIONAL FILTER -->
+<div class="rfil-bar">
+    <a href="/relatorio/cliente?key={{ client_key }}&data={{ data_ref }}&regional=all"
+       class="rfil r-all {% if regional == 'all' %}active{% endif %}">Todas as regionais</a>
+    <a href="/relatorio/cliente?key={{ client_key }}&data={{ data_ref }}&regional=capitao"
+       class="rfil r-cap {% if regional == 'capitao' %}active{% endif %}">Capitão</a>
+    <a href="/relatorio/cliente?key={{ client_key }}&data={{ data_ref }}&regional=capitao2"
+       class="rfil r-cap2 {% if regional == 'capitao2' %}active{% endif %}">Capitão 2</a>
+    <a href="/relatorio/cliente?key={{ client_key }}&data={{ data_ref }}&regional=jardim"
+       class="rfil r-je {% if regional == 'jardim' %}active{% endif %}">Jardim Europa</a>
+</div>
 
 <main class="main">
 
 {% if snap_hoje %}
 {% set h = snap_hoje %}
 {% set a = snap_mes_passado %}
+
+{# Valores filtrados por regional #}
+{% set ns = namespace(
+    v_total=h.vendas_total, v_label="novos contratos",
+    r_qtd=h.receb_total_qtd, r_val=h.receb_total_valor,
+    a_v_total=a.vendas_total if a else none,
+    a_r_val=a.receb_total_valor if a else none
+) %}
+{% if regional == 'capitao' %}
+    {% set ns.v_total = h.vendas_capitao %}{% set ns.v_label = "Capitão" %}
+    {% set ns.r_qtd = h.receb_capitao_qtd %}{% set ns.r_val = h.receb_capitao_valor %}
+    {% if a %}{% set ns.a_v_total = a.vendas_capitao %}{% set ns.a_r_val = a.receb_capitao_valor %}{% endif %}
+{% elif regional == 'capitao2' %}
+    {% set ns.v_total = h.vendas_capitao2 %}{% set ns.v_label = "Capitão 2" %}
+    {% set ns.r_qtd = h.receb_capitao2_qtd %}{% set ns.r_val = h.receb_capitao2_valor %}
+    {% if a %}{% set ns.a_v_total = a.vendas_capitao2 %}{% set ns.a_r_val = a.receb_capitao2_valor %}{% endif %}
+{% elif regional == 'jardim' %}
+    {% set ns.v_total = h.vendas_jardim_europa %}{% set ns.v_label = "Jardim Europa" %}
+    {% set ns.r_qtd = h.receb_jardim_europa_qtd %}{% set ns.r_val = h.receb_jardim_europa_valor %}
+    {% if a %}{% set ns.a_v_total = a.vendas_jardim_europa %}{% set ns.a_r_val = a.receb_jardim_europa_valor %}{% endif %}
+{% endif %}
 
 {% macro badge(v_h, v_a) %}
   {% if a and v_a is not none %}
@@ -294,22 +335,22 @@
   {% endif %}
 {% endmacro %}
 
-<!-- ── KPIs PRINCIPAIS ─────────────────────────────── -->
-<div class="section-label">Resumo do dia</div>
+<!-- KPIs -->
+<div class="section-label">Resumo do dia — {{ data_ref_fmt }}</div>
 <div class="grid g4">
 
     <div class="card card-top" style="--accent:var(--r1);">
         <div class="kpi">
-            <div class="kpi-lbl">Vendas no mês</div>
-            <div class="kpi-val">{{ h.vendas_total }}</div>
+            <div class="kpi-lbl">Vendas no mês<span>{{ ns.v_label }}</span></div>
+            <div class="kpi-val">{{ ns.v_total }}</div>
             <div class="kpi-sub">novos contratos</div>
-            {{ badge(h.vendas_total, a.vendas_total if a else none) }}
+            {{ badge(ns.v_total, ns.a_v_total) }}
         </div>
     </div>
 
     <div class="card card-top" style="--accent:var(--green);">
         <div class="kpi">
-            <div class="kpi-lbl">Reativação</div>
+            <div class="kpi-lbl">Reativação<span>consolidado</span></div>
             <div class="kpi-val">{{ h.reativacao_qtd }}</div>
             <div class="kpi-money">R$ {{ "%.2f"|format(h.reativacao_valor) }}</div>
             {{ badge(h.reativacao_qtd, a.reativacao_qtd if a else none) }}
@@ -318,7 +359,7 @@
 
     <div class="card card-top" style="--accent:var(--yellow);">
         <div class="kpi">
-            <div class="kpi-lbl">1º Boleto pago</div>
+            <div class="kpi-lbl">1º Boleto pago<span>consolidado</span></div>
             <div class="kpi-val">{{ h.pb_pagos }}<span style="font-size:1rem;color:var(--muted);font-weight:500;">/{{ h.pb_total }}</span></div>
             {% if h.pb_total > 0 %}
             {% set pct = h.pb_pagos / h.pb_total * 100 %}
@@ -335,99 +376,111 @@
 
     <div class="card card-top" style="--accent:var(--cyan);">
         <div class="kpi">
-            <div class="kpi-lbl">Recebimento no mês</div>
-            <div class="kpi-val md">{{ h.receb_total_qtd }}</div>
-            <div class="kpi-money">R$ {{ "%.2f"|format(h.receb_total_valor) }}</div>
-            {{ badge_r(h.receb_total_valor, a.receb_total_valor if a else none) }}
+            <div class="kpi-lbl">Recebimento<span>{{ ns.v_label }}</span></div>
+            <div class="kpi-val md">{{ ns.r_qtd }}</div>
+            <div class="kpi-sub">placas pagas</div>
+            <div class="kpi-money">R$ {{ "%.2f"|format(ns.r_val) }}</div>
+            {{ badge_r(ns.r_val, ns.a_r_val) }}
         </div>
     </div>
 
 </div>
 
-<!-- ── GRÁFICOS ────────────────────────────────────── -->
+<!-- CHARTS -->
 <div class="section-label">Distribuição por Regional</div>
 <div class="grid g2">
 
-    <!-- Donut: Vendas -->
+    <!-- Vendas por regional -->
     <div class="card">
         <div class="chart-card">
-            <div class="chart-title">Vendas — por regional</div>
-            <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
-                <div class="chart-wrap" style="width:160px;height:160px;flex-shrink:0;">
+            <div class="chart-title">Vendas por regional</div>
+            <div class="chart-inner">
+                <div class="chart-wrap">
                     <canvas id="chart-vendas"></canvas>
-                    <div class="chart-center-label">
+                    <div class="chart-center">
                         <div class="chart-center-val">{{ h.vendas_total }}</div>
                         <div class="chart-center-sub">total</div>
                     </div>
                 </div>
-                <div class="legend" style="flex:1;">
-                    <div class="legend-item">
-                        <div class="legend-dot-name">
-                            <div class="legend-dot" style="background:var(--r1);"></div>
+                <div class="legend">
+                    {% set vt = h.vendas_total or 1 %}
+                    <div class="li">
+                        <div class="li-name">
+                            <div class="li-dot{% if regional not in ('all','capitao') %} dim{% endif %}" style="background:var(--r1);"></div>
                             <span style="color:var(--muted);">Capitão</span>
                         </div>
-                        <span class="legend-val">{{ h.vendas_capitao }}{% if h.vendas_total>0 %} <span style="color:var(--dim);">({{ "%.0f"|format(h.vendas_capitao/h.vendas_total*100) }}%)</span>{% endif %}</span>
+                        <div class="li-vals">
+                            <div class="li-q">{{ h.vendas_capitao }}</div>
+                            <div class="li-r">{{ "%.0f"|format(h.vendas_capitao/vt*100) }}%</div>
+                        </div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-dot-name">
-                            <div class="legend-dot" style="background:var(--r2);"></div>
+                    <div class="li">
+                        <div class="li-name">
+                            <div class="li-dot{% if regional not in ('all','capitao2') %} dim{% endif %}" style="background:var(--r2);"></div>
                             <span style="color:var(--muted);">Capitão 2</span>
                         </div>
-                        <span class="legend-val">{{ h.vendas_capitao2 }}{% if h.vendas_total>0 %} <span style="color:var(--dim);">({{ "%.0f"|format(h.vendas_capitao2/h.vendas_total*100) }}%)</span>{% endif %}</span>
+                        <div class="li-vals">
+                            <div class="li-q">{{ h.vendas_capitao2 }}</div>
+                            <div class="li-r">{{ "%.0f"|format(h.vendas_capitao2/vt*100) }}%</div>
+                        </div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-dot-name">
-                            <div class="legend-dot" style="background:var(--r3);"></div>
+                    <div class="li">
+                        <div class="li-name">
+                            <div class="li-dot{% if regional not in ('all','jardim') %} dim{% endif %}" style="background:var(--r3);"></div>
                             <span style="color:var(--muted);">Jardim Europa</span>
                         </div>
-                        <span class="legend-val">{{ h.vendas_jardim_europa }}{% if h.vendas_total>0 %} <span style="color:var(--dim);">({{ "%.0f"|format(h.vendas_jardim_europa/h.vendas_total*100) }}%)</span>{% endif %}</span>
+                        <div class="li-vals">
+                            <div class="li-q">{{ h.vendas_jardim_europa }}</div>
+                            <div class="li-r">{{ "%.0f"|format(h.vendas_jardim_europa/vt*100) }}%</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Donut: Recebimento (valor) -->
+    <!-- Recebimento por regional (R$) -->
     <div class="card">
         <div class="chart-card">
-            <div class="chart-title">Recebimento — por regional (R$)</div>
-            <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
-                <div class="chart-wrap" style="width:160px;height:160px;flex-shrink:0;">
+            <div class="chart-title">Recebimento por regional (R$)</div>
+            <div class="chart-inner">
+                <div class="chart-wrap">
                     <canvas id="chart-receb"></canvas>
-                    <div class="chart-center-label">
-                        <div class="chart-center-val" style="font-size:0.9rem;">R$ {{ "%.0f"|format(h.receb_total_valor) }}</div>
+                    <div class="chart-center">
+                        <div class="chart-center-val" style="font-size:.85rem;">R$ {{ "%.0f"|format(h.receb_total_valor) }}</div>
                         <div class="chart-center-sub">total</div>
                     </div>
                 </div>
-                <div class="legend" style="flex:1;">
-                    <div class="legend-item">
-                        <div class="legend-dot-name">
-                            <div class="legend-dot" style="background:var(--r1);"></div>
+                <div class="legend">
+                    {% set rt = h.receb_total_valor or 1 %}
+                    <div class="li">
+                        <div class="li-name">
+                            <div class="li-dot{% if regional not in ('all','capitao') %} dim{% endif %}" style="background:var(--r1);"></div>
                             <span style="color:var(--muted);">Capitão</span>
                         </div>
-                        <div style="text-align:right;">
-                            <div class="legend-val">{{ h.receb_capitao_qtd }} placas</div>
-                            <div style="font-size:0.7rem;color:var(--dim);">R$ {{ "%.0f"|format(h.receb_capitao_valor) }}</div>
+                        <div class="li-vals">
+                            <div class="li-q">{{ h.receb_capitao_qtd }} placas</div>
+                            <div class="li-r">R$ {{ "%.0f"|format(h.receb_capitao_valor) }} ({{ "%.0f"|format(h.receb_capitao_valor/rt*100) }}%)</div>
                         </div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-dot-name">
-                            <div class="legend-dot" style="background:var(--r2);"></div>
+                    <div class="li">
+                        <div class="li-name">
+                            <div class="li-dot{% if regional not in ('all','capitao2') %} dim{% endif %}" style="background:var(--r2);"></div>
                             <span style="color:var(--muted);">Capitão 2</span>
                         </div>
-                        <div style="text-align:right;">
-                            <div class="legend-val">{{ h.receb_capitao2_qtd }} placas</div>
-                            <div style="font-size:0.7rem;color:var(--dim);">R$ {{ "%.0f"|format(h.receb_capitao2_valor) }}</div>
+                        <div class="li-vals">
+                            <div class="li-q">{{ h.receb_capitao2_qtd }} placas</div>
+                            <div class="li-r">R$ {{ "%.0f"|format(h.receb_capitao2_valor) }} ({{ "%.0f"|format(h.receb_capitao2_valor/rt*100) }}%)</div>
                         </div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-dot-name">
-                            <div class="legend-dot" style="background:var(--r3);"></div>
+                    <div class="li">
+                        <div class="li-name">
+                            <div class="li-dot{% if regional not in ('all','jardim') %} dim{% endif %}" style="background:var(--r3);"></div>
                             <span style="color:var(--muted);">Jardim Europa</span>
                         </div>
-                        <div style="text-align:right;">
-                            <div class="legend-val">{{ h.receb_jardim_europa_qtd }} placas</div>
-                            <div style="font-size:0.7rem;color:var(--dim);">R$ {{ "%.0f"|format(h.receb_jardim_europa_valor) }}</div>
+                        <div class="li-vals">
+                            <div class="li-q">{{ h.receb_jardim_europa_qtd }} placas</div>
+                            <div class="li-r">R$ {{ "%.0f"|format(h.receb_jardim_europa_valor) }} ({{ "%.0f"|format(h.receb_jardim_europa_valor/rt*100) }}%)</div>
                         </div>
                     </div>
                 </div>
@@ -437,7 +490,7 @@
 
 </div>
 
-<!-- ── INADIMPLÊNCIA ───────────────────────────────── -->
+<!-- INADIMPLÊNCIA -->
 <div class="section-label">Inadimplência em Cobrança</div>
 <div class="grid g3">
 
@@ -459,7 +512,7 @@
         </div>
     </div>
 
-    <div class="card card-top" style="--accent:var(--purple);">
+    <div class="card card-top" style="--accent:var(--r1);">
         <div class="kpi">
             <div class="kpi-lbl">Venc. mês atual</div>
             <div class="kpi-val md">{{ h.inadi_mes_atual_qtd }}</div>
@@ -470,27 +523,34 @@
 
 </div>
 
-<!-- ── COMPARAÇÃO ──────────────────────────────────── -->
+<!-- COMPARAÇÃO (collapsível) -->
 {% if a %}
-<div class="section-label">{{ data_ref_fmt }} vs {{ mesmo_dia_mes_passado }}</div>
-<div class="card">
-    <table class="cmp-table">
-        <thead><tr>
-            <th>Indicador</th>
-            <th>{{ data_ref_fmt }}</th>
-            <th>{{ mesmo_dia_mes_passado }}</th>
-            <th>Δ</th>
-        </tr></thead>
-        <tbody>
+<div class="cmp-wrap" style="margin-top:24px;">
+    <details>
+        <summary>
+            <span class="cmp-summary-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                Comparar com {{ mesmo_dia_mes_passado }}
+            </span>
+        </summary>
+        <div class="card" style="margin-top:8px;">
+        <table class="cmp-table">
+            <thead><tr>
+                <th>Indicador</th>
+                <th>{{ data_ref_fmt }}</th>
+                <th>{{ mesmo_dia_mes_passado }}</th>
+                <th>Δ</th>
+            </tr></thead>
+            <tbody>
             {% macro crow(lbl, v_h, v_a, fmt='n') %}
             <tr>
                 <td style="color:var(--muted);">{{ lbl }}</td>
                 <td class="mono">{% if fmt=='r' %}R$ {{ "%.2f"|format(v_h) }}{% else %}{{ v_h }}{% endif %}</td>
                 <td class="mono" style="color:var(--dim);">{% if fmt=='r' %}R$ {{ "%.2f"|format(v_a) }}{% else %}{{ v_a }}{% endif %}</td>
                 <td>{% set d=v_h-v_a %}
-                    {% if d>0 %}<span class="badge badge-up" style="font-size:.7rem;padding:1px 6px;">+{% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
-                    {% elif d<0 %}<span class="badge badge-down" style="font-size:.7rem;padding:1px 6px;">{% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
-                    {% else %}<span style="color:var(--dim);font-size:.75rem;">=</span>{% endif %}
+                    {% if d>0 %}<span class="badge badge-up" style="font-size:.68rem;padding:1px 6px;">+{% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
+                    {% elif d<0 %}<span class="badge badge-down" style="font-size:.68rem;padding:1px 6px;">{% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
+                    {% else %}<span style="color:var(--dim);font-size:.74rem;">=</span>{% endif %}
                 </td>
             </tr>
             {% endmacro %}
@@ -517,16 +577,18 @@
             {{ crow("Capitão (R$)", h.receb_capitao_valor, a.receb_capitao_valor, 'r') }}
             {{ crow("Capitão 2 (qtd)", h.receb_capitao2_qtd, a.receb_capitao2_qtd) }}
             {{ crow("Jardim Europa (qtd)", h.receb_jardim_europa_qtd, a.receb_jardim_europa_qtd) }}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+        </div>
+    </details>
 </div>
 {% endif %}
 
 {% else %}
 <div class="empty-state">
     <div style="font-size:2.5rem;margin-bottom:14px;">📊</div>
-    <div style="font-size:1rem;font-weight:600;color:var(--text);margin-bottom:6px;">Sem dados para {{ data_ref_fmt }}</div>
-    <div style="color:var(--muted);font-size:0.85rem;">Selecione outra data ou aguarde a extração automática.</div>
+    <div style="font-size:1rem;font-weight:600;margin-bottom:6px;">Sem dados para {{ data_ref_fmt }}</div>
+    <div style="color:var(--muted);font-size:.85rem;">Selecione outra data no menu acima.</div>
 </div>
 {% endif %}
 
@@ -536,33 +598,42 @@
 Chart.defaults.color = '#8899b4';
 Chart.defaults.borderColor = '#1e2d47';
 
-const COLORS = ['#6366f1', '#06b6d4', '#10b981'];
+// Date picker
+function toggleDp(e) {
+    e.stopPropagation();
+    document.getElementById('dp-menu').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('dp-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('dp-menu').classList.remove('open');
+    }
+});
 
-function donut(id, labels, values, total) {
+// Charts
+const COLORS_FULL = ['#6366f1','#06b6d4','#10b981'];
+const REGIONAL = '{{ regional }}';
+const REGIONAL_IDX = {capitao:0, capitao2:1, jardim:2};
+
+function chartColors() {
+    if (!REGIONAL || REGIONAL === 'all') return COLORS_FULL;
+    return COLORS_FULL.map((c, i) => i === REGIONAL_IDX[REGIONAL] ? c : c + '33');
+}
+
+function donut(id, values, total) {
     const canvas = document.getElementById(id);
     if (!canvas) return;
     new Chart(canvas, {
         type: 'doughnut',
         data: {
-            labels: labels,
-            datasets: [{
-                data: values,
-                backgroundColor: COLORS,
-                borderWidth: 0,
-                hoverOffset: 4,
-            }]
+            labels: ['Capitão','Capitão 2','Jardim Europa'],
+            datasets: [{ data: values, backgroundColor: chartColors(), borderWidth: 0, hoverOffset: 4 }]
         },
         options: {
-            cutout: '72%',
-            responsive: true,
-            maintainAspectRatio: true,
+            cutout: '72%', responsive: true, maintainAspectRatio: true,
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => ` ${ctx.label}: ${ctx.parsed} (${total > 0 ? Math.round(ctx.parsed/total*100) : 0}%)`
-                    }
-                }
+                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} (${total>0?Math.round(ctx.parsed/total*100):0}%)` } }
             }
         }
     });
@@ -570,12 +641,10 @@ function donut(id, labels, values, total) {
 
 {% if snap_hoje %}
 donut('chart-vendas',
-    ['Capitão', 'Capitão 2', 'Jardim Europa'],
     [{{ snap_hoje.vendas_capitao }}, {{ snap_hoje.vendas_capitao2 }}, {{ snap_hoje.vendas_jardim_europa }}],
     {{ snap_hoje.vendas_total or 1 }}
 );
 donut('chart-receb',
-    ['Capitão', 'Capitão 2', 'Jardim Europa'],
     [{{ snap_hoje.receb_capitao_valor|round|int }}, {{ snap_hoje.receb_capitao2_valor|round|int }}, {{ snap_hoje.receb_jardim_europa_valor|round|int }}],
     {{ (snap_hoje.receb_total_valor or 1)|round|int }}
 );
