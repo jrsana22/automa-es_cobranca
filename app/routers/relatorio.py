@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import logging
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
@@ -8,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.auth import require_auth
+from app.config import settings
 from app.database import SessionLocal, get_db
 from app.models import RelatorioCapitaoDiario
 from app.services.relatorio_extractor import RelatorioExtractor
@@ -18,6 +21,15 @@ templates = Jinja2Templates(directory="app/templates")
 
 _BRASILIA = ZoneInfo("America/Sao_Paulo")
 ERP_SENHA = "Rcarol@2025"
+
+
+def _client_key() -> str:
+    """Chave derivada do SECRET_KEY para acesso público do cliente. Estável, não adivinhável."""
+    return hmac.new(
+        settings.SECRET_KEY.encode(),
+        b"relatorio-capitao-cliente",
+        hashlib.sha256,
+    ).hexdigest()[:24]
 
 _extracao_em_andamento = False
 
@@ -102,35 +114,10 @@ def _run_extracao_background():
 
 @router.get("/relatorio", response_class=HTMLResponse)
 def relatorio_dashboard(request: Request, db: Session = Depends(get_db), _: None = Depends(require_auth)):
-    hoje = date.today()
-    ano_ant, mes_ant_n = _mes_anterior(hoje)
-    # Mesmo dia do mês passado
-    try:
-        mesmo_dia_mes_passado = date(ano_ant, mes_ant_n, hoje.day)
-    except ValueError:
-        import calendar
-        last_day = calendar.monthrange(ano_ant, mes_ant_n)[1]
-        mesmo_dia_mes_passado = date(ano_ant, mes_ant_n, last_day)
-
-    snap_hoje = _buscar_snapshot(db, hoje)
-    snap_mes_passado = _buscar_snapshot(db, mesmo_dia_mes_passado)
-
-    historico = (
-        db.query(RelatorioCapitaoDiario)
-        .order_by(RelatorioCapitaoDiario.data_ref.desc())
-        .limit(30)
-        .all()
-    )
-
-    return templates.TemplateResponse("relatorio_capitao.html", {
-        "request": request,
-        "hoje": hoje.strftime("%d/%m/%Y"),
-        "mesmo_dia_mes_passado": mesmo_dia_mes_passado.strftime("%d/%m/%Y"),
-        "snap_hoje": _snap_para_dict(snap_hoje),
-        "snap_mes_passado": _snap_para_dict(snap_mes_passado),
-        "historico": [_snap_para_dict(r) for r in historico],
-        "extracao_em_andamento": _extracao_em_andamento,
-    })
+    ctx = _contexto_relatorio(db)
+    ctx["request"] = request
+    ctx["client_key"] = _client_key()
+    return templates.TemplateResponse("relatorio_capitao.html", ctx)
 
 
 @router.post("/relatorio/extrair")
@@ -208,3 +195,57 @@ def relatorio_manual(
 
     _salvar_snapshot(db, snap, manual=True)
     return JSONResponse({"ok": True, "msg": f"Dados de {data_ref} salvos."})
+
+
+def _contexto_relatorio(db: Session) -> dict:
+    """Monta o contexto compartilhado entre a view admin e a view cliente."""
+    hoje = date.today()
+    ano_ant, mes_ant_n = _mes_anterior(hoje)
+    try:
+        mesmo_dia_mes_passado = date(ano_ant, mes_ant_n, hoje.day)
+    except ValueError:
+        import calendar
+        last_day = calendar.monthrange(ano_ant, mes_ant_n)[1]
+        mesmo_dia_mes_passado = date(ano_ant, mes_ant_n, last_day)
+
+    snap_hoje = _buscar_snapshot(db, hoje)
+    snap_mes_passado = _buscar_snapshot(db, mesmo_dia_mes_passado)
+    historico = (
+        db.query(RelatorioCapitaoDiario)
+        .order_by(RelatorioCapitaoDiario.data_ref.desc())
+        .limit(30)
+        .all()
+    )
+    return {
+        "hoje": hoje.strftime("%d/%m/%Y"),
+        "mesmo_dia_mes_passado": mesmo_dia_mes_passado.strftime("%d/%m/%Y"),
+        "snap_hoje": _snap_para_dict(snap_hoje),
+        "snap_mes_passado": _snap_para_dict(snap_mes_passado),
+        "historico": [_snap_para_dict(r) for r in historico],
+        "extracao_em_andamento": _extracao_em_andamento,
+    }
+
+
+@router.get("/relatorio/cliente", response_class=HTMLResponse)
+def relatorio_cliente(request: Request, key: str = "", db: Session = Depends(get_db)):
+    expected = _client_key()
+    if not hmac.compare_digest(key, expected):
+        return HTMLResponse("<h2>Acesso negado</h2>", status_code=403)
+    ctx = _contexto_relatorio(db)
+    ctx["request"] = request
+    ctx["client_key"] = key
+    return templates.TemplateResponse("relatorio_capitao_cliente.html", ctx)
+
+
+@router.get("/relatorio/link-cliente", response_class=HTMLResponse)
+def relatorio_link_cliente(_: None = Depends(require_auth)):
+    key = _client_key()
+    base = settings.APP_BASE_URL.rstrip("/")
+    url = f"{base}/relatorio/cliente?key={key}"
+    return HTMLResponse(
+        f"<html><body style='font-family:monospace;padding:2rem;background:#111;color:#eee'>"
+        f"<p style='margin-bottom:1rem;color:#9ca3af;font-size:.9rem'>URL pública para o cliente (bookmarkar):</p>"
+        f"<p style='word-break:break-all;font-size:1.1rem;color:#60a5fa'>{url}</p>"
+        f"<p style='margin-top:1.5rem'><a href='/relatorio' style='color:#9ca3af'>← Voltar</a></p>"
+        f"</body></html>"
+    )

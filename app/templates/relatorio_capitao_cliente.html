@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Regional Capitão</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0f1a;
+            --bg2: #111827;
+            --bg3: #1f2937;
+            --border: #1f2937;
+            --border2: #374151;
+            --text: #f9fafb;
+            --muted: #9ca3af;
+            --dim: #6b7280;
+            --green: #4ade80;
+            --green-bg: #052e16;
+            --red: #f87171;
+            --red-bg: #2d0a0a;
+            --yellow: #fbbf24;
+            --blue: #60a5fa;
+            --blue-bg: #0c1a2e;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100dvh;
+            padding: 0;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg2);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-logo {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 13px; color: #fff; letter-spacing: -0.5px;
+        }
+        .header-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+        .header-sub { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+        .header-date {
+            text-align: right;
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .header-date strong { color: var(--text); }
+
+        /* Layout */
+        .main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+        .section-title {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            margin: 24px 0 10px;
+        }
+
+        /* Grid cards */
+        .grid { display: grid; gap: 12px; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        @media(max-width:700px) {
+            .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+        }
+        @media(min-width:500px) and (max-width:700px) {
+            .grid-4, .grid-3, .grid-2 { grid-template-columns: repeat(2,1fr); }
+        }
+
+        /* KPI card */
+        .kpi {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--accent-color, transparent);
+        }
+        .kpi-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            margin-bottom: 8px;
+        }
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1;
+        }
+        .kpi-value.sm { font-size: 1.5rem; }
+        .kpi-currency {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--muted);
+            margin-left: 3px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .kpi-sub {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+        .kpi-delta {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .delta-up   { background: var(--green-bg); color: var(--green); }
+        .delta-down { background: var(--red-bg);   color: var(--red); }
+        .delta-zero { background: var(--bg3); color: var(--dim); }
+        .delta-na   { color: var(--dim); font-size: 0.75rem; padding: 0; background: none; }
+
+        /* Progress bar */
+        .progress-wrap { margin-top: 10px; }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+        .progress-label strong { color: var(--text); }
+        .progress-bar {
+            height: 6px;
+            background: var(--bg3);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #1d4ed8, #60a5fa);
+            transition: width 0.6s ease;
+        }
+
+        /* Regional breakdown */
+        .regional-row {
+            display: grid;
+            grid-template-columns: 100px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .regional-row:last-child { border-bottom: none; }
+        .regional-name { font-size: 0.78rem; color: var(--muted); }
+        .regional-bar-wrap { background: var(--bg3); border-radius: 3px; height: 5px; }
+        .regional-bar { height: 5px; border-radius: 3px; }
+        .regional-val {
+            font-size: 0.78rem;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        /* Inadi breakdown */
+        .inadi-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+        }
+        .inadi-row:last-child { border-bottom: none; }
+
+        /* Comparison strip */
+        .compare-strip {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .compare-strip table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .compare-strip th {
+            background: var(--bg3);
+            padding: 8px 14px;
+            text-align: left;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: .07em;
+        }
+        .compare-strip td { padding: 8px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
+        .compare-strip tr:hover td { background: rgba(255,255,255,.02); }
+        .compare-strip .group-row td {
+            background: var(--bg3);
+            font-weight: 700;
+            font-size: 0.72rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            padding: 6px 14px;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--dim);
+            padding: 32px 24px;
+            border-top: 1px solid var(--border);
+            margin-top: 32px;
+        }
+
+        /* Pulse dot */
+        .live-dot {
+            display: inline-block;
+            width: 7px; height: 7px;
+            background: var(--green);
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity: 1; }
+            50% { opacity: .3; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-left">
+        <div class="header-logo">RC</div>
+        <div>
+            <div class="header-title">Regional Capitão</div>
+            <div class="header-sub"><span class="live-dot"></span>Atualizado diariamente via ERP</div>
+        </div>
+    </div>
+    <div class="header-date">
+        <div>Dados de <strong>{{ hoje }}</strong></div>
+        <div>Comparação com <strong>{{ mesmo_dia_mes_passado }}</strong></div>
+    </div>
+</header>
+
+<main class="main">
+
+{% if snap_hoje %}
+{% set h = snap_hoje %}
+{% set a = snap_mes_passado %}
+
+{% macro delta_badge(v_hoje, v_ant) %}
+  {% if a and v_ant is not none and v_ant != 0 %}
+    {% set d = v_hoje - v_ant %}
+    {% if d > 0 %}<span class="kpi-delta delta-up">&#9650; +{{ d }}</span>
+    {% elif d < 0 %}<span class="kpi-delta delta-down">&#9660; {{ d }}</span>
+    {% else %}<span class="kpi-delta delta-zero">= igual ao mês passado</span>{% endif %}
+  {% elif not a %}<span class="kpi-delta delta-na">sem dado mês passado ainda</span>{% endif %}
+{% endmacro %}
+
+{% macro delta_badge_r(v_hoje, v_ant) %}
+  {% if a and v_ant is not none and v_ant != 0 %}
+    {% set d = v_hoje - v_ant %}
+    {% if d > 0 %}<span class="kpi-delta delta-up">&#9650; +R$ {{ "%.0f"|format(d) }}</span>
+    {% elif d < 0 %}<span class="kpi-delta delta-down">&#9660; R$ {{ "%.0f"|format(d) }}</span>
+    {% else %}<span class="kpi-delta delta-zero">= sem variação</span>{% endif %}
+  {% endif %}
+{% endmacro %}
+
+<!-- ─── VENDAS ─── -->
+<div class="section-title">Vendas — Novos Contratos ({{ hoje[:6] }})</div>
+<div class="grid grid-4">
+    <div class="kpi" style="--accent-color:#2563eb;">
+        <div class="kpi-label">Total 3 Regionais</div>
+        <div class="kpi-value">{{ h.vendas_total }}</div>
+        <div class="kpi-sub">contratos novos no mês</div>
+        {{ delta_badge(h.vendas_total, a.vendas_total if a else none) }}
+    </div>
+    <div class="kpi" style="--accent-color:#7c3aed;">
+        <div class="kpi-label">Regional Capitão</div>
+        <div class="kpi-value sm">{{ h.vendas_capitao }}</div>
+        {% if h.vendas_total > 0 %}
+        <div class="progress-wrap">
+            <div class="progress-label"><span>participação</span><strong>{{ "%.0f"|format(h.vendas_capitao / h.vendas_total * 100) }}%</strong></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:{{ "%.0f"|format(h.vendas_capitao / h.vendas_total * 100) }}%;background:linear-gradient(90deg,#7c3aed,#a78bfa);"></div></div>
+        </div>
+        {% endif %}
+        {{ delta_badge(h.vendas_capitao, a.vendas_capitao if a else none) }}
+    </div>
+    <div class="kpi" style="--accent-color:#0891b2;">
+        <div class="kpi-label">Regional Capitão 2</div>
+        <div class="kpi-value sm">{{ h.vendas_capitao2 }}</div>
+        {% if h.vendas_total > 0 %}
+        <div class="progress-wrap">
+            <div class="progress-label"><span>participação</span><strong>{{ "%.0f"|format(h.vendas_capitao2 / h.vendas_total * 100) }}%</strong></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:{{ "%.0f"|format(h.vendas_capitao2 / h.vendas_total * 100) }}%;background:linear-gradient(90deg,#0891b2,#22d3ee);"></div></div>
+        </div>
+        {% endif %}
+        {{ delta_badge(h.vendas_capitao2, a.vendas_capitao2 if a else none) }}
+    </div>
+    <div class="kpi" style="--accent-color:#059669;">
+        <div class="kpi-label">Regional Jardim Europa</div>
+        <div class="kpi-value sm">{{ h.vendas_jardim_europa }}</div>
+        {% if h.vendas_total > 0 %}
+        <div class="progress-wrap">
+            <div class="progress-label"><span>participação</span><strong>{{ "%.0f"|format(h.vendas_jardim_europa / h.vendas_total * 100) }}%</strong></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:{{ "%.0f"|format(h.vendas_jardim_europa / h.vendas_total * 100) }}%;background:linear-gradient(90deg,#059669,#34d399);"></div></div>
+        </div>
+        {% endif %}
+        {{ delta_badge(h.vendas_jardim_europa, a.vendas_jardim_europa if a else none) }}
+    </div>
+</div>
+
+<!-- ─── 1º BOLETO + REATIVAÇÃO ─── -->
+<div class="section-title">Ativação e Reativação</div>
+<div class="grid grid-2">
+
+    <div class="kpi" style="--accent-color:#d97706;">
+        <div class="kpi-label">1º Boleto — mês anterior</div>
+        <div class="kpi-value sm">{{ h.pb_pagos }}<span style="font-size:1rem;color:var(--muted);font-weight:400;"> / {{ h.pb_total }}</span></div>
+        <div class="kpi-sub">pagos de {{ h.pb_total }} contratos emitidos</div>
+        {% if h.pb_total > 0 %}
+        {% set pct = h.pb_pagos / h.pb_total * 100 %}
+        <div class="progress-wrap">
+            <div class="progress-label">
+                <span>conversão</span>
+                <strong style="color:{% if pct >= 70 %}var(--green){% elif pct >= 40 %}var(--yellow){% else %}var(--red){% endif %}">{{ "%.1f"|format(pct) }}%</strong>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width:{{ "%.0f"|format(pct) }}%;background:{% if pct >= 70 %}linear-gradient(90deg,#15803d,#4ade80){% elif pct >= 40 %}linear-gradient(90deg,#b45309,#fbbf24){% else %}linear-gradient(90deg,#991b1b,#f87171){% endif %};"></div>
+            </div>
+        </div>
+        {% endif %}
+        {{ delta_badge(h.pb_pagos, a.pb_pagos if a else none) }}
+    </div>
+
+    <div class="kpi" style="--accent-color:#16a34a;">
+        <div class="kpi-label">Reativação</div>
+        <div class="kpi-value sm">{{ h.reativacao_qtd }}</div>
+        <div class="kpi-sub">contratos reativados</div>
+        <div class="kpi-sub" style="margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--text);">
+            R$ {{ "%.2f"|format(h.reativacao_valor) }}
+        </div>
+        {{ delta_badge(h.reativacao_qtd, a.reativacao_qtd if a else none) }}
+    </div>
+</div>
+
+<!-- ─── RECEBIMENTO ─── -->
+<div class="section-title">Recebimento — mês atual</div>
+<div class="kpi" style="--accent-color:#1d4ed8;margin-bottom:12px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div>
+            <div class="kpi-label">Total recebido</div>
+            <div class="kpi-value">{{ h.receb_total_qtd }}<span class="kpi-currency">parcelas</span></div>
+            <div class="kpi-sub" style="font-size:1rem;font-weight:700;color:var(--text);margin-top:4px;font-family:'JetBrains Mono',monospace;">
+                R$ {{ "%.2f"|format(h.receb_total_valor) }}
+            </div>
+            {{ delta_badge_r(h.receb_total_valor, a.receb_total_valor if a else none) }}
+        </div>
+        <div style="min-width:220px;flex:1;">
+            {% set total = h.receb_total_qtd if h.receb_total_qtd > 0 else 1 %}
+            <div class="regional-row">
+                <span class="regional-name">Capitão</span>
+                <div class="regional-bar-wrap">
+                    <div class="regional-bar" style="width:{{ "%.0f"|format(h.receb_capitao_qtd / total * 100) }}%;background:linear-gradient(90deg,#7c3aed,#a78bfa);"></div>
+                </div>
+                <span class="regional-val">{{ h.receb_capitao_qtd }} · R$ {{ "%.0f"|format(h.receb_capitao_valor) }}</span>
+            </div>
+            <div class="regional-row">
+                <span class="regional-name">Capitão 2</span>
+                <div class="regional-bar-wrap">
+                    <div class="regional-bar" style="width:{{ "%.0f"|format(h.receb_capitao2_qtd / total * 100) }}%;background:linear-gradient(90deg,#0891b2,#22d3ee);"></div>
+                </div>
+                <span class="regional-val">{{ h.receb_capitao2_qtd }} · R$ {{ "%.0f"|format(h.receb_capitao2_valor) }}</span>
+            </div>
+            <div class="regional-row">
+                <span class="regional-name">Jardim Europa</span>
+                <div class="regional-bar-wrap">
+                    <div class="regional-bar" style="width:{{ "%.0f"|format(h.receb_jardim_europa_qtd / total * 100) }}%;background:linear-gradient(90deg,#059669,#34d399);"></div>
+                </div>
+                <span class="regional-val">{{ h.receb_jardim_europa_qtd }} · R$ {{ "%.0f"|format(h.receb_jardim_europa_valor) }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── INADIMPLÊNCIA ─── -->
+<div class="section-title">Inadimplência em Cobrança</div>
+<div class="grid grid-3">
+    <div class="kpi" style="--accent-color:#dc2626;">
+        <div class="kpi-label">Total em cobrança</div>
+        <div class="kpi-value sm">{{ h.inadi_total_qtd }}</div>
+        <div class="kpi-sub" style="font-family:'JetBrains Mono',monospace;margin-top:4px;color:var(--text);">R$ {{ "%.2f"|format(h.inadi_total_valor) }}</div>
+        {{ delta_badge(h.inadi_total_qtd, a.inadi_total_qtd if a else none) }}
+    </div>
+    <div class="kpi" style="--accent-color:#b45309;">
+        <div class="kpi-label">Venc. mês passado</div>
+        <div class="kpi-value sm">{{ h.inadi_mes_ant_qtd }}</div>
+        <div class="kpi-sub" style="font-family:'JetBrains Mono',monospace;margin-top:4px;color:var(--text);">R$ {{ "%.2f"|format(h.inadi_mes_ant_valor) }}</div>
+        {{ delta_badge(h.inadi_mes_ant_qtd, a.inadi_mes_ant_qtd if a else none) }}
+    </div>
+    <div class="kpi" style="--accent-color:#7c3aed;">
+        <div class="kpi-label">Venc. mês atual</div>
+        <div class="kpi-value sm">{{ h.inadi_mes_atual_qtd }}</div>
+        <div class="kpi-sub" style="font-family:'JetBrains Mono',monospace;margin-top:4px;color:var(--text);">R$ {{ "%.2f"|format(h.inadi_mes_atual_valor) }}</div>
+        {{ delta_badge(h.inadi_mes_atual_qtd, a.inadi_mes_atual_qtd if a else none) }}
+    </div>
+</div>
+
+<!-- ─── COMPARAÇÃO ─── -->
+{% if a %}
+<div class="section-title">Comparação — {{ hoje }} vs {{ mesmo_dia_mes_passado }}</div>
+<div class="compare-strip">
+    <table>
+        <thead><tr>
+            <th>Indicador</th>
+            <th>{{ hoje }}</th>
+            <th>{{ mesmo_dia_mes_passado }}</th>
+            <th>Variação</th>
+        </tr></thead>
+        <tbody>
+            {% macro crow(label, v_h, v_a, fmt='n') %}
+            <tr>
+                <td style="color:var(--muted);">{{ label }}</td>
+                <td class="mono">{% if fmt=='r' %}R$ {{ "%.2f"|format(v_h) }}{% else %}{{ v_h }}{% endif %}</td>
+                <td class="mono" style="color:var(--dim);">{% if fmt=='r' %}R$ {{ "%.2f"|format(v_a) }}{% else %}{{ v_a }}{% endif %}</td>
+                <td>{% set d = v_h - v_a %}
+                    {% if d > 0 %}<span class="kpi-delta delta-up" style="font-size:.75rem;padding:1px 6px;">&#9650; +{% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
+                    {% elif d < 0 %}<span class="kpi-delta delta-down" style="font-size:.75rem;padding:1px 6px;">&#9660; {% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
+                    {% else %}<span style="color:var(--dim);font-size:.75rem;">=</span>{% endif %}
+                </td>
+            </tr>
+            {% endmacro %}
+            <tr class="group-row"><td colspan="4">Vendas</td></tr>
+            {{ crow("Total", h.vendas_total, a.vendas_total) }}
+            {{ crow("Capitão", h.vendas_capitao, a.vendas_capitao) }}
+            {{ crow("Capitão 2", h.vendas_capitao2, a.vendas_capitao2) }}
+            {{ crow("Jardim Europa", h.vendas_jardim_europa, a.vendas_jardim_europa) }}
+            <tr class="group-row"><td colspan="4">Reativação</td></tr>
+            {{ crow("Quantidade", h.reativacao_qtd, a.reativacao_qtd) }}
+            {{ crow("Valor", h.reativacao_valor, a.reativacao_valor, 'r') }}
+            <tr class="group-row"><td colspan="4">1º Boleto</td></tr>
+            {{ crow("Total", h.pb_total, a.pb_total) }}
+            {{ crow("Pagos", h.pb_pagos, a.pb_pagos) }}
+            <tr class="group-row"><td colspan="4">Inadimplência</td></tr>
+            {{ crow("Total (qtd)", h.inadi_total_qtd, a.inadi_total_qtd) }}
+            {{ crow("Total (R$)", h.inadi_total_valor, a.inadi_total_valor, 'r') }}
+            {{ crow("Venc. mês passado", h.inadi_mes_ant_qtd, a.inadi_mes_ant_qtd) }}
+            {{ crow("Venc. mês atual", h.inadi_mes_atual_qtd, a.inadi_mes_atual_qtd) }}
+            <tr class="group-row"><td colspan="4">Recebimento</td></tr>
+            {{ crow("Total parcelas", h.receb_total_qtd, a.receb_total_qtd) }}
+            {{ crow("Total (R$)", h.receb_total_valor, a.receb_total_valor, 'r') }}
+            {{ crow("Capitão (qtd)", h.receb_capitao_qtd, a.receb_capitao_qtd) }}
+            {{ crow("Capitão 2 (qtd)", h.receb_capitao2_qtd, a.receb_capitao2_qtd) }}
+            {{ crow("Jardim Europa (qtd)", h.receb_jardim_europa_qtd, a.receb_jardim_europa_qtd) }}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% else %}
+<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:48px 32px;text-align:center;margin-top:24px;">
+    <div style="font-size:2rem;margin-bottom:12px;">📊</div>
+    <div style="color:var(--muted);font-size:0.9rem;">Os dados de hoje ainda não foram extraídos.</div>
+    <div style="color:var(--dim);font-size:0.8rem;margin-top:6px;">Tente novamente mais tarde — a extração acontece automaticamente.</div>
+</div>
+{% endif %}
+
+</main>
+
+<footer class="footer">
+    Solucões IA · Regional Capitão · Atualização automática diária via ERP APVS
+</footer>
+
+<script>
+// Auto-refresh a cada 30 minutos para sempre mostrar dados atuais
+setTimeout(() => location.reload(), 30 * 60 * 1000);
+</script>
+</body>
+</html>

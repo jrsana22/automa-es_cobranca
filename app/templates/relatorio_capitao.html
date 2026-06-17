@@ -102,6 +102,7 @@
         <div style="display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;">
             <span style="font-size:0.85rem;color:var(--text-muted);">Hoje: <strong style="color:var(--text-primary);">{{ hoje }}</strong></span>
             <span style="font-size:0.85rem;color:var(--text-muted);">Ref. mês passado: <strong style="color:var(--text-primary);">{{ mesmo_dia_mes_passado }}</strong></span>
+            <a href="/relatorio/link-cliente" target="_blank" class="btn btn-ghost btn-sm">&#128279; Link Cliente</a>
             <button id="btn-extrair" class="btn btn-primary btn-sm" onclick="iniciarExtracao()">
                 {% if extracao_em_andamento %}<span class="spinner"></span>Extraindo...{% else %}&#8635; Extrair Agora{% endif %}
             </button>
@@ -187,10 +188,16 @@
         <div class="metric-label">Recebimento (mês atual)</div>
         <div class="metric-value">{{ snap_hoje.receb_total_qtd }}</div>
         <div class="metric-sub">R$ {{ "%.2f"|format(snap_hoje.receb_total_valor) }}</div>
-        <div class="metric-sub">
-            Cap: {{ snap_hoje.receb_capitao_qtd }} (R$ {{ "%.0f"|format(snap_hoje.receb_capitao_valor) }}) |
-            Cap2: {{ snap_hoje.receb_capitao2_qtd }} |
-            JE: {{ snap_hoje.receb_jardim_europa_qtd }}
+        <div style="margin-top:var(--space-3);display:grid;grid-template-columns:auto 1fr 1fr;gap:2px 10px;font-size:0.78rem;">
+            <span style="color:var(--text-muted);">Capitão</span>
+            <span style="color:var(--text-secondary);">{{ snap_hoje.receb_capitao_qtd }} parcelas</span>
+            <span style="color:var(--text-secondary);font-family:'JetBrains Mono',monospace;">R$ {{ "%.0f"|format(snap_hoje.receb_capitao_valor) }}</span>
+            <span style="color:var(--text-muted);">Capitão 2</span>
+            <span style="color:var(--text-secondary);">{{ snap_hoje.receb_capitao2_qtd }} parcelas</span>
+            <span style="color:var(--text-secondary);font-family:'JetBrains Mono',monospace;">R$ {{ "%.0f"|format(snap_hoje.receb_capitao2_valor) }}</span>
+            <span style="color:var(--text-muted);">Jardim Europa</span>
+            <span style="color:var(--text-secondary);">{{ snap_hoje.receb_jardim_europa_qtd }} parcelas</span>
+            <span style="color:var(--text-secondary);font-family:'JetBrains Mono',monospace;">R$ {{ "%.0f"|format(snap_hoje.receb_jardim_europa_valor) }}</span>
         </div>
         {% if ant %}{{ delta(snap_hoje.receb_total_qtd, ant.receb_total_qtd) }}{% endif %}
     </div>
