@@ -288,3 +288,18 @@ class RelatorioCapitaoDiario(Base):
     log: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     erros: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     manual: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class RelatorioWhatsappConfig(Base):
+    __tablename__ = "relatorio_whatsapp_config"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    server_url: Mapped[str] = mapped_column(String, default="")
+    instance_token: Mapped[str] = mapped_column(String, default="")
+    numero_1: Mapped[str] = mapped_column(String, default="")
+    numero_2: Mapped[str] = mapped_column(String, default="")
+    numero_3: Mapped[str] = mapped_column(String, default="")
+    horario_envio: Mapped[str] = mapped_column(String, default="07:00")
+    dias_envio: Mapped[str] = mapped_column(String, default="0,1,2,3,4")
+    ativo: Mapped[bool] = mapped_column(Boolean, default=False)
+    atualizado_em: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

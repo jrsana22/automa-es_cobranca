@@ -12,10 +12,14 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+import json
+import urllib.error
+import urllib.request
+
 from app.auth import require_auth
 from app.config import settings
 from app.database import SessionLocal, get_db
-from app.models import RelatorioCapitaoDiario
+from app.models import RelatorioCapitaoDiario, RelatorioWhatsappConfig
 from app.services.relatorio_extractor import RelatorioExtractor
 
 logger = logging.getLogger(__name__)
@@ -367,3 +371,259 @@ def relatorio_link_cliente(_: None = Depends(require_auth)):
         f"<p style='margin-top:1.5rem'><a href='/relatorio' style='color:#9ca3af'>← Voltar</a></p>"
         f"</body></html>"
     )
+
+
+# ── WhatsApp helpers ────────────────────────────────────────────────────────
+
+def _wz_config_get(db: Session) -> RelatorioWhatsappConfig:
+    cfg = db.query(RelatorioWhatsappConfig).first()
+    if not cfg:
+        cfg = RelatorioWhatsappConfig()
+        db.add(cfg)
+        db.commit()
+        db.refresh(cfg)
+    return cfg
+
+
+def _formatar_relatorio_wz(snap: dict, data_ref_fmt: str) -> str:
+    v  = snap.get("vendas_total", 0) or 0
+    vc = snap.get("vendas_capitao", 0) or 0
+    vc2= snap.get("vendas_capitao2", 0) or 0
+    vj = snap.get("vendas_jardim_europa", 0) or 0
+    r  = snap.get("reativacao_qtd", 0) or 0
+    rv = snap.get("reativacao_valor", 0.0) or 0.0
+    pb = snap.get("pb_pagos", 0) or 0
+    pbt= snap.get("pb_total", 0) or 0
+    pct= round(pb / pbt * 100) if pbt > 0 else 0
+    rec_q = snap.get("receb_total_qtd", 0) or 0
+    rec_v = snap.get("receb_total_valor", 0.0) or 0.0
+    rec_c = snap.get("receb_capitao_qtd", 0) or 0
+    rec_c2= snap.get("receb_capitao2_qtd", 0) or 0
+    rec_j = snap.get("receb_jardim_europa_qtd", 0) or 0
+    in_t  = snap.get("inadi_total_qtd", 0) or 0
+    in_mp = snap.get("inadi_mes_ant_qtd", 0) or 0
+    in_ma = snap.get("inadi_mes_atual_qtd", 0) or 0
+
+    return (
+        f"📊 *Relatório Regional Capitão — {data_ref_fmt}*\n\n"
+        f"📈 *Vendas:* {v} contratos\n"
+        f"  Cap: {vc} | Cap 2: {vc2} | JE: {vj}\n\n"
+        f"🔄 *Reativação:* {r} (R$ {rv:,.2f})\n\n"
+        f"📋 *1º Boleto:* {pb}/{pbt} pagos ({pct}%)\n\n"
+        f"💰 *Recebimento:* {rec_q} placas (R$ {rec_v:,.2f})\n"
+        f"  Cap: {rec_c} | Cap 2: {rec_c2} | JE: {rec_j}\n\n"
+        f"⚠️ *Inadimplência:* {in_t} contratos\n"
+        f"  Mês passado: {in_mp} | Mês atual: {in_ma}\n\n"
+        f"_Gerado automaticamente — {data_ref_fmt}_"
+    )
+
+
+def _enviar_wz(cfg: RelatorioWhatsappConfig, msg: str) -> list[dict]:
+    results = []
+    for numero in [cfg.numero_1, cfg.numero_2, cfg.numero_3]:
+        if not numero:
+            continue
+        payload = json.dumps({"number": numero, "text": msg}).encode()
+        req = urllib.request.Request(
+            f"{cfg.server_url.rstrip('/')}/send/text",
+            data=payload,
+            headers={"token": cfg.instance_token, "Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=15) as r:
+                results.append({"numero": numero, "ok": True, "status": r.status})
+        except urllib.error.HTTPError as e:
+            results.append({"numero": numero, "ok": False, "status": e.code})
+        except Exception as ex:
+            results.append({"numero": numero, "ok": False, "erro": str(ex)})
+    return results
+
+
+def _wz_status(cfg: RelatorioWhatsappConfig) -> dict:
+    if not cfg.server_url or not cfg.instance_token:
+        return {"conectado": False, "motivo": "Não configurado"}
+    try:
+        req = urllib.request.Request(
+            f"{cfg.server_url.rstrip('/')}/status",
+            headers={"token": cfg.instance_token},
+        )
+        with urllib.request.urlopen(req, timeout=8) as r:
+            data = json.loads(r.read())
+            status = data.get("status", {})
+            inst = status.get("checked_instance", {})
+            conectado = inst.get("connection_status") == "connected"
+            return {
+                "conectado": conectado,
+                "nome_instancia": inst.get("name", ""),
+                "servidor": status.get("server_status", ""),
+            }
+    except Exception as ex:
+        return {"conectado": False, "motivo": str(ex)}
+
+
+# ── Client-side routes (authed by key) ─────────────────────────────────────
+
+def _validar_key(key: str) -> bool:
+    return hmac.compare_digest(key, _client_key())
+
+
+@router.post("/relatorio/cliente/entrada")
+def cliente_entrada(
+    db: Session = Depends(get_db),
+    key: str = Form(...),
+    data_ref: str = Form(...),
+    vendas_capitao: int = Form(0),
+    vendas_capitao2: int = Form(0),
+    vendas_jardim_europa: int = Form(0),
+    reativacao_qtd: int = Form(0),
+    reativacao_valor: float = Form(0.0),
+    pb_total: int = Form(0),
+    pb_pagos: int = Form(0),
+    inadi_total_qtd: int = Form(0),
+    inadi_total_valor: float = Form(0.0),
+    inadi_mes_ant_qtd: int = Form(0),
+    inadi_mes_ant_valor: float = Form(0.0),
+    inadi_mes_atual_qtd: int = Form(0),
+    inadi_mes_atual_valor: float = Form(0.0),
+    receb_total_qtd: int = Form(0),
+    receb_total_valor: float = Form(0.0),
+    receb_capitao_qtd: int = Form(0),
+    receb_capitao_valor: float = Form(0.0),
+    receb_capitao2_qtd: int = Form(0),
+    receb_capitao2_valor: float = Form(0.0),
+    receb_jardim_europa_qtd: int = Form(0),
+    receb_jardim_europa_valor: float = Form(0.0),
+):
+    if not _validar_key(key):
+        return JSONResponse({"ok": False, "msg": "Acesso negado"}, status_code=403)
+
+    try:
+        ref = date.fromisoformat(data_ref)
+    except ValueError:
+        return JSONResponse({"ok": False, "msg": "Data inválida"}, status_code=400)
+
+    class FakeSnap:
+        pass
+
+    snap = FakeSnap()
+    snap.data_ref = ref
+    snap.vendas_total = vendas_capitao + vendas_capitao2 + vendas_jardim_europa
+    snap.vendas_capitao = vendas_capitao
+    snap.vendas_capitao2 = vendas_capitao2
+    snap.vendas_jardim_europa = vendas_jardim_europa
+    snap.cotacoes_mes = 0
+    snap.cotacoes_dia_anterior = 0
+    snap.reativacao_qtd = reativacao_qtd
+    snap.reativacao_valor = reativacao_valor
+    snap.pb_total = pb_total
+    snap.pb_pagos = pb_pagos
+    snap.pb_valor = 0.0
+    snap.inadi_total_qtd = inadi_total_qtd
+    snap.inadi_total_valor = inadi_total_valor
+    snap.inadi_mes_ant_qtd = inadi_mes_ant_qtd
+    snap.inadi_mes_ant_valor = inadi_mes_ant_valor
+    snap.inadi_mes_atual_qtd = inadi_mes_atual_qtd
+    snap.inadi_mes_atual_valor = inadi_mes_atual_valor
+    snap.cancelamento_qtd = 0
+    snap.receb_total_qtd = receb_total_qtd
+    snap.receb_total_valor = receb_total_valor
+    snap.receb_capitao_qtd = receb_capitao_qtd
+    snap.receb_capitao_valor = receb_capitao_valor
+    snap.receb_capitao2_qtd = receb_capitao2_qtd
+    snap.receb_capitao2_valor = receb_capitao2_valor
+    snap.receb_jardim_europa_qtd = receb_jardim_europa_qtd
+    snap.receb_jardim_europa_valor = receb_jardim_europa_valor
+    snap.log = "Entrada manual (cliente)"
+    snap.erros = ""
+
+    _salvar_snapshot(db, snap, manual=True)
+    return JSONResponse({"ok": True, "msg": f"Dados de {ref.strftime('%d/%m/%Y')} salvos."})
+
+
+@router.get("/relatorio/cliente/wz-status")
+def cliente_wz_status(key: str = "", db: Session = Depends(get_db)):
+    if not _validar_key(key):
+        return JSONResponse({"ok": False}, status_code=403)
+    cfg = _wz_config_get(db)
+    return JSONResponse({"ok": True, **_wz_status(cfg)})
+
+
+@router.post("/relatorio/cliente/wz-config")
+def cliente_wz_config(
+    db: Session = Depends(get_db),
+    key: str = Form(...),
+    server_url: str = Form(""),
+    instance_token: str = Form(""),
+    numero_1: str = Form(""),
+    numero_2: str = Form(""),
+    numero_3: str = Form(""),
+    horario_envio: str = Form("07:00"),
+    dias_envio: str = Form("0,1,2,3,4"),
+    ativo: bool = Form(False),
+):
+    if not _validar_key(key):
+        return JSONResponse({"ok": False, "msg": "Acesso negado"}, status_code=403)
+
+    cfg = _wz_config_get(db)
+    cfg.server_url = server_url.strip()
+    cfg.instance_token = instance_token.strip()
+    cfg.numero_1 = numero_1.strip()
+    cfg.numero_2 = numero_2.strip()
+    cfg.numero_3 = numero_3.strip()
+    cfg.horario_envio = horario_envio.strip()
+    cfg.dias_envio = dias_envio.strip()
+    cfg.ativo = ativo
+    cfg.atualizado_em = datetime.now(_BRASILIA).replace(tzinfo=None)
+    db.commit()
+
+    # Recarregar job no scheduler
+    try:
+        from app.scheduler import _reagendar_whatsapp
+        _reagendar_whatsapp(cfg)
+    except Exception:
+        pass
+
+    return JSONResponse({"ok": True, "msg": "Configuração salva."})
+
+
+@router.post("/relatorio/cliente/wz-enviar")
+def cliente_wz_enviar(
+    db: Session = Depends(get_db),
+    key: str = Form(...),
+    data_ref: str = Form(""),
+):
+    if not _validar_key(key):
+        return JSONResponse({"ok": False, "msg": "Acesso negado"}, status_code=403)
+
+    ref = _parse_data(data_ref) or date.today()
+    snap = _buscar_snapshot(db, ref)
+    if not snap:
+        return JSONResponse({"ok": False, "msg": f"Sem dados para {ref.strftime('%d/%m/%Y')}"}, status_code=404)
+
+    cfg = _wz_config_get(db)
+    if not cfg.server_url or not cfg.instance_token:
+        return JSONResponse({"ok": False, "msg": "WhatsApp não configurado"}, status_code=400)
+
+    msg = _formatar_relatorio_wz(_snap_para_dict(snap), ref.strftime("%d/%m/%Y"))
+    results = _enviar_wz(cfg, msg)
+    enviados = sum(1 for r in results if r.get("ok"))
+    return JSONResponse({"ok": True, "enviados": enviados, "detalhes": results})
+
+
+@router.get("/relatorio/cliente/wz-cfg")
+def cliente_wz_cfg_get(key: str = "", db: Session = Depends(get_db)):
+    if not _validar_key(key):
+        return JSONResponse({"ok": False}, status_code=403)
+    cfg = _wz_config_get(db)
+    return JSONResponse({
+        "ok": True,
+        "server_url": cfg.server_url,
+        "instance_token": cfg.instance_token,
+        "numero_1": cfg.numero_1,
+        "numero_2": cfg.numero_2,
+        "numero_3": cfg.numero_3,
+        "horario_envio": cfg.horario_envio,
+        "dias_envio": cfg.dias_envio,
+        "ativo": cfg.ativo,
+    })

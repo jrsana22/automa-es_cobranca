@@ -37,14 +37,14 @@
             background:var(--bg2); border-bottom:1px solid var(--border);
             padding:0 20px; height:56px;
             display:flex; align-items:center; justify-content:space-between; gap:12px;
-            position:sticky; top:0; z-index:200;
+            position:sticky; top:0; z-index:200; flex-shrink:0;
         }
         .topbar-brand { display:flex; align-items:center; gap:10px; flex-shrink:0; }
         .brand-icon {
             width:32px; height:32px;
             background:linear-gradient(135deg,var(--r1),#4f46e5);
             border-radius:8px; display:flex; align-items:center; justify-content:center;
-            font-weight:800; font-size:12px; color:#fff;
+            font-weight:800; font-size:12px; color:#fff; letter-spacing:-.5px;
         }
         .brand-name { font-size:.9rem; font-weight:700; }
         .brand-sub  { font-size:.65rem; color:var(--muted); }
@@ -60,12 +60,11 @@
             transition:border-color .15s;
         }
         .dp-btn:hover { border-color:var(--blue); }
-        .dp-btn svg { opacity:.5; }
         .dp-menu {
             display:none; position:absolute; top:calc(100% + 6px); left:0;
             background:var(--bg2); border:1px solid var(--border2); border-radius:10px;
-            min-width:200px; max-height:300px; overflow-y:auto;
-            box-shadow:0 8px 32px rgba(0,0,0,.6); z-index:300;
+            min-width:200px; max-height:280px; overflow-y:auto;
+            box-shadow:0 8px 32px rgba(0,0,0,.6); z-index:400;
         }
         .dp-menu.open { display:block; }
         .dp-opt {
@@ -73,13 +72,10 @@
             text-decoration:none; border-bottom:1px solid var(--border);
             transition:background .1s,color .1s;
         }
-        .dp-opt:last-child { border-bottom:none; }
+        .dp-opt:last-of-type { border-bottom:none; }
         .dp-opt:hover { background:var(--bg3); color:var(--text); }
         .dp-opt.active { color:var(--blue); font-weight:700; background:rgba(59,130,246,.07); }
-        .dp-native {
-            padding:8px 12px 10px;
-            border-top:1px solid var(--border);
-        }
+        .dp-native { padding:8px 12px 10px; border-top:1px solid var(--border); }
         .dp-native label { font-size:.7rem; color:var(--dim); display:block; margin-bottom:4px; }
         .dp-native input[type=date] {
             width:100%; background:var(--bg3); border:1px solid var(--border);
@@ -92,50 +88,46 @@
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
         .live-label { font-size:.7rem; color:var(--muted); }
 
-        /* ── INTEL BLOCK ────────────────────────── */
-        .intel-block {
+        /* ── TAB BAR ────────────────────────────── */
+        .tabbar {
             background:var(--bg2); border-bottom:1px solid var(--border);
-            padding:10px 20px; display:flex; flex-direction:column; gap:5px;
+            display:flex; align-items:flex-end; padding:0 20px; gap:2px;
+            position:sticky; top:56px; z-index:100; overflow-x:auto;
         }
-        .intel-item {
-            display:flex; align-items:flex-start; gap:8px;
-            font-size:.8rem; line-height:1.4; padding:4px 0;
+        .tab-btn {
+            padding:10px 16px; font-size:.8rem; font-weight:600;
+            color:var(--muted); border:none; background:transparent;
+            border-bottom:2px solid transparent; cursor:pointer;
+            white-space:nowrap; transition:color .15s,border-color .15s;
+            font-family:'Inter',sans-serif; display:flex; align-items:center; gap:6px;
         }
-        .intel-icon { flex-shrink:0; font-size:.9rem; line-height:1.4; }
-        .intel-text { color:var(--muted); }
-        .intel-good  .intel-text { color:#4ade80; }
-        .intel-warn  .intel-text { color:#fbbf24; }
-        .intel-alert .intel-text { color:#f87171; }
-        .intel-info  .intel-text { color:#93c5fd; }
-        .intel-header {
-            font-size:.65rem; font-weight:700; color:var(--dim);
-            text-transform:uppercase; letter-spacing:.1em;
-            padding-bottom:4px; margin-bottom:2px;
-            border-bottom:1px solid var(--border);
+        .tab-btn:hover { color:var(--text); }
+        .tab-btn.active { color:var(--text); border-bottom-color:var(--r1); }
+        .tab-badge {
+            background:var(--red); color:#fff;
+            font-size:.62rem; font-weight:700; padding:1px 5px; border-radius:8px;
         }
 
         /* ── REGIONAL FILTER ────────────────────── */
-        .rfil-bar {
-            display:flex; gap:6px; padding:14px 20px 0;
-            flex-wrap:wrap;
-        }
+        .rfil-bar { display:flex; gap:6px; padding:14px 20px 0; flex-wrap:wrap; }
         .rfil {
             padding:5px 14px; border-radius:20px; font-size:.78rem; font-weight:600;
             border:1px solid var(--border); color:var(--muted);
-            text-decoration:none; transition:all .15s; cursor:pointer;
+            text-decoration:none; transition:all .15s;
         }
         .rfil:hover { border-color:var(--border2); color:var(--text); }
-        .rfil.r-all.active    { background:rgba(99,102,241,.15); border-color:var(--r1); color:var(--r1); }
-        .rfil.r-cap.active    { background:rgba(99,102,241,.15); border-color:var(--r1); color:var(--r1); }
-        .rfil.r-cap2.active   { background:rgba(6,182,212,.15);  border-color:var(--r2); color:var(--r2); }
-        .rfil.r-je.active     { background:rgba(16,185,129,.15); border-color:var(--r3); color:var(--r3); }
+        .rfil.r-all.active  { background:rgba(99,102,241,.15); border-color:var(--r1); color:var(--r1); }
+        .rfil.r-cap.active  { background:rgba(99,102,241,.15); border-color:var(--r1); color:var(--r1); }
+        .rfil.r-cap2.active { background:rgba(6,182,212,.15);  border-color:var(--r2); color:var(--r2); }
+        .rfil.r-je.active   { background:rgba(16,185,129,.15); border-color:var(--r3); color:var(--r3); }
 
         /* ── LAYOUT ─────────────────────────────── */
+        .tab-pane { display:none; }
+        .tab-pane.active { display:block; }
         .main { padding:16px 20px 60px; max-width:1200px; margin:0 auto; }
         .section-label {
             font-size:.65rem; font-weight:700; color:var(--dim);
-            text-transform:uppercase; letter-spacing:.12em;
-            margin:22px 0 10px;
+            text-transform:uppercase; letter-spacing:.12em; margin:22px 0 10px;
         }
         .grid { display:grid; gap:12px; }
         .g4 { grid-template-columns:repeat(4,1fr); }
@@ -154,57 +146,47 @@
         .kpi-val.md { font-size:1.4rem; }
         .kpi-sub { font-size:.78rem; color:var(--muted); margin-top:5px; }
         .kpi-money { font-family:'JetBrains Mono',monospace; font-size:.85rem; color:var(--text); margin-top:4px; }
-        .badge {
-            display:inline-flex; align-items:center; gap:3px;
-            font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:8px;
-        }
+        .badge { display:inline-flex; align-items:center; gap:3px; font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:8px; }
         .badge-up   { background:rgba(34,197,94,.12); color:var(--green); }
         .badge-down { background:rgba(239,68,68,.12);  color:var(--red); }
         .badge-zero { background:rgba(255,255,255,.05); color:var(--dim); }
 
         /* ── PROGRESS ───────────────────────────── */
-        .prog-wrap  { margin-top:10px; }
-        .prog-lbl   { display:flex; justify-content:space-between; font-size:.73rem; color:var(--muted); margin-bottom:5px; }
-        .prog-bar   { height:7px; background:var(--bg3); border-radius:4px; overflow:hidden; }
-        .prog-fill  { height:100%; border-radius:4px; transition:width .6s ease; }
+        .prog-wrap { margin-top:10px; }
+        .prog-lbl { display:flex; justify-content:space-between; font-size:.73rem; color:var(--muted); margin-bottom:5px; }
+        .prog-bar { height:7px; background:var(--bg3); border-radius:4px; overflow:hidden; }
+        .prog-fill { height:100%; border-radius:4px; transition:width .6s ease; }
 
         /* ── CHARTS ─────────────────────────────── */
         .chart-card { padding:20px; }
         .chart-title { font-size:.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:16px; }
         .chart-inner { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
-        .chart-wrap  { position:relative; width:150px; height:150px; flex-shrink:0; }
-        .chart-center {
-            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-            text-align:center; pointer-events:none;
-        }
+        .chart-wrap { position:relative; width:150px; height:150px; flex-shrink:0; }
+        .chart-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
         .chart-center-val { font-size:1.25rem; font-weight:800; line-height:1; }
         .chart-center-sub { font-size:.62rem; color:var(--muted); margin-top:2px; }
         .legend { flex:1; display:flex; flex-direction:column; gap:7px; }
         .li { display:flex; align-items:center; justify-content:space-between; font-size:.78rem; padding:4px 0; border-bottom:1px solid var(--border); }
         .li:last-child { border-bottom:none; }
         .li-name { display:flex; align-items:center; gap:8px; }
-        .li-dot  { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-        .li-dot.dim { opacity:.25; }
+        .li-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+        .li-dot.dim { opacity:.2; }
         .li-vals { text-align:right; }
-        .li-q    { font-weight:700; font-size:.82rem; }
-        .li-r    { font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--dim); }
+        .li-q { font-weight:700; font-size:.82rem; }
+        .li-r { font-family:'JetBrains Mono',monospace; font-size:.7rem; color:var(--dim); }
 
         /* ── INADI ──────────────────────────────── */
         .inadi-row { display:flex; justify-content:space-between; align-items:center; padding:8px 20px; border-bottom:1px solid var(--border); font-size:.82rem; }
         .inadi-row:last-child { border-bottom:none; }
         .inadi-row .label { color:var(--muted); }
-        .inadi-row .vals  { display:flex; gap:14px; align-items:center; }
-        .inadi-row .qtd   { color:var(--text); font-weight:600; min-width:28px; text-align:right; }
+        .inadi-row .vals { display:flex; gap:14px; align-items:center; }
+        .inadi-row .qtd { color:var(--text); font-weight:600; min-width:28px; text-align:right; }
         .inadi-row .money { font-family:'JetBrains Mono',monospace; font-size:.74rem; color:var(--muted); }
 
         /* ── COMPARE TABLE ──────────────────────── */
         .cmp-wrap details summary { cursor:pointer; list-style:none; }
         .cmp-wrap details summary::-webkit-details-marker { display:none; }
-        .cmp-summary-btn {
-            display:inline-flex; align-items:center; gap:6px;
-            font-size:.72rem; color:var(--dim); padding:6px 0;
-            user-select:none;
-        }
+        .cmp-summary-btn { display:inline-flex; align-items:center; gap:6px; font-size:.72rem; color:var(--dim); padding:6px 0; user-select:none; }
         .cmp-summary-btn:hover { color:var(--muted); }
         .cmp-table { width:100%; border-collapse:collapse; font-size:.8rem; margin-top:2px; }
         .cmp-table th { background:var(--bg3); padding:7px 14px; text-align:left; font-size:.63rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; }
@@ -212,6 +194,95 @@
         .cmp-table .grp td { background:var(--bg3); font-weight:700; font-size:.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; padding:4px 14px; }
         .cmp-table tr:hover td { background:rgba(255,255,255,.015); }
         .mono { font-family:'JetBrains Mono',monospace; }
+
+        /* ── INTEL BLOCK ────────────────────────── */
+        .intel-list { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+        .intel-item {
+            display:flex; align-items:flex-start; gap:12px;
+            background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+            padding:14px 16px;
+        }
+        .intel-icon { font-size:1.3rem; flex-shrink:0; line-height:1.2; }
+        .intel-text { font-size:.85rem; line-height:1.5; color:var(--muted); }
+        .intel-good  .intel-text { color:#4ade80; }
+        .intel-warn  .intel-text { color:#fbbf24; }
+        .intel-alert .intel-text { color:#f87171; }
+        .intel-info  .intel-text { color:#93c5fd; }
+        .intel-good  { border-color:rgba(74,222,128,.2); }
+        .intel-warn  { border-color:rgba(251,191,36,.2); }
+        .intel-alert { border-color:rgba(248,113,113,.2); }
+        .intel-info  { border-color:rgba(147,197,253,.15); }
+
+        /* ── FORM ENTRADA ───────────────────────── */
+        .form-card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:24px; }
+        .form-title { font-size:.85rem; font-weight:700; margin-bottom:20px; color:var(--text); }
+        .form-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+        @media(max-width:700px){ .form-grid { grid-template-columns:1fr 1fr; } }
+        @media(max-width:480px){ .form-grid { grid-template-columns:1fr; } }
+        .form-group label { font-size:.7rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:5px; }
+        .form-group input {
+            width:100%; background:var(--bg3); border:1px solid var(--border);
+            color:var(--text); border-radius:8px; padding:8px 12px;
+            font-size:.85rem; font-family:'JetBrains Mono',monospace;
+            transition:border-color .15s;
+        }
+        .form-group input:focus { outline:none; border-color:var(--blue); }
+        .form-sep { grid-column:1/-1; border-top:1px solid var(--border); margin:4px 0; }
+        .form-sep-label { grid-column:1/-1; font-size:.65rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; margin-top:4px; }
+        .btn-primary {
+            background:var(--r1); color:#fff; border:none; border-radius:8px;
+            padding:10px 22px; font-size:.85rem; font-weight:700; cursor:pointer;
+            font-family:'Inter',sans-serif; transition:opacity .15s;
+        }
+        .btn-primary:hover { opacity:.85; }
+        .btn-secondary {
+            background:var(--bg3); color:var(--muted); border:1px solid var(--border); border-radius:8px;
+            padding:10px 22px; font-size:.85rem; font-weight:600; cursor:pointer;
+            font-family:'Inter',sans-serif; transition:all .15s;
+        }
+        .btn-secondary:hover { border-color:var(--border2); color:var(--text); }
+        .form-msg { font-size:.82rem; padding:10px 14px; border-radius:8px; margin-top:14px; display:none; }
+        .form-msg.ok  { background:rgba(34,197,94,.1); color:var(--green); border:1px solid rgba(34,197,94,.2); }
+        .form-msg.err { background:rgba(239,68,68,.1);  color:var(--red);   border:1px solid rgba(239,68,68,.2); }
+
+        /* ── WHATSAPP TAB ───────────────────────── */
+        .wz-status-row {
+            display:flex; align-items:center; gap:10px;
+            background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+            padding:14px 18px; margin-bottom:20px;
+        }
+        .wz-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .wz-dot.on  { background:var(--green); box-shadow:0 0 6px rgba(34,197,94,.5); }
+        .wz-dot.off { background:var(--red); }
+        .wz-status-text { font-size:.85rem; font-weight:600; }
+        .wz-status-sub  { font-size:.75rem; color:var(--muted); margin-top:2px; }
+        .wz-section-label { font-size:.65rem; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; margin:20px 0 10px; }
+        .wz-form { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:22px; }
+        .wz-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        @media(max-width:600px){ .wz-form-grid { grid-template-columns:1fr; } }
+        .wz-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:1px solid var(--border); margin-top:14px; }
+        .wz-toggle-label { font-size:.85rem; font-weight:600; }
+        .wz-toggle-sub { font-size:.75rem; color:var(--muted); }
+        .toggle-switch { position:relative; width:44px; height:24px; flex-shrink:0; }
+        .toggle-switch input { opacity:0; width:0; height:0; }
+        .toggle-slider {
+            position:absolute; top:0; left:0; right:0; bottom:0;
+            background:var(--bg3); border:1px solid var(--border2); border-radius:24px;
+            cursor:pointer; transition:.3s;
+        }
+        .toggle-slider::before {
+            content:""; position:absolute; width:18px; height:18px;
+            left:2px; bottom:2px; background:var(--dim);
+            border-radius:50%; transition:.3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background:rgba(99,102,241,.3); border-color:var(--r1); }
+        .toggle-switch input:checked + .toggle-slider::before { transform:translateX(20px); background:var(--r1); }
+        .wz-send-preview {
+            background:var(--bg3); border:1px solid var(--border); border-radius:10px;
+            padding:14px 16px; font-size:.78rem; color:var(--muted); line-height:1.8;
+            font-family:'JetBrains Mono',monospace; white-space:pre-line;
+        }
+        .wz-btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
 
         /* ── EMPTY ──────────────────────────────── */
         .empty-state {
@@ -232,7 +303,6 @@
         </div>
     </div>
 
-    <!-- Custom date picker -->
     <div class="dp-wrap" id="dp-wrap">
         <button class="dp-btn" onclick="toggleDp(event)" type="button">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -248,7 +318,7 @@
             <div class="dp-opt" style="color:var(--dim);">Nenhum dado ainda</div>
             {% endif %}
             <div class="dp-native">
-                <label>Escolher data específica</label>
+                <label>Outra data</label>
                 <form method="get" action="/relatorio/cliente">
                     <input type="hidden" name="key" value="{{ client_key }}">
                     <input type="hidden" name="regional" value="{{ regional }}">
@@ -261,27 +331,40 @@
 
     <div class="topbar-right">
         <div class="live-dot"></div>
-        <span class="live-label">Atualiza 30min</span>
+        <span class="live-label">Extrai 8h e 20h</span>
     </div>
 </header>
 
-<!-- INTELLIGENCE BLOCK -->
-{% if insights %}
-<div class="intel-block">
-    <div class="intel-header">Inteligência de Gestão</div>
-    {% for item in insights %}
-    <div class="intel-item intel-{{ item.level }}">
-        <span class="intel-icon">{{ item.icon }}</span>
-        <span class="intel-text">{{ item.text }}</span>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
+<!-- TAB BAR -->
+<nav class="tabbar">
+    <button class="tab-btn active" onclick="switchTab('painel',this)" id="tab-painel">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Painel
+    </button>
+    <button class="tab-btn" onclick="switchTab('analise',this)" id="tab-analise">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Análise
+        {% if insights %}<span class="tab-badge">{{ insights|length }}</span>{% endif %}
+    </button>
+    <button class="tab-btn" onclick="switchTab('entrada',this)" id="tab-entrada">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Entrada
+    </button>
+    <button class="tab-btn" onclick="switchTab('whatsapp',this)" id="tab-whatsapp">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        WhatsApp
+    </button>
+</nav>
 
-<!-- REGIONAL FILTER -->
+<!-- ══════════════════════════════════════════════════════════
+     ABA PAINEL
+═══════════════════════════════════════════════════════════ -->
+<div id="pane-painel" class="tab-pane active">
+
+<!-- Regional filter -->
 <div class="rfil-bar">
     <a href="/relatorio/cliente?key={{ client_key }}&data={{ data_ref }}&regional=all"
-       class="rfil r-all {% if regional == 'all' %}active{% endif %}">Todas as regionais</a>
+       class="rfil r-all {% if regional == 'all' %}active{% endif %}">Todas</a>
     <a href="/relatorio/cliente?key={{ client_key }}&data={{ data_ref }}&regional=capitao"
        class="rfil r-cap {% if regional == 'capitao' %}active{% endif %}">Capitão</a>
     <a href="/relatorio/cliente?key={{ client_key }}&data={{ data_ref }}&regional=capitao2"
@@ -290,53 +373,49 @@
        class="rfil r-je {% if regional == 'jardim' %}active{% endif %}">Jardim Europa</a>
 </div>
 
-<main class="main">
+<div class="main">
 
 {% if snap_hoje %}
 {% set h = snap_hoje %}
 {% set a = snap_mes_passado %}
 
-{# Valores filtrados por regional #}
+{# Valores filtrados #}
 {% set ns = namespace(
-    v_total=h.vendas_total, v_label="novos contratos",
+    v_total=h.vendas_total, v_label="todas",
     r_qtd=h.receb_total_qtd, r_val=h.receb_total_valor,
-    a_v_total=a.vendas_total if a else none,
-    a_r_val=a.receb_total_valor if a else none
+    a_v=a.vendas_total if a else none,
+    a_r=a.receb_total_valor if a else none
 ) %}
 {% if regional == 'capitao' %}
     {% set ns.v_total = h.vendas_capitao %}{% set ns.v_label = "Capitão" %}
     {% set ns.r_qtd = h.receb_capitao_qtd %}{% set ns.r_val = h.receb_capitao_valor %}
-    {% if a %}{% set ns.a_v_total = a.vendas_capitao %}{% set ns.a_r_val = a.receb_capitao_valor %}{% endif %}
+    {% if a %}{% set ns.a_v = a.vendas_capitao %}{% set ns.a_r = a.receb_capitao_valor %}{% endif %}
 {% elif regional == 'capitao2' %}
-    {% set ns.v_total = h.vendas_capitao2 %}{% set ns.v_label = "Capitão 2" %}
+    {% set ns.v_total = h.vendas_capitao2 %}{% set ns.v_label = "Cap. 2" %}
     {% set ns.r_qtd = h.receb_capitao2_qtd %}{% set ns.r_val = h.receb_capitao2_valor %}
-    {% if a %}{% set ns.a_v_total = a.vendas_capitao2 %}{% set ns.a_r_val = a.receb_capitao2_valor %}{% endif %}
+    {% if a %}{% set ns.a_v = a.vendas_capitao2 %}{% set ns.a_r = a.receb_capitao2_valor %}{% endif %}
 {% elif regional == 'jardim' %}
-    {% set ns.v_total = h.vendas_jardim_europa %}{% set ns.v_label = "Jardim Europa" %}
+    {% set ns.v_total = h.vendas_jardim_europa %}{% set ns.v_label = "Jardim" %}
     {% set ns.r_qtd = h.receb_jardim_europa_qtd %}{% set ns.r_val = h.receb_jardim_europa_valor %}
-    {% if a %}{% set ns.a_v_total = a.vendas_jardim_europa %}{% set ns.a_r_val = a.receb_jardim_europa_valor %}{% endif %}
+    {% if a %}{% set ns.a_v = a.vendas_jardim_europa %}{% set ns.a_r = a.receb_jardim_europa_valor %}{% endif %}
 {% endif %}
 
 {% macro badge(v_h, v_a) %}
-  {% if a and v_a is not none %}
-    {% set d = v_h - v_a %}
-    {% if d > 0 %}<span class="badge badge-up">&#9650; +{{ d }}</span>
-    {% elif d < 0 %}<span class="badge badge-down">&#9660; {{ d }}</span>
+  {% if a and v_a is not none %}{% set d=v_h-v_a %}
+    {% if d>0 %}<span class="badge badge-up">&#9650; +{{ d }}</span>
+    {% elif d<0 %}<span class="badge badge-down">&#9660; {{ d }}</span>
     {% else %}<span class="badge badge-zero">= igual</span>{% endif %}
   {% endif %}
 {% endmacro %}
-
 {% macro badge_r(v_h, v_a) %}
-  {% if a and v_a is not none %}
-    {% set d = v_h - v_a %}
-    {% if d > 0 %}<span class="badge badge-up">&#9650; +R$ {{ "%.0f"|format(d) }}</span>
-    {% elif d < 0 %}<span class="badge badge-down">&#9660; R$ {{ "%.0f"|format(d) }}</span>
+  {% if a and v_a is not none %}{% set d=v_h-v_a %}
+    {% if d>0 %}<span class="badge badge-up">&#9650; +R$ {{ "%.0f"|format(d) }}</span>
+    {% elif d<0 %}<span class="badge badge-down">&#9660; R$ {{ "%.0f"|format(d) }}</span>
     {% else %}<span class="badge badge-zero">= sem variação</span>{% endif %}
   {% endif %}
 {% endmacro %}
 
-<!-- KPIs -->
-<div class="section-label">Resumo do dia — {{ data_ref_fmt }}</div>
+<div class="section-label">Resumo — {{ data_ref_fmt }}</div>
 <div class="grid g4">
 
     <div class="card card-top" style="--accent:var(--r1);">
@@ -344,7 +423,7 @@
             <div class="kpi-lbl">Vendas no mês<span>{{ ns.v_label }}</span></div>
             <div class="kpi-val">{{ ns.v_total }}</div>
             <div class="kpi-sub">novos contratos</div>
-            {{ badge(ns.v_total, ns.a_v_total) }}
+            {{ badge(ns.v_total, ns.a_v) }}
         </div>
     </div>
 
@@ -365,9 +444,7 @@
             {% set pct = h.pb_pagos / h.pb_total * 100 %}
             <div class="prog-wrap">
                 <div class="prog-lbl"><span>conversão</span><strong style="color:{% if pct>=70 %}var(--green){% elif pct>=40 %}var(--yellow){% else %}var(--red){% endif %}">{{ "%.0f"|format(pct) }}%</strong></div>
-                <div class="prog-bar">
-                    <div class="prog-fill" style="width:{{ "%.0f"|format(pct) }}%;background:{% if pct>=70 %}linear-gradient(90deg,#166534,#22c55e){% elif pct>=40 %}linear-gradient(90deg,#92400e,#f59e0b){% else %}linear-gradient(90deg,#7f1d1d,#ef4444){% endif %};"></div>
-                </div>
+                <div class="prog-bar"><div class="prog-fill" style="width:{{ "%.0f"|format(pct) }}%;background:{% if pct>=70 %}linear-gradient(90deg,#166534,#22c55e){% elif pct>=40 %}linear-gradient(90deg,#92400e,#f59e0b){% else %}linear-gradient(90deg,#7f1d1d,#ef4444){% endif %};"></div></div>
             </div>
             {% endif %}
             {{ badge(h.pb_pagos, a.pb_pagos if a else none) }}
@@ -380,109 +457,47 @@
             <div class="kpi-val md">{{ ns.r_qtd }}</div>
             <div class="kpi-sub">placas pagas</div>
             <div class="kpi-money">R$ {{ "%.2f"|format(ns.r_val) }}</div>
-            {{ badge_r(ns.r_val, ns.a_r_val) }}
+            {{ badge_r(ns.r_val, ns.a_r) }}
         </div>
     </div>
 
 </div>
 
-<!-- CHARTS -->
+<!-- Charts -->
 <div class="section-label">Distribuição por Regional</div>
 <div class="grid g2">
 
-    <!-- Vendas por regional -->
     <div class="card">
         <div class="chart-card">
             <div class="chart-title">Vendas por regional</div>
             <div class="chart-inner">
                 <div class="chart-wrap">
                     <canvas id="chart-vendas"></canvas>
-                    <div class="chart-center">
-                        <div class="chart-center-val">{{ h.vendas_total }}</div>
-                        <div class="chart-center-sub">total</div>
-                    </div>
+                    <div class="chart-center"><div class="chart-center-val">{{ h.vendas_total }}</div><div class="chart-center-sub">total</div></div>
                 </div>
                 <div class="legend">
                     {% set vt = h.vendas_total or 1 %}
-                    <div class="li">
-                        <div class="li-name">
-                            <div class="li-dot{% if regional not in ('all','capitao') %} dim{% endif %}" style="background:var(--r1);"></div>
-                            <span style="color:var(--muted);">Capitão</span>
-                        </div>
-                        <div class="li-vals">
-                            <div class="li-q">{{ h.vendas_capitao }}</div>
-                            <div class="li-r">{{ "%.0f"|format(h.vendas_capitao/vt*100) }}%</div>
-                        </div>
-                    </div>
-                    <div class="li">
-                        <div class="li-name">
-                            <div class="li-dot{% if regional not in ('all','capitao2') %} dim{% endif %}" style="background:var(--r2);"></div>
-                            <span style="color:var(--muted);">Capitão 2</span>
-                        </div>
-                        <div class="li-vals">
-                            <div class="li-q">{{ h.vendas_capitao2 }}</div>
-                            <div class="li-r">{{ "%.0f"|format(h.vendas_capitao2/vt*100) }}%</div>
-                        </div>
-                    </div>
-                    <div class="li">
-                        <div class="li-name">
-                            <div class="li-dot{% if regional not in ('all','jardim') %} dim{% endif %}" style="background:var(--r3);"></div>
-                            <span style="color:var(--muted);">Jardim Europa</span>
-                        </div>
-                        <div class="li-vals">
-                            <div class="li-q">{{ h.vendas_jardim_europa }}</div>
-                            <div class="li-r">{{ "%.0f"|format(h.vendas_jardim_europa/vt*100) }}%</div>
-                        </div>
-                    </div>
+                    <div class="li"><div class="li-name"><div class="li-dot{% if regional not in ('all','capitao') %} dim{% endif %}" style="background:var(--r1);"></div><span style="color:var(--muted);">Capitão</span></div><div class="li-vals"><div class="li-q">{{ h.vendas_capitao }}</div><div class="li-r">{{ "%.0f"|format(h.vendas_capitao/vt*100) }}%</div></div></div>
+                    <div class="li"><div class="li-name"><div class="li-dot{% if regional not in ('all','capitao2') %} dim{% endif %}" style="background:var(--r2);"></div><span style="color:var(--muted);">Capitão 2</span></div><div class="li-vals"><div class="li-q">{{ h.vendas_capitao2 }}</div><div class="li-r">{{ "%.0f"|format(h.vendas_capitao2/vt*100) }}%</div></div></div>
+                    <div class="li"><div class="li-name"><div class="li-dot{% if regional not in ('all','jardim') %} dim{% endif %}" style="background:var(--r3);"></div><span style="color:var(--muted);">Jardim Europa</span></div><div class="li-vals"><div class="li-q">{{ h.vendas_jardim_europa }}</div><div class="li-r">{{ "%.0f"|format(h.vendas_jardim_europa/vt*100) }}%</div></div></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recebimento por regional (R$) -->
     <div class="card">
         <div class="chart-card">
             <div class="chart-title">Recebimento por regional (R$)</div>
             <div class="chart-inner">
                 <div class="chart-wrap">
                     <canvas id="chart-receb"></canvas>
-                    <div class="chart-center">
-                        <div class="chart-center-val" style="font-size:.85rem;">R$ {{ "%.0f"|format(h.receb_total_valor) }}</div>
-                        <div class="chart-center-sub">total</div>
-                    </div>
+                    <div class="chart-center"><div class="chart-center-val" style="font-size:.85rem;">R$ {{ "%.0f"|format(h.receb_total_valor) }}</div><div class="chart-center-sub">total</div></div>
                 </div>
                 <div class="legend">
                     {% set rt = h.receb_total_valor or 1 %}
-                    <div class="li">
-                        <div class="li-name">
-                            <div class="li-dot{% if regional not in ('all','capitao') %} dim{% endif %}" style="background:var(--r1);"></div>
-                            <span style="color:var(--muted);">Capitão</span>
-                        </div>
-                        <div class="li-vals">
-                            <div class="li-q">{{ h.receb_capitao_qtd }} placas</div>
-                            <div class="li-r">R$ {{ "%.0f"|format(h.receb_capitao_valor) }} ({{ "%.0f"|format(h.receb_capitao_valor/rt*100) }}%)</div>
-                        </div>
-                    </div>
-                    <div class="li">
-                        <div class="li-name">
-                            <div class="li-dot{% if regional not in ('all','capitao2') %} dim{% endif %}" style="background:var(--r2);"></div>
-                            <span style="color:var(--muted);">Capitão 2</span>
-                        </div>
-                        <div class="li-vals">
-                            <div class="li-q">{{ h.receb_capitao2_qtd }} placas</div>
-                            <div class="li-r">R$ {{ "%.0f"|format(h.receb_capitao2_valor) }} ({{ "%.0f"|format(h.receb_capitao2_valor/rt*100) }}%)</div>
-                        </div>
-                    </div>
-                    <div class="li">
-                        <div class="li-name">
-                            <div class="li-dot{% if regional not in ('all','jardim') %} dim{% endif %}" style="background:var(--r3);"></div>
-                            <span style="color:var(--muted);">Jardim Europa</span>
-                        </div>
-                        <div class="li-vals">
-                            <div class="li-q">{{ h.receb_jardim_europa_qtd }} placas</div>
-                            <div class="li-r">R$ {{ "%.0f"|format(h.receb_jardim_europa_valor) }} ({{ "%.0f"|format(h.receb_jardim_europa_valor/rt*100) }}%)</div>
-                        </div>
-                    </div>
+                    <div class="li"><div class="li-name"><div class="li-dot{% if regional not in ('all','capitao') %} dim{% endif %}" style="background:var(--r1);"></div><span style="color:var(--muted);">Capitão</span></div><div class="li-vals"><div class="li-q">{{ h.receb_capitao_qtd }} placas</div><div class="li-r">R$ {{ "%.0f"|format(h.receb_capitao_valor) }} ({{ "%.0f"|format(h.receb_capitao_valor/rt*100) }}%)</div></div></div>
+                    <div class="li"><div class="li-name"><div class="li-dot{% if regional not in ('all','capitao2') %} dim{% endif %}" style="background:var(--r2);"></div><span style="color:var(--muted);">Capitão 2</span></div><div class="li-vals"><div class="li-q">{{ h.receb_capitao2_qtd }} placas</div><div class="li-r">R$ {{ "%.0f"|format(h.receb_capitao2_valor) }} ({{ "%.0f"|format(h.receb_capitao2_valor/rt*100) }}%)</div></div></div>
+                    <div class="li"><div class="li-name"><div class="li-dot{% if regional not in ('all','jardim') %} dim{% endif %}" style="background:var(--r3);"></div><span style="color:var(--muted);">Jardim Europa</span></div><div class="li-vals"><div class="li-q">{{ h.receb_jardim_europa_qtd }} placas</div><div class="li-r">R$ {{ "%.0f"|format(h.receb_jardim_europa_valor) }} ({{ "%.0f"|format(h.receb_jardim_europa_valor/rt*100) }}%)</div></div></div>
                 </div>
             </div>
         </div>
@@ -490,93 +505,49 @@
 
 </div>
 
-<!-- INADIMPLÊNCIA -->
+<!-- Inadimplência -->
 <div class="section-label">Inadimplência em Cobrança</div>
 <div class="grid g3">
-
     <div class="card card-top" style="--accent:var(--red);">
-        <div class="kpi">
-            <div class="kpi-lbl">Total em cobrança</div>
-            <div class="kpi-val md">{{ h.inadi_total_qtd }}</div>
-            <div class="kpi-money">R$ {{ "%.2f"|format(h.inadi_total_valor) }}</div>
-            {{ badge(h.inadi_total_qtd, a.inadi_total_qtd if a else none) }}
-        </div>
+        <div class="kpi"><div class="kpi-lbl">Total em cobrança</div><div class="kpi-val md">{{ h.inadi_total_qtd }}</div><div class="kpi-money">R$ {{ "%.2f"|format(h.inadi_total_valor) }}</div>{{ badge(h.inadi_total_qtd, a.inadi_total_qtd if a else none) }}</div>
     </div>
-
     <div class="card card-top" style="--accent:#f59e0b;">
-        <div class="kpi">
-            <div class="kpi-lbl">Venc. mês passado</div>
-            <div class="kpi-val md">{{ h.inadi_mes_ant_qtd }}</div>
-            <div class="kpi-money">R$ {{ "%.2f"|format(h.inadi_mes_ant_valor) }}</div>
-            {{ badge(h.inadi_mes_ant_qtd, a.inadi_mes_ant_qtd if a else none) }}
-        </div>
+        <div class="kpi"><div class="kpi-lbl">Venc. mês passado</div><div class="kpi-val md">{{ h.inadi_mes_ant_qtd }}</div><div class="kpi-money">R$ {{ "%.2f"|format(h.inadi_mes_ant_valor) }}</div>{{ badge(h.inadi_mes_ant_qtd, a.inadi_mes_ant_qtd if a else none) }}</div>
     </div>
-
     <div class="card card-top" style="--accent:var(--r1);">
-        <div class="kpi">
-            <div class="kpi-lbl">Venc. mês atual</div>
-            <div class="kpi-val md">{{ h.inadi_mes_atual_qtd }}</div>
-            <div class="kpi-money">R$ {{ "%.2f"|format(h.inadi_mes_atual_valor) }}</div>
-            {{ badge(h.inadi_mes_atual_qtd, a.inadi_mes_atual_qtd if a else none) }}
-        </div>
+        <div class="kpi"><div class="kpi-lbl">Venc. mês atual</div><div class="kpi-val md">{{ h.inadi_mes_atual_qtd }}</div><div class="kpi-money">R$ {{ "%.2f"|format(h.inadi_mes_atual_valor) }}</div>{{ badge(h.inadi_mes_atual_qtd, a.inadi_mes_atual_qtd if a else none) }}</div>
     </div>
-
 </div>
 
-<!-- COMPARAÇÃO (collapsível) -->
 {% if a %}
 <div class="cmp-wrap" style="margin-top:24px;">
     <details>
-        <summary>
-            <span class="cmp-summary-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                Comparar com {{ mesmo_dia_mes_passado }}
-            </span>
-        </summary>
+        <summary><span class="cmp-summary-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            Comparar com {{ mesmo_dia_mes_passado }}
+        </span></summary>
         <div class="card" style="margin-top:8px;">
         <table class="cmp-table">
-            <thead><tr>
-                <th>Indicador</th>
-                <th>{{ data_ref_fmt }}</th>
-                <th>{{ mesmo_dia_mes_passado }}</th>
-                <th>Δ</th>
-            </tr></thead>
+            <thead><tr><th>Indicador</th><th>{{ data_ref_fmt }}</th><th>{{ mesmo_dia_mes_passado }}</th><th>Δ</th></tr></thead>
             <tbody>
-            {% macro crow(lbl, v_h, v_a, fmt='n') %}
-            <tr>
-                <td style="color:var(--muted);">{{ lbl }}</td>
-                <td class="mono">{% if fmt=='r' %}R$ {{ "%.2f"|format(v_h) }}{% else %}{{ v_h }}{% endif %}</td>
-                <td class="mono" style="color:var(--dim);">{% if fmt=='r' %}R$ {{ "%.2f"|format(v_a) }}{% else %}{{ v_a }}{% endif %}</td>
-                <td>{% set d=v_h-v_a %}
-                    {% if d>0 %}<span class="badge badge-up" style="font-size:.68rem;padding:1px 6px;">+{% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
-                    {% elif d<0 %}<span class="badge badge-down" style="font-size:.68rem;padding:1px 6px;">{% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
-                    {% else %}<span style="color:var(--dim);font-size:.74rem;">=</span>{% endif %}
-                </td>
-            </tr>
+            {% macro crow(lbl,v_h,v_a,fmt='n') %}
+            <tr><td style="color:var(--muted);">{{ lbl }}</td>
+            <td class="mono">{% if fmt=='r' %}R$ {{ "%.2f"|format(v_h) }}{% else %}{{ v_h }}{% endif %}</td>
+            <td class="mono" style="color:var(--dim);">{% if fmt=='r' %}R$ {{ "%.2f"|format(v_a) }}{% else %}{{ v_a }}{% endif %}</td>
+            <td>{% set d=v_h-v_a %}{% if d>0 %}<span class="badge badge-up" style="font-size:.68rem;padding:1px 6px;">+{% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
+            {% elif d<0 %}<span class="badge badge-down" style="font-size:.68rem;padding:1px 6px;">{% if fmt=='r' %}R$ {{ "%.0f"|format(d) }}{% else %}{{ d }}{% endif %}</span>
+            {% else %}<span style="color:var(--dim);font-size:.74rem;">=</span>{% endif %}</td></tr>
             {% endmacro %}
             <tr class="grp"><td colspan="4">Vendas</td></tr>
-            {{ crow("Total", h.vendas_total, a.vendas_total) }}
-            {{ crow("Capitão", h.vendas_capitao, a.vendas_capitao) }}
-            {{ crow("Capitão 2", h.vendas_capitao2, a.vendas_capitao2) }}
-            {{ crow("Jardim Europa", h.vendas_jardim_europa, a.vendas_jardim_europa) }}
+            {{ crow("Total",h.vendas_total,a.vendas_total) }}{{ crow("Capitão",h.vendas_capitao,a.vendas_capitao) }}{{ crow("Capitão 2",h.vendas_capitao2,a.vendas_capitao2) }}{{ crow("Jardim Europa",h.vendas_jardim_europa,a.vendas_jardim_europa) }}
             <tr class="grp"><td colspan="4">Reativação</td></tr>
-            {{ crow("Quantidade", h.reativacao_qtd, a.reativacao_qtd) }}
-            {{ crow("Valor", h.reativacao_valor, a.reativacao_valor, 'r') }}
+            {{ crow("Quantidade",h.reativacao_qtd,a.reativacao_qtd) }}{{ crow("Valor",h.reativacao_valor,a.reativacao_valor,'r') }}
             <tr class="grp"><td colspan="4">1º Boleto</td></tr>
-            {{ crow("Total contratos", h.pb_total, a.pb_total) }}
-            {{ crow("Pagos", h.pb_pagos, a.pb_pagos) }}
+            {{ crow("Total contratos",h.pb_total,a.pb_total) }}{{ crow("Pagos",h.pb_pagos,a.pb_pagos) }}
             <tr class="grp"><td colspan="4">Inadimplência</td></tr>
-            {{ crow("Total (qtd)", h.inadi_total_qtd, a.inadi_total_qtd) }}
-            {{ crow("Total (R$)", h.inadi_total_valor, a.inadi_total_valor, 'r') }}
-            {{ crow("Venc. mês passado", h.inadi_mes_ant_qtd, a.inadi_mes_ant_qtd) }}
-            {{ crow("Venc. mês atual", h.inadi_mes_atual_qtd, a.inadi_mes_atual_qtd) }}
+            {{ crow("Total",h.inadi_total_qtd,a.inadi_total_qtd) }}{{ crow("Venc. mês passado",h.inadi_mes_ant_qtd,a.inadi_mes_ant_qtd) }}{{ crow("Venc. mês atual",h.inadi_mes_atual_qtd,a.inadi_mes_atual_qtd) }}
             <tr class="grp"><td colspan="4">Recebimento</td></tr>
-            {{ crow("Total placas", h.receb_total_qtd, a.receb_total_qtd) }}
-            {{ crow("Total (R$)", h.receb_total_valor, a.receb_total_valor, 'r') }}
-            {{ crow("Capitão (qtd)", h.receb_capitao_qtd, a.receb_capitao_qtd) }}
-            {{ crow("Capitão (R$)", h.receb_capitao_valor, a.receb_capitao_valor, 'r') }}
-            {{ crow("Capitão 2 (qtd)", h.receb_capitao2_qtd, a.receb_capitao2_qtd) }}
-            {{ crow("Jardim Europa (qtd)", h.receb_jardim_europa_qtd, a.receb_jardim_europa_qtd) }}
+            {{ crow("Total placas",h.receb_total_qtd,a.receb_total_qtd) }}{{ crow("Total (R$)",h.receb_total_valor,a.receb_total_valor,'r') }}{{ crow("Capitão",h.receb_capitao_qtd,a.receb_capitao_qtd) }}{{ crow("Capitão 2",h.receb_capitao2_qtd,a.receb_capitao2_qtd) }}{{ crow("Jardim Europa",h.receb_jardim_europa_qtd,a.receb_jardim_europa_qtd) }}
             </tbody>
         </table>
         </div>
@@ -588,67 +559,335 @@
 <div class="empty-state">
     <div style="font-size:2.5rem;margin-bottom:14px;">📊</div>
     <div style="font-size:1rem;font-weight:600;margin-bottom:6px;">Sem dados para {{ data_ref_fmt }}</div>
-    <div style="color:var(--muted);font-size:.85rem;">Selecione outra data no menu acima.</div>
+    <div style="color:var(--muted);font-size:.85rem;">Selecione outra data ou use a aba <strong>Entrada</strong> para inserir manualmente.</div>
 </div>
 {% endif %}
 
-</main>
+</div><!-- /main -->
+</div><!-- /pane-painel -->
+
+<!-- ══════════════════════════════════════════════════════════
+     ABA ANÁLISE
+═══════════════════════════════════════════════════════════ -->
+<div id="pane-analise" class="tab-pane">
+<div class="main">
+    <div class="section-label">Inteligência de Gestão — {{ data_ref_fmt }}</div>
+    {% if insights %}
+    <div class="intel-list">
+        {% for item in insights %}
+        <div class="intel-item intel-{{ item.level }}">
+            <span class="intel-icon">{{ item.icon }}</span>
+            <span class="intel-text">{{ item.text }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div style="font-size:2.5rem;margin-bottom:14px;">🔍</div>
+        <div style="font-size:1rem;font-weight:600;margin-bottom:6px;">Sem análise disponível</div>
+        <div style="color:var(--muted);font-size:.85rem;">Extraia os dados do dia para ver a análise automática.</div>
+    </div>
+    {% endif %}
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ABA ENTRADA
+═══════════════════════════════════════════════════════════ -->
+<div id="pane-entrada" class="tab-pane">
+<div class="main">
+    <div class="section-label">Inserção Manual de Dados</div>
+    <div class="form-card">
+        <div class="form-title">Preencha os dados para uma data específica</div>
+        <form id="form-entrada" onsubmit="submitEntrada(event)">
+            <input type="hidden" name="key" value="{{ client_key }}">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label>Data de referência</label>
+                    <input type="date" name="data_ref" value="{{ data_ref }}" max="{{ hoje_iso }}" required style="font-family:'Inter',sans-serif;max-width:200px;">
+                </div>
+
+                <div class="form-sep-label">Vendas (novos contratos)</div>
+                <div class="form-group"><label>Capitão</label><input type="number" name="vendas_capitao" value="0" min="0"></div>
+                <div class="form-group"><label>Capitão 2</label><input type="number" name="vendas_capitao2" value="0" min="0"></div>
+                <div class="form-group"><label>Jardim Europa</label><input type="number" name="vendas_jardim_europa" value="0" min="0"></div>
+
+                <div class="form-sep-label">Reativação</div>
+                <div class="form-group"><label>Quantidade</label><input type="number" name="reativacao_qtd" value="0" min="0"></div>
+                <div class="form-group"><label>Valor (R$)</label><input type="number" name="reativacao_valor" value="0" min="0" step="0.01"></div>
+                <div class="form-group"></div>
+
+                <div class="form-sep-label">1º Boleto</div>
+                <div class="form-group"><label>Total contratos</label><input type="number" name="pb_total" value="0" min="0"></div>
+                <div class="form-group"><label>Pagos</label><input type="number" name="pb_pagos" value="0" min="0"></div>
+                <div class="form-group"></div>
+
+                <div class="form-sep-label">Inadimplência</div>
+                <div class="form-group"><label>Total (qtd)</label><input type="number" name="inadi_total_qtd" value="0" min="0"></div>
+                <div class="form-group"><label>Total (R$)</label><input type="number" name="inadi_total_valor" value="0" min="0" step="0.01"></div>
+                <div class="form-group"></div>
+                <div class="form-group"><label>Mês passado (qtd)</label><input type="number" name="inadi_mes_ant_qtd" value="0" min="0"></div>
+                <div class="form-group"><label>Mês passado (R$)</label><input type="number" name="inadi_mes_ant_valor" value="0" min="0" step="0.01"></div>
+                <div class="form-group"></div>
+                <div class="form-group"><label>Mês atual (qtd)</label><input type="number" name="inadi_mes_atual_qtd" value="0" min="0"></div>
+                <div class="form-group"><label>Mês atual (R$)</label><input type="number" name="inadi_mes_atual_valor" value="0" min="0" step="0.01"></div>
+                <div class="form-group"></div>
+
+                <div class="form-sep-label">Recebimento</div>
+                <div class="form-group"><label>Total (qtd)</label><input type="number" name="receb_total_qtd" value="0" min="0"></div>
+                <div class="form-group"><label>Total (R$)</label><input type="number" name="receb_total_valor" value="0" min="0" step="0.01"></div>
+                <div class="form-group"></div>
+                <div class="form-group"><label>Capitão (qtd)</label><input type="number" name="receb_capitao_qtd" value="0" min="0"></div>
+                <div class="form-group"><label>Capitão (R$)</label><input type="number" name="receb_capitao_valor" value="0" min="0" step="0.01"></div>
+                <div class="form-group"></div>
+                <div class="form-group"><label>Capitão 2 (qtd)</label><input type="number" name="receb_capitao2_qtd" value="0" min="0"></div>
+                <div class="form-group"><label>Capitão 2 (R$)</label><input type="number" name="receb_capitao2_valor" value="0" min="0" step="0.01"></div>
+                <div class="form-group"></div>
+                <div class="form-group"><label>Jardim Europa (qtd)</label><input type="number" name="receb_jardim_europa_qtd" value="0" min="0"></div>
+                <div class="form-group"><label>Jardim Europa (R$)</label><input type="number" name="receb_jardim_europa_valor" value="0" min="0" step="0.01"></div>
+                <div class="form-group"></div>
+
+                <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;">
+                    <button type="submit" class="btn-primary">Salvar dados</button>
+                    <button type="reset" class="btn-secondary">Limpar</button>
+                </div>
+            </div>
+        </form>
+        <div id="entrada-msg" class="form-msg"></div>
+    </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ABA WHATSAPP
+═══════════════════════════════════════════════════════════ -->
+<div id="pane-whatsapp" class="tab-pane">
+<div class="main">
+
+    <!-- Status de conexão -->
+    <div class="section-label">Conexão WhatsApp</div>
+    <div class="wz-status-row" id="wz-status-row">
+        <div class="wz-dot off" id="wz-dot"></div>
+        <div>
+            <div class="wz-status-text" id="wz-status-text">Verificando...</div>
+            <div class="wz-status-sub" id="wz-status-sub">Aguarde</div>
+        </div>
+        <button class="btn-secondary" onclick="checkWzStatus()" style="margin-left:auto;padding:6px 14px;font-size:.78rem;">Atualizar</button>
+    </div>
+
+    <!-- Configuração -->
+    <div class="section-label">Configuração</div>
+    <div class="wz-form">
+        <form id="form-wz" onsubmit="saveWzConfig(event)">
+            <input type="hidden" name="key" value="{{ client_key }}">
+            <div class="wz-form-grid">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label>URL do servidor UAZapi</label>
+                    <input type="url" name="server_url" id="wz-server-url" placeholder="https://wwwsolucoesdeia.uazapi.com">
+                </div>
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label>Token da instância</label>
+                    <input type="text" name="instance_token" id="wz-token" placeholder="Token de acesso da instância">
+                </div>
+                <div class="form-group">
+                    <label>Número destinatário 1</label>
+                    <input type="text" name="numero_1" id="wz-n1" placeholder="5511999990000">
+                </div>
+                <div class="form-group">
+                    <label>Número destinatário 2</label>
+                    <input type="text" name="numero_2" id="wz-n2" placeholder="5511999990001">
+                </div>
+                <div class="form-group">
+                    <label>Número destinatário 3</label>
+                    <input type="text" name="numero_3" id="wz-n3" placeholder="5511999990002">
+                </div>
+                <div class="form-group">
+                    <label>Horário do envio automático</label>
+                    <input type="time" name="horario_envio" id="wz-hora" value="07:00">
+                </div>
+                <div class="form-group">
+                    <label>Dias (APScheduler: 0=Seg … 6=Dom)</label>
+                    <input type="text" name="dias_envio" id="wz-dias" value="0,1,2,3,4" placeholder="0,1,2,3,4">
+                </div>
+            </div>
+            <div class="wz-toggle-row">
+                <div>
+                    <div class="wz-toggle-label">Envio automático ativo</div>
+                    <div class="wz-toggle-sub">Envia o relatório no horário configurado</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="ativo" id="wz-ativo">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="wz-btn-row">
+                <button type="submit" class="btn-primary">Salvar configuração</button>
+                <button type="button" class="btn-secondary" onclick="sendNow()">Enviar agora</button>
+            </div>
+        </form>
+        <div id="wz-msg" class="form-msg"></div>
+    </div>
+
+    <!-- Preview da mensagem -->
+    <div class="section-label">Preview da mensagem</div>
+    {% if snap_hoje %}
+    {% set h = snap_hoje %}
+    <div class="wz-send-preview">📊 *Relatório Regional Capitão — {{ data_ref_fmt }}*
+
+📈 *Vendas:* {{ h.vendas_total }} contratos
+  Cap: {{ h.vendas_capitao }} | Cap 2: {{ h.vendas_capitao2 }} | JE: {{ h.vendas_jardim_europa }}
+
+🔄 *Reativação:* {{ h.reativacao_qtd }} (R$ {{ "%.2f"|format(h.reativacao_valor) }})
+
+📋 *1º Boleto:* {{ h.pb_pagos }}/{{ h.pb_total }} pagos{% if h.pb_total > 0 %} ({{ "%.0f"|format(h.pb_pagos/h.pb_total*100) }}%){% endif %}
+
+💰 *Recebimento:* {{ h.receb_total_qtd }} placas (R$ {{ "%.2f"|format(h.receb_total_valor) }})
+  Cap: {{ h.receb_capitao_qtd }} | Cap 2: {{ h.receb_capitao2_qtd }} | JE: {{ h.receb_jardim_europa_qtd }}
+
+⚠️ *Inadimplência:* {{ h.inadi_total_qtd }} contratos
+  Mês passado: {{ h.inadi_mes_ant_qtd }} | Mês atual: {{ h.inadi_mes_atual_qtd }}
+
+_Gerado automaticamente — {{ data_ref_fmt }}_</div>
+    {% else %}
+    <div style="color:var(--dim);font-size:.82rem;">Sem dados para prévia.</div>
+    {% endif %}
+
+</div>
+</div><!-- /pane-whatsapp -->
 
 <script>
 Chart.defaults.color = '#8899b4';
 Chart.defaults.borderColor = '#1e2d47';
 
-// Date picker
+// ── Date picker ───────────────────────────────────────────────
 function toggleDp(e) {
     e.stopPropagation();
     document.getElementById('dp-menu').classList.toggle('open');
 }
 document.addEventListener('click', function(e) {
-    const wrap = document.getElementById('dp-wrap');
-    if (wrap && !wrap.contains(e.target)) {
-        document.getElementById('dp-menu').classList.remove('open');
-    }
+    const w = document.getElementById('dp-wrap');
+    if (w && !w.contains(e.target)) document.getElementById('dp-menu').classList.remove('open');
 });
 
-// Charts
-const COLORS_FULL = ['#6366f1','#06b6d4','#10b981'];
-const REGIONAL = '{{ regional }}';
-const REGIONAL_IDX = {capitao:0, capitao2:1, jardim:2};
-
-function chartColors() {
-    if (!REGIONAL || REGIONAL === 'all') return COLORS_FULL;
-    return COLORS_FULL.map((c, i) => i === REGIONAL_IDX[REGIONAL] ? c : c + '33');
+// ── Tab switching ─────────────────────────────────────────────
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('pane-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'whatsapp') { loadWzConfig(); checkWzStatus(); }
 }
 
+// ── Charts ────────────────────────────────────────────────────
+const REGIONAL = '{{ regional }}';
+const RI = {capitao:0, capitao2:1, jardim:2};
+function chartColors() {
+    const c = ['#6366f1','#06b6d4','#10b981'];
+    if (!REGIONAL || REGIONAL === 'all') return c;
+    return c.map((x, i) => i === RI[REGIONAL] ? x : x + '33');
+}
 function donut(id, values, total) {
-    const canvas = document.getElementById(id);
-    if (!canvas) return;
-    new Chart(canvas, {
+    const el = document.getElementById(id);
+    if (!el) return;
+    new Chart(el, {
         type: 'doughnut',
-        data: {
-            labels: ['Capitão','Capitão 2','Jardim Europa'],
-            datasets: [{ data: values, backgroundColor: chartColors(), borderWidth: 0, hoverOffset: 4 }]
-        },
-        options: {
-            cutout: '72%', responsive: true, maintainAspectRatio: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} (${total>0?Math.round(ctx.parsed/total*100):0}%)` } }
-            }
-        }
+        data: { labels:['Capitão','Capitão 2','Jardim Europa'], datasets:[{data:values, backgroundColor:chartColors(), borderWidth:0, hoverOffset:4}] },
+        options: { cutout:'72%', responsive:true, maintainAspectRatio:true, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed} (${total>0?Math.round(ctx.parsed/total*100):0}%)`}}} }
     });
 }
-
 {% if snap_hoje %}
-donut('chart-vendas',
-    [{{ snap_hoje.vendas_capitao }}, {{ snap_hoje.vendas_capitao2 }}, {{ snap_hoje.vendas_jardim_europa }}],
-    {{ snap_hoje.vendas_total or 1 }}
-);
-donut('chart-receb',
-    [{{ snap_hoje.receb_capitao_valor|round|int }}, {{ snap_hoje.receb_capitao2_valor|round|int }}, {{ snap_hoje.receb_jardim_europa_valor|round|int }}],
-    {{ (snap_hoje.receb_total_valor or 1)|round|int }}
-);
+donut('chart-vendas', [{{ snap_hoje.vendas_capitao }},{{ snap_hoje.vendas_capitao2 }},{{ snap_hoje.vendas_jardim_europa }}], {{ snap_hoje.vendas_total or 1 }});
+donut('chart-receb',  [{{ snap_hoje.receb_capitao_valor|round|int }},{{ snap_hoje.receb_capitao2_valor|round|int }},{{ snap_hoje.receb_jardim_europa_valor|round|int }}], {{ (snap_hoje.receb_total_valor or 1)|round|int }});
 {% endif %}
+
+// ── Formulário entrada ────────────────────────────────────────
+async function submitEntrada(e) {
+    e.preventDefault();
+    const form = e.target;
+    const msg  = document.getElementById('entrada-msg');
+    const btn  = form.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    try {
+        const r = await fetch('/relatorio/cliente/entrada', { method:'POST', body: new FormData(form) });
+        const d = await r.json();
+        msg.className = 'form-msg ' + (d.ok ? 'ok' : 'err');
+        msg.textContent = d.msg;
+        msg.style.display = 'block';
+        if (d.ok) setTimeout(() => location.reload(), 1200);
+    } catch(ex) {
+        msg.className = 'form-msg err'; msg.textContent = 'Erro de conexão.'; msg.style.display = 'block';
+    }
+    btn.disabled = false; btn.textContent = 'Salvar dados';
+}
+
+// ── WhatsApp ──────────────────────────────────────────────────
+async function checkWzStatus() {
+    const dot  = document.getElementById('wz-dot');
+    const txt  = document.getElementById('wz-status-text');
+    const sub  = document.getElementById('wz-status-sub');
+    txt.textContent = 'Verificando...'; sub.textContent = '';
+    try {
+        const r = await fetch('/relatorio/cliente/wz-status?key={{ client_key }}');
+        const d = await r.json();
+        if (d.conectado) {
+            dot.className = 'wz-dot on';
+            txt.textContent = 'Conectado';
+            sub.textContent = d.nome_instancia || '';
+        } else {
+            dot.className = 'wz-dot off';
+            txt.textContent = 'Desconectado';
+            sub.textContent = d.motivo || 'Configure a instância no painel UAZapi';
+        }
+    } catch { txt.textContent = 'Erro ao verificar'; sub.textContent = ''; }
+}
+
+async function loadWzConfig() {
+    try {
+        const r = await fetch('/relatorio/cliente/wz-cfg?key={{ client_key }}');
+        const d = await r.json();
+        if (!d.ok) return;
+        document.getElementById('wz-server-url').value = d.server_url || '';
+        document.getElementById('wz-token').value      = d.instance_token || '';
+        document.getElementById('wz-n1').value         = d.numero_1 || '';
+        document.getElementById('wz-n2').value         = d.numero_2 || '';
+        document.getElementById('wz-n3').value         = d.numero_3 || '';
+        document.getElementById('wz-hora').value       = d.horario_envio || '07:00';
+        document.getElementById('wz-dias').value       = d.dias_envio || '0,1,2,3,4';
+        document.getElementById('wz-ativo').checked    = d.ativo;
+    } catch {}
+}
+
+async function saveWzConfig(e) {
+    e.preventDefault();
+    const form = e.target;
+    const msg  = document.getElementById('wz-msg');
+    const btn  = form.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    const fd = new FormData(form);
+    if (!document.getElementById('wz-ativo').checked) fd.set('ativo', 'false');
+    try {
+        const r = await fetch('/relatorio/cliente/wz-config', { method:'POST', body: fd });
+        const d = await r.json();
+        msg.className = 'form-msg ' + (d.ok ? 'ok' : 'err');
+        msg.textContent = d.msg; msg.style.display = 'block';
+        if (d.ok) checkWzStatus();
+    } catch { msg.className='form-msg err'; msg.textContent='Erro de conexão.'; msg.style.display='block'; }
+    btn.disabled = false; btn.textContent = 'Salvar configuração';
+}
+
+async function sendNow() {
+    const msg = document.getElementById('wz-msg');
+    msg.className = 'form-msg'; msg.textContent = 'Enviando...'; msg.style.display = 'block';
+    const fd = new FormData();
+    fd.append('key', '{{ client_key }}');
+    fd.append('data_ref', '{{ data_ref }}');
+    try {
+        const r = await fetch('/relatorio/cliente/wz-enviar', { method:'POST', body: fd });
+        const d = await r.json();
+        msg.className = 'form-msg ' + (d.ok ? 'ok' : 'err');
+        msg.textContent = d.ok ? `Enviado para ${d.enviados} número(s).` : (d.msg || 'Erro ao enviar.');
+    } catch { msg.className='form-msg err'; msg.textContent='Erro de conexão.'; }
+}
 
 // Auto-refresh a cada 30 minutos
 setTimeout(() => location.reload(), 30 * 60 * 1000);

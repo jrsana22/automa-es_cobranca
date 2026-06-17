@@ -330,6 +330,38 @@ def migrate_add_relatorio_capitao():
     print("Tabela 'relatorio_capitao_diario' criada.")
 
 
+def migrate_add_whatsapp_config():
+    """Cria a tabela relatorio_whatsapp_config se não existir."""
+    if not os.path.exists(DB_PATH):
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='relatorio_whatsapp_config'")
+    if cur.fetchone():
+        conn.close()
+        return
+
+    cur.execute("""
+        CREATE TABLE relatorio_whatsapp_config (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            server_url VARCHAR(500) DEFAULT '',
+            instance_token VARCHAR(200) DEFAULT '',
+            numero_1 VARCHAR(50) DEFAULT '',
+            numero_2 VARCHAR(50) DEFAULT '',
+            numero_3 VARCHAR(50) DEFAULT '',
+            horario_envio VARCHAR(5) DEFAULT '07:00',
+            dias_envio VARCHAR(20) DEFAULT '0,1,2,3,4',
+            ativo BOOLEAN DEFAULT 0,
+            atualizado_em DATETIME
+        )
+    """)
+    conn.commit()
+    conn.close()
+    print("Tabela 'relatorio_whatsapp_config' criada.")
+
+
 if __name__ == "__main__":
     migrate()
     migrate_add_dias_semana()

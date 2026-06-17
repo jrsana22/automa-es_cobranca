@@ -173,9 +173,67 @@ def iniciar_scheduler(db: Session):
         )
         logger.info(f"Agendado: Relatório Capitão às {hora:02d}:00 seg-sex")
 
+    # Job WhatsApp relatório — carrega config do banco
+    try:
+        from app.routers.relatorio import _wz_config_get
+        cfg = _wz_config_get(db)
+        _reagendar_whatsapp(cfg)
+    except Exception as e:
+        logger.warning(f"WhatsApp job não agendado na inicialização: {e}")
+
     if not scheduler.running:
         scheduler.start()
         logger.info("Scheduler iniciado")
+
+
+def executar_whatsapp_relatorio():
+    """Envia relatório do dia via WhatsApp para os números configurados."""
+    from datetime import date as _date
+    from app.models import RelatorioWhatsappConfig
+    from app.routers.relatorio import _buscar_snapshot, _snap_para_dict, _formatar_relatorio_wz, _enviar_wz, _wz_config_get
+
+    db = SessionLocal()
+    try:
+        cfg = _wz_config_get(db)
+        if not cfg.ativo or not cfg.server_url or not cfg.instance_token:
+            return
+        hoje = _date.today()
+        snap = _buscar_snapshot(db, hoje)
+        if not snap:
+            logger.warning("WhatsApp: sem snapshot para hoje, pulando envio.")
+            return
+        msg = _formatar_relatorio_wz(_snap_para_dict(snap), hoje.strftime("%d/%m/%Y"))
+        results = _enviar_wz(cfg, msg)
+        logger.info(f"WhatsApp relatorio enviado: {results}")
+    except Exception as e:
+        logger.error(f"WhatsApp relatorio: erro no envio: {e}")
+    finally:
+        db.close()
+
+
+def _reagendar_whatsapp(cfg):
+    """Recria o job de WhatsApp no scheduler com a config atualizada."""
+    try:
+        scheduler.remove_job("whatsapp_relatorio")
+    except Exception:
+        pass
+    if not cfg.ativo or not cfg.horario_envio:
+        return
+    try:
+        hora, minuto = cfg.horario_envio.split(":")
+        scheduler.add_job(
+            executar_whatsapp_relatorio,
+            trigger=CronTrigger(hour=int(hora), minute=int(minuto), day_of_week=cfg.dias_envio, timezone=BRASILIA_TZ),
+            id="whatsapp_relatorio",
+            name="WhatsApp Relatório Capitão",
+            replace_existing=True,
+            max_instances=1,
+            misfire_grace_time=3600,
+            coalesce=True,
+        )
+        logger.info(f"WhatsApp relatorio agendado: {cfg.horario_envio} dias={cfg.dias_envio}")
+    except Exception as e:
+        logger.error(f"Erro ao agendar WhatsApp: {e}")
 
 
 def iniciar_watchdog():
