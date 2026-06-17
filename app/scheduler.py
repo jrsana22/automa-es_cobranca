@@ -23,6 +23,9 @@ from app.services.processor import processar_automacao
 from app.services.notifier import notify_failure
 from app.routers.executions import _running_automations, _mark_running, _clear_running, _purge_stale_running
 
+_RELATORIO_ERP_SENHA = "Rcarol@2025"
+_relatorio_lock = threading.Lock()
+
 logger = logging.getLogger(__name__)
 
 scheduler = BackgroundScheduler(timezone=BRASILIA_TZ)
@@ -84,6 +87,37 @@ def executar_automacao_agendada(automacao_id: int):
         db.close()
 
 
+def executar_relatorio_capitao_agendado():
+    """Job diário: extrai snapshot do ERP e salva no banco. Pula se já existe dado de hoje."""
+    if not _relatorio_lock.acquire(blocking=False):
+        logger.info("Relatorio Capitão: extração já em andamento, pulando.")
+        return
+
+    from datetime import date as _date
+    from app.services.relatorio_extractor import RelatorioExtractor
+    from app.models import RelatorioCapitaoDiario
+    from app.routers.relatorio import _salvar_snapshot
+
+    db = SessionLocal()
+    try:
+        hoje = _date.today()
+        existente = db.query(RelatorioCapitaoDiario).filter(RelatorioCapitaoDiario.data_ref == hoje).first()
+        if existente and not existente.erros:
+            logger.info(f"Relatorio Capitão: snapshot de {hoje} já existe e sem erros. Pulando.")
+            return
+
+        logger.info(f"Relatorio Capitão: iniciando extração para {hoje}...")
+        extractor = RelatorioExtractor(_RELATORIO_ERP_SENHA)
+        snap = extractor.extrair(hoje)
+        _salvar_snapshot(db, snap)
+        logger.info(f"Relatorio Capitão: extração concluída. erros={snap.erros or 'nenhum'}")
+    except Exception as e:
+        logger.error(f"Relatorio Capitão: falha na extração agendada: {e}")
+    finally:
+        db.close()
+        _relatorio_lock.release()
+
+
 def atualizar_agendamentos(db: Session):
     """
     Lê todas as automações ativas do banco e recria os jobs no scheduler.
@@ -124,6 +158,21 @@ def atualizar_agendamentos(db: Session):
 def iniciar_scheduler(db: Session):
     """Inicializa o scheduler e carrega as automações."""
     atualizar_agendamentos(db)
+
+    # Job fixo: relatório diário Regional Capitão — 08:00 e 20:00, seg a sex
+    for job_id, hora in [("relatorio_capitao_manha", 8), ("relatorio_capitao_tarde", 20)]:
+        scheduler.add_job(
+            executar_relatorio_capitao_agendado,
+            trigger=CronTrigger(hour=hora, minute=0, day_of_week="0-4", timezone=BRASILIA_TZ),
+            id=job_id,
+            name=f"Relatório Capitão {'08h' if hora == 8 else '20h'}",
+            replace_existing=True,
+            max_instances=1,
+            misfire_grace_time=3600,
+            coalesce=True,
+        )
+        logger.info(f"Agendado: Relatório Capitão às {hora:02d}:00 seg-sex")
+
     if not scheduler.running:
         scheduler.start()
         logger.info("Scheduler iniciado")
