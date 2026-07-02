@@ -16,6 +16,10 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Planilhas onde a coluna "Nome" deve gravar só o primeiro nome (por pedido do cliente).
+# Hoje: só a Regional Juiz de Fora. Adicionar outros IDs aqui se precisar.
+PRIMEIRO_NOME_SHEETS = {"1_2UhU8HLvMFylab2Fn2xES30AVfkkvXLSO-K_flmDU4"}
+
 
 def _primeiro_nome(nome: str) -> str:
     """Retorna só o primeiro nome, capitalizado. Ex: 'FABIANO MARTINS' -> 'Fabiano'."""
@@ -226,8 +230,8 @@ class SheetsWriter:
                             except (ValueError, AttributeError):
                                 pass
                         if value is not None and str(value).strip() != "" and str(value).strip() != "nan":
-                            # Coluna "Nome" → grava só o primeiro nome, capitalizado
-                            if sheets_col_stripped.lower() == "nome":
+                            # Coluna "Nome" → só o primeiro nome (apenas nas planilhas marcadas)
+                            if sheets_col_stripped.lower() == "nome" and spreadsheet_id in PRIMEIRO_NOME_SHEETS:
                                 value = _primeiro_nome(str(value))
                             row[col_map[sheets_col_stripped]] = str(value)
                 rows.append(row)
