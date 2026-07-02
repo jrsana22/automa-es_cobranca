@@ -16,6 +16,15 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+
+def _primeiro_nome(nome: str) -> str:
+    """Retorna só o primeiro nome, capitalizado. Ex: 'FABIANO MARTINS' -> 'Fabiano'."""
+    n = (nome or "").strip()
+    if not n:
+        return n
+    w = n.split()[0]
+    return w[:1].upper() + w[1:].lower()
+
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SHEETS_MAX_RETRIES = 3
 SHEETS_RETRY_INTERVAL = 5  # segundos
@@ -217,6 +226,9 @@ class SheetsWriter:
                             except (ValueError, AttributeError):
                                 pass
                         if value is not None and str(value).strip() != "" and str(value).strip() != "nan":
+                            # Coluna "Nome" → grava só o primeiro nome, capitalizado
+                            if sheets_col_stripped.lower() == "nome":
+                                value = _primeiro_nome(str(value))
                             row[col_map[sheets_col_stripped]] = str(value)
                 rows.append(row)
 
